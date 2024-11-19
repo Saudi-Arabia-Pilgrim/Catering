@@ -126,9 +126,9 @@ Our project uses a structured approach to managing dependencies across different
 ### Prerequisites
 
 - Python 3.12+
-- Django 3.3.1
+- Django 5.1.3+
 - PostgresSQL 16+
-- Redis 7+
+- Redis 5.2.0+
 
 ### Installation
 
