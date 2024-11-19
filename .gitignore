@@ -16,6 +16,15 @@ src/static/
 src/static
 src/celerybeat-schedule
 
+# Mukhsin
+# Ignore all files in apps' migrations folders
+**/apps/**/migrations/*
+**/migrations/*.py
+# But do not ignore the migrations folder itself
+!**/apps/**/migrations/
+# Do not ignore __init__.py files inside migrations folders
+!**/apps/**/migrations/__init__.py
+
 # AWS User-specific
 .idea/**/aws.xml
 
