@@ -15,7 +15,71 @@ Welcome to the Hajj & Umrah Management Platform! This enterprise-grade solution 
 ## 📊 System Architecture
 
 Below is our complete platform workflow showing how different components interact:
+```mermaid
+graph TB
+    %% Authentication Flow
+    unAuth["UnAuthenticated User"] --> Authorization
+    Authorization --> Register
+    Register --> HomePage["Home Page"]
+    
+    %% Main Management Paths
+    HomePage --> Hotels
+    HomePage --> Catering
+    
+    %% Hotel Management Flow
+    subgraph HotelManagement
+        Hotels --> CheckRole["Check Role"]
+        CheckRole --> CEO
+        CheckRole --> Manager
+        CheckRole --> Staff
+        
+        CEO --> |Manages| Clients
+        CEO --> |Oversees| Partners
+        CEO --> |Analyzes| Statistics
+        CEO --> |Receives| Notification
+        
+        Manager --> |Controls| Rooms
+        Manager --> |Reviews| Financial
+        Manager --> |Manages| Personal["Staff Management"]
+        
+        Staff --> |Handles| Rooms
+        Staff --> |Interacts with| Clients
+        Staff --> |Checks| Notification
+    end
+    
+    %% Catering Management Flow
+    subgraph CateringManagement
+        Catering --> CateringCheckRole["Check Role"]
+        CateringCheckRole --> CateringManager
+        CateringCheckRole --> CateringStaff
+        
+        CateringManager --> |Manages| Personal
+        CateringManager --> |Oversees| Financial
+        CateringManager --> |Controls| Warehouse
+        CateringManager --> |Interacts with| Partners
+        CateringManager --> |Analyzes| Statistics
+        CateringManager --> |Receives| Notification
+        
+        CateringStaff --> |Manages| Warehouse
+        CateringStaff --> |Creates| MenuCreation["Menu"]
+        CateringStaff --> |Interacts with| Clients
+        CateringStaff --> |Checks| Notification
+        
+        MenuCreation --> MenuDetailsCost["Menu Details & Cost"]
+        MenuDetailsCost --> Ingredients["Ingredient Management"]
+    end
+    
+    %% Styling
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px
+    classDef process fill:#e1f3fd,stroke:#333,stroke-width:1px
+    classDef financial fill:#e1fde3,stroke:#333,stroke-width:1px
+    
+    class unAuth,HomePage,Hotels,Catering,Rooms,Clients,Partners,Statistics,Notification default
+    class Authorization,Register,CEO,Manager,Staff,CateringManager,CateringStaff process
+    class Financial,Personal,Warehouse,MenuCreation,Ingredients financial
+```
 
+## 📊 Business Logic Flowchart
 ```mermaid
 flowchart TB
     Start["Client Requests (Hajj/Umrah)"]
