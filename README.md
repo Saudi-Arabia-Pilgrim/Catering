@@ -333,7 +333,7 @@ We believe in the power of collaboration. Below are some of our amazing contribu
 
 | Name                                                | LinkedIn                                                             | Project Spent Time                                                                                                                       |
 |-----------------------------------------------------|----------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------| 
-| [Mukhsin Mukhtorov](https://github.com/Mukhsin0508) | [LinkedIn](https://www.linkedin.com/in/mukhsin-mukhtorov-58b26221b/) | ![Wakatime Badge](https://wakatime.com/badge/user/60731bfe-5801-4003-b6ab-b7db12ed73d0/project/e1974447-198b-4e5c-b175-201c8be81c13.svg) |
+| [Mukhsin Mukhtorov](https://github.com/Mukhsin0508) | [LinkedIn](https://www.linkedin.com/in/mukhsin-mukhtorov-58b26221b/) | ![Wakatime Badge](https://wakatime.com/badge/user/60731bfe-5801-4003-b6ab-b7db12ed73d0/project/ab825e1c-5780-4606-a51d-c693e6d8f131.svg) |
 
 
 
