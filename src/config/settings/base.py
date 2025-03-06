@@ -36,7 +36,6 @@ STATIC_ROOT = os.path.join(BASE_DIR / 'static')
 INSTALLED_APPS = [
     "jazzmin",
     "modeltranslation",
-    "drf_spectacular",
     "debug_toolbar",
 
     "django.contrib.admin",
@@ -48,6 +47,7 @@ INSTALLED_APPS = [
 
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
+    "drf_yasg"
 
 ]
 
