@@ -36,7 +36,6 @@ STATIC_ROOT = os.path.join(BASE_DIR / 'static')
 INSTALLED_APPS = [
     "jazzmin",
     "modeltranslation",
-    "drf_spectacular",
     "debug_toolbar",
 
     "django.contrib.admin",
@@ -48,6 +47,7 @@ INSTALLED_APPS = [
 
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
+    "drf_yasg"
 
 ]
 
@@ -56,6 +56,18 @@ INSTALLED_APPS += [
     'apps.authentication.apps.AuthenticationConfig',
     'apps.base.apps.BaseConfig',
     'apps.users.apps.UsersConfig',
+    'apps.counter_agents.apps.CounterAgentsConfig',
+    'apps.expenses.apps.ExpensesConfig',
+    'apps.foods.apps.FoodsConfig',
+    'apps.guests.apps.GuestsConfig',
+    'apps.hotels.apps.HotelsConfig',
+    'apps.menus.apps.MenusConfig',
+    'apps.orders.apps.OrdersConfig',
+    'apps.products.apps.ProductsConfig',
+    'apps.rooms.apps.RoomsConfig',
+    'apps.sections.apps.SectionsConfig',
+    'apps.transports.apps.TransportsConfig',
+    'apps.warehouses.apps.WarehousesConfig',
 ]
 
 MIDDLEWARE = [
