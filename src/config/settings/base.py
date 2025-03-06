@@ -56,6 +56,18 @@ INSTALLED_APPS += [
     'apps.authentication.apps.AuthenticationConfig',
     'apps.base.apps.BaseConfig',
     'apps.users.apps.UsersConfig',
+    'apps.counter_agents.apps.CounterAgentsConfig',
+    'apps.expenses.apps.ExpensesConfig',
+    'apps.foods.apps.FoodsConfig',
+    'apps.guests.apps.GuestsConfig',
+    'apps.hotels.apps.HotelsConfig',
+    'apps.menus.apps.MenusConfig',
+    'apps.orders.apps.OrdersConfig',
+    'apps.products.apps.ProductsConfig',
+    'apps.rooms.apps.RoomsConfig',
+    'apps.sections.apps.SectionsConfig',
+    'apps.transports.apps.TransportsConfig',
+    'apps.warehouses.apps.WarehousesConfig',
 ]
 
 MIDDLEWARE = [
