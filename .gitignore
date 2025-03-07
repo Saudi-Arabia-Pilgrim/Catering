@@ -13,6 +13,7 @@
 .idea/**/shelf
 .idea
 
+.vscode
 
 src/static/
 src/static
