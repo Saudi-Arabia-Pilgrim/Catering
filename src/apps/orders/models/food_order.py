@@ -48,7 +48,7 @@ class FoodOrder(AbstractBaseModel):
     recipe = models.ForeignKey('menus.Recipe', on_delete=models.PROTECT, related_name='food_orders', blank=True, null=True)
 
     # === Reference to the hotel associated with the order. ===
-    # hotel = models.ForeignKey('hotels.Hotel', on_delete=models.PROTECT, related_name='food_orders', blank=True, null=True)
+    hotel = models.ForeignKey('hotels.Hotel', on_delete=models.PROTECT, related_name='food_orders', blank=True, null=True)
 
     # === The time when the order was placed. ===
     order_time = models.DateTimeField(blank=True, null=True)    

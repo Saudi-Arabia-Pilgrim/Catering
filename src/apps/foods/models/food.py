@@ -6,24 +6,8 @@ from apps.base.models import AbstractBaseModel
 class Food(AbstractBaseModel):
     """
     Food model representing a food item in the catering application.
-
-    Attributes:
-        recipe (ForeignKey): Foreign key to the RecipeFood model, with a protect delete rule.
-        name (CharField): Name of the food item, with a maximum length of 255 characters.
-        slug (SlugField): Unique slug for the food item, with a maximum length of 255 characters.
-        status (BooleanField): Status of the food item, default is True.
-        net_price (DecimalField): Net price of the food item, with a maximum of 10 digits and 2 decimal places.
-        image (ImageField): Optional image of the food item, uploaded to 'foods/%Y/%m/%d/'.
-        section (PositiveSmallIntegerField): Section of the food item, chosen from predefined choices (LIQUID or DEEP).
-
-    Meta:
-        db_table (str): Name of the database table.
-        verbose_name (str): Human-readable name of the model.
-        verbose_name_plural (str): Human-readable plural name of the model.
-
-    Methods:
-        __str__(): Returns the name of the food item.
     """
+
     class Section(models.IntegerChoices):
         LIQUID = 0, 'Suyuq'
         DEEP = 1, 'Quyuq'
