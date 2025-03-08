@@ -6,27 +6,6 @@ from apps.base.models import AbstractBaseModel
 class FoodOrder(AbstractBaseModel):
     """
     Model representing a food order.
-
-    Attributes:
-
-        menu (ForeignKey): 
-        recipe (ForeignKey):
-        hotel (ForeignKey):
-        order_time (DateTimeField): 
-        expiration_date (DateTimeField): 
-        order_type (PositiveSmallIntegerField):
-        product_type (PositiveSmallIntegerField): 
-        price (DecimalField):
-        address (CharField):
-        product_count (PositiveSmallIntegerField): 
-
-    Meta:
-        db_table (str): 
-        verbose_name (str): 
-        verbose_name_plural (str): 
-
-    Methods:
-        __str__(): 
     """
 
     class OrderType(models.IntegerChoices):
