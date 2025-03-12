@@ -1,6 +1,8 @@
 from django.db import models
 
+from apps.base.exceptions import CustomExceptionError
 from apps.base.models import AbstractBaseModel
+from apps.orders.utils.generate_id import new_id
 
 
 class FoodOrder(AbstractBaseModel):
@@ -18,7 +20,7 @@ class FoodOrder(AbstractBaseModel):
         RECIPE = 2, 'Retsept'
 
     # === Unique identifier for the food order. ===
-    food_order_id = models.CharField(default="apps.orders.utils.generate_id.pynew_id", max_length=24, unique=True)
+    food_order_id = models.CharField(default=new_id, max_length=24, unique=True)
     # === Reference to the food item being ordered. ===
     food = models.ForeignKey('foods.Food', on_delete=models.PROTECT, related_name='food_orders', blank=True, null=True)
     # === Reference to the menu being ordered. ===
@@ -64,3 +66,7 @@ class FoodOrder(AbstractBaseModel):
     @property
     def total_price(self):
         return self.price * self.product_count
+
+    def clean(self):
+        if bool(self.food) + bool(self.menu) + bool(self.recipe) != 1:
+            raise CustomExceptionError(detail="Input 1 type of product")
