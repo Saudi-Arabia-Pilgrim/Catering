@@ -1,7 +1,7 @@
 from apps.base.serializers import CustomModelSerializer
 from apps.guests.serializers import GuestSerializer
 from apps.hotels.models import Hotel
-from apps.rooms.serializers.room import RoomSerializer
+from apps.rooms.serializers import RoomSerializer
 
 class HotelSerializer(CustomModelSerializer):
     """
