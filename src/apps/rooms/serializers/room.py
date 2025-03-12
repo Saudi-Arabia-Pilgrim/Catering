@@ -20,18 +20,25 @@ class RoomSerializer(CustomModelSerializer):
          price (Decimal): Price per night for the room type.
     """
 
-    room_type = RoomTypeSerializer()
     available_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Room
         fields = [
+            "id",
+            "hotel",
             "room_type",
             "count",
             "occupied_count",
             "available_count",
             "price",
         ]
+
+    def get_hotel(self, obj):
+        return obj.hotel.name
+
+    def get_room_type(self, obj):
+        return obj.room_type.name
 
     def get_available_count(self, obj):
         """
