@@ -45,4 +45,5 @@ urlpatterns += [
     path("api/v1/rooms/", include("apps.rooms.urls")),
     path("api/v1/hotels/", include("apps.hotels.urls")),
     path("api/v1/guests/", include("apps.guests.urls")),
+    path("api/v1/orders/", include("apps.orders.urls")),
 ]
