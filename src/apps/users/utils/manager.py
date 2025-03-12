@@ -9,7 +9,7 @@ class CustomUserManager(UserManager):
     """
     Custom user model manager where email is the unique identifiers
     """
-    def _create_user(self, username, email, password, **extra_fields) -> User:
+    def _create_user(self, username, email, password, **extra_fields) -> User: # type: ignore
         """
         Create and save a User with the given username, email and password.
         :param username:
@@ -23,7 +23,7 @@ class CustomUserManager(UserManager):
         user.save(using=self._db)
         return user
 
-    def create_user(self, **extra_fields) -> User:
+    def create_user(self, **extra_fields) -> User: # type: ignore
         """
         Creates and saves a new user
         :param extra_fields:
@@ -33,7 +33,7 @@ class CustomUserManager(UserManager):
         extra_fields.setdefault("is_staff", False)
         return self._create_user(**extra_fields)
 
-    def create_superuser(self, **extra_fields) -> User:
+    def create_superuser(self, **extra_fields) -> User: # type: ignore
         """
         Creates and saves a new superuser
         :param extra_fields:
