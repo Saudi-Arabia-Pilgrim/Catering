@@ -3,9 +3,9 @@ from django.db import models
 from apps.base.models import AbstractBaseModel
 
 
-class CounterAgents(AbstractBaseModel):
+class CounterAgent(AbstractBaseModel):
     """
-    CounterAgents model represents the counter agents in the system.
+    CounterAgent model represents the counter agents in the system.
     """
 
     # === The name of the counter agent. ===

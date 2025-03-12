@@ -1,6 +1,8 @@
 from django.db import models
+from django.utils.text import slugify
 
 from apps.base.models import AbstractBaseModel
+from apps.warehouses.models import Warehouse
 
 
 class Product(AbstractBaseModel):
@@ -15,13 +17,11 @@ class Product(AbstractBaseModel):
     # === The name of the product. ===
     name = models.CharField(max_length=255)
     # === A unique slug for the product. ===
-    slug = models.SlugField(max_length=255, unique=True)
+    slug = models.SlugField(max_length=255, unique=True, blank=True)
     # === An optional image of the product, with the upload path 'products/%Y/%m/%d/'. ===
     image = models.ImageField(upload_to='products/%Y/%m/%d/', null=True, blank=True)
     # === The status of the product, indicating if it is active (default is True). ===
-    status = models.BooleanField(default=True)
-    # === The price of the product, with a maximum of 10 digits and 2 decimal places. ===
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.BooleanField(default=False)
 
     class Meta:
         # === The name of the database table ('product'). ===
@@ -36,3 +36,11 @@ class Product(AbstractBaseModel):
         Returns the string representation of the product, which is its name.
         """
         return self.name
+
+    def clean(self):
+        """
+        Cleans the product instance by generating a slug from the product name.
+
+        This method uses the `slugify` function to convert the product name into a URL-friendly slug and assigns it to the `slug` attribute of the product instance.
+        """
+        self.slug = slugify(self.name)
