@@ -1,3 +1,7 @@
 from django.contrib import admin
 
-# Register your models here.
+from apps.sections.models import Section, Measure
+
+
+admin.site.register(Section)
+admin.site.register(Measure)

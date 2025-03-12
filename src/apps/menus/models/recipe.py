@@ -1,4 +1,6 @@
 from django.db import models
+from django.core.validators import MinValueValidator
+from django.utils.text import slugify
 
 from apps.base.models import AbstractBaseModel
 
@@ -28,13 +30,17 @@ class Recipe(AbstractBaseModel):
     # === Name of the recipe. ===
     name = models.CharField(max_length=255)
     # === Unique slug for the recipe. ===
-    slug = models.SlugField(max_length=255, unique=True)
+    slug = models.SlugField(max_length=255, unique=True, blank=True)
     # === Number of products in the recipe. ===
-    count_of_products = models.FloatField()
+    count_of_products = models.PositiveSmallIntegerField()
     # === Status of the recipe, default is True (active). ===
     status = models.BooleanField(default=True)
-    # === Price of the recipe, with a maximum of 10 digits and 2 decimal places. ===
-    price = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # === Net price of the recipe. ===
+    net_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, validators=[MinValueValidator(1)])
+    # === Profit associated with the recipe. ===
+    profit = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(1)])
+    # === Gross price of the recipe. ===
+    gross_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, validators=[MinValueValidator(1)])
 
     class Meta:
         # === The database table name for the model. ===
@@ -48,4 +54,26 @@ class Recipe(AbstractBaseModel):
         """
         Returns a string representation of the recipe, including its name, count of products, and price.
         """
-        return f"{self.name} - {self.count_of_products} - {self.price}"
+        return f"{self.name} - {self.count_of_products} - {self.gross_price}"
+
+    def clean(self):
+        """
+        Clean method for the Recipe model.
+
+        This method performs additional operations before saving the instance:
+        1. Generates a slug from the recipe name if it doesn't exist or doesn't match the current slug.
+        2. Calculates the total count of products from associated breakfast, lunch, and dinner menus.
+        3. Calculates the net price from associated menus.
+        4. Calculates the gross price by adding profit to net price.
+        5. Updates status based on associated menus.
+        """
+        self.slug = slugify(self.name)
+
+        menus = [self.menu_breakfast, self.menu_lunch, self.menu_dinner]
+
+        self.count_of_products = sum(menu.count_of_products for menu in menus)
+        self.net_price = sum(menu.net_price for menu in menus)
+
+        self.gross_price = self.net_price + self.profit
+
+        self.status = all(menu.status for menu in menus)
