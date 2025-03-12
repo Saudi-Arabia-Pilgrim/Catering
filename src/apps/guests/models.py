@@ -28,6 +28,12 @@ class Guest(AbstractBaseModel):
         related_name='guests',
         help_text="The hotel where the guest is staying."
     )
+    hotel_order = models.ForeignKey(
+        'orders.HotelOrder',
+        on_delete=models.PROTECT,
+        related_name='guests',
+        help_text="The hotel order associated with the guest."
+    )
     room_type = models.ForeignKey(
         "rooms.RoomType",
         on_delete=models.CASCADE,
