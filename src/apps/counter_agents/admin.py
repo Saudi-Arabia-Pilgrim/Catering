@@ -1,3 +1,6 @@
 from django.contrib import admin
 
-# Register your models here.
+from apps.counter_agents.models import CounterAgent
+
+
+admin.site.register(CounterAgent)
