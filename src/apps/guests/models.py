@@ -1,3 +1,5 @@
+import random
+
 from django.db import models
 
 from apps.base.models import AbstractBaseModel
@@ -26,6 +28,18 @@ class Guest(AbstractBaseModel):
         related_name='guests',
         help_text="The hotel where the guest is staying."
     )
+    room_type = models.ForeignKey(
+        "rooms.RoomType",
+        on_delete=models.CASCADE,
+        related_name="guests",
+        help_text="The type of room the guest is staying in."
+    )
+    order_number = models.CharField(
+        max_length=8,
+        unique=True,
+        editable=False,
+    )
+
     gender = models.PositiveSmallIntegerField(
         choices=Gender.choices,
         help_text="Gender of the guest (Male or Female)."
@@ -39,6 +53,17 @@ class Guest(AbstractBaseModel):
         decimal_places=2,
         help_text="Price associated with the guest's stay."
     )
+    check_in = models.DateField(
+        help_text="Date of check-in."
+    )
+    check_out = models.DateField(
+        help_text="Date of check-out."
+    )
+
+    def save(self, *args, **kwargs):
+        if not self.order_number:
+            self.order_number = f"№{random.randint(1000000, 9999999)}"
+        super().save(*args, **kwargs)
 
     def __str__(self):
         """
