@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from apps.base.serializers import CustomModelSerializer
 from apps.guests.models import Guest
+from apps.hotels.models import Hotel
 
 
 class GuestSerializer(CustomModelSerializer):
@@ -12,17 +13,25 @@ class GuestSerializer(CustomModelSerializer):
     and creating new guest entries with an associated hotel.
     """
 
-    hotel = serializers.SerializerMethodField(help_text="Name of the hotel associated with the guest.")
+    hotel = serializers.CharField(write_only=True)
 
     class Meta:
         model = Guest
         fields = [
-            "id",  # Unique identifier for the guest.
-            "hotel",  # The name of the hotel associated with the guest.
-            "gender",  # Gender of the guest.
-            "full_name",  # Full name of the guest.
-            "price",  # Price associated with the guest's stay.
+            "id",
+            "hotel",
+            "full_name",
+            "order_number",
+            "room_type",
+            "gender",
+            "check_in",
+            "check_out",
+            "price",
         ]
+
+    def get_gender(self, obj):
+        return obj.get_gender_display()
+
 
     def create(self, validated_data):
         """
@@ -37,17 +46,18 @@ class GuestSerializer(CustomModelSerializer):
             Guest: Newly created Guest instance.
         """
         hotel_id = self.context["view"].kwargs.get("hotel_id")
-        validated_data["hotel_id"] = hotel_id
+        validated_data["hotel"] = Hotel.objects.get(id=hotel_id)
         return super().create(validated_data)
 
-    def get_hotel(self, obj):
-        """
-        Retrieve the name of the hotel associated with the guest.
 
-        Args:
-            obj (Guest): Guest instance.
 
-        Returns:
-            str: Name of the associated hotel.
-        """
-        return obj.hotel.name
+
+{
+    "hotel": "Taiba Suites Madinah",
+    "full_name": "Kimdirov Kimdir",
+    "room_type": "2 Kishilik",
+    "gender": "Male",
+    "check_in": "12.03.2025",
+    "check_out": "20.03.2025",
+    "price": 120
+}
