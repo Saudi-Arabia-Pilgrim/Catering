@@ -1,3 +1,5 @@
+import random
+
 from django.db import models
 
 from apps.base.models import AbstractBaseModel
@@ -30,7 +32,7 @@ class HotelOrder(AbstractBaseModel):
 
     order_status = models.PositiveSmallIntegerField(choices=OrderStatus.choices)
 
-    order_id = models.CharField(max_length=255)
+    order_id = models.CharField(max_length=8, unique=True, editable=False)
     status = models.BooleanField(default=True)
     food_service = models.BooleanField(default=False)
     check_in = models.DateTimeField()
@@ -40,6 +42,10 @@ class HotelOrder(AbstractBaseModel):
 
     class Meta:
         ordering = ['-created_at']
+
+    def save(self, *args, **kwargs):
+        if not self.order_id:
+            self.order_id = f"{random.randint(1000000, 9999999)}"
 
     def __str__(self):
         return self.hotel.name
