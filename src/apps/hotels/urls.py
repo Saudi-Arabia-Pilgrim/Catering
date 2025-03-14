@@ -1,7 +1,7 @@
 from django.urls import path
 
 from apps.hotels.views.hotels import HotelListAPIView
-from apps.hotels.serializers.hotel_stats import HotelStatsAPIView
+from apps.hotels.views.hotel_stats import HotelStatsAPIView
 from apps.hotels.views import (HotelCreateAPIView,
                                HotelRetrieveAPIView,
                                HotelUpdateAPIView,
