@@ -1,5 +1,7 @@
 from rest_framework import viewsets
 
+from apps.base.serializers import EmptySerializer
+
 
 class CustomViewSet(viewsets.ViewSet):
     """
@@ -10,7 +12,8 @@ class CustomViewSet(viewsets.ViewSet):
         Example usage:
             router.register(r'items', CustomViewSet, basename='item')
     """
-    pass
+    serializer_class = EmptySerializer
+    queryset = []
 
 
 class CustomGenericViewSet(viewsets.GenericViewSet):
@@ -25,7 +28,8 @@ class CustomGenericViewSet(viewsets.GenericViewSet):
             queryset = MyModel.objects.all()
             serializer_class = MyModelSerializer
     """
-    pass
+    serializer_class = EmptySerializer
+    queryset = []
 
 
 class CustomModelViewSet(viewsets.ModelViewSet):
@@ -38,7 +42,8 @@ class CustomModelViewSet(viewsets.ModelViewSet):
             router.register(r'products', CustomModelViewSet, basename='product')
             Automatically provides GET, POST, PUT, PATCH, DELETE endpoints
     """
-    pass
+    serializer_class = EmptySerializer
+    queryset = []
 
 
 class CustomReadOnlyModelViewSet(viewsets.ReadOnlyModelViewSet):
@@ -50,4 +55,5 @@ class CustomReadOnlyModelViewSet(viewsets.ReadOnlyModelViewSet):
             router.register(r'reports', CustomReadOnlyModelViewSet, basename='report')
             Only provides GET list and GET single item endpoints
     """
-    pass
+    serializer_class = EmptySerializer
+    queryset = []
