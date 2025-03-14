@@ -1,5 +1,7 @@
 from rest_framework import generics
 
+from apps.base.serializers import EmptySerializer
+
 
 class CustomGenericAPIView(generics.GenericAPIView):
     """
@@ -7,7 +9,8 @@ class CustomGenericAPIView(generics.GenericAPIView):
     Provides the core functionality such as serialization, pagination, and filtering.
     Example: Use as a base for creating a view that needs custom pagination or filtering.
     """
-    pass
+    serializer_class = EmptySerializer
+    queryset = []
 
 
 class CustomListAPIView(generics.ListAPIView):
@@ -16,7 +19,8 @@ class CustomListAPIView(generics.ListAPIView):
     Provides a GET method handler.
     Example: Use to display a list of blog posts or user profiles.
     """
-    pass
+    serializer_class = EmptySerializer
+    queryset = []
 
 
 class CustomCreateAPIView(generics.CreateAPIView):
@@ -25,7 +29,8 @@ class CustomCreateAPIView(generics.CreateAPIView):
     Provides a POST method handler.
     Example: Use to allow users to create new blog entries or register new accounts.
     """
-    pass
+    serializer_class = EmptySerializer
+    queryset = []
 
 
 class CustomRetrieveAPIView(generics.RetrieveAPIView):
@@ -34,7 +39,8 @@ class CustomRetrieveAPIView(generics.RetrieveAPIView):
     Provides a GET method handler to retrieve details of a specific instance.
     Example: Use to display details of a specific blog post or user profile.
     """
-    pass
+    serializer_class = EmptySerializer
+    queryset = []
 
 
 class CustomUpdateAPIView(generics.UpdateAPIView):
@@ -43,7 +49,8 @@ class CustomUpdateAPIView(generics.UpdateAPIView):
     Provides PUT and PATCH method handlers to update resources.
     Example: Use to allow users to update their profile information or a blog post.
     """
-    pass
+    serializer_class = EmptySerializer
+    queryset = []
 
 
 class CustomDestroyAPIView(generics.DestroyAPIView):
@@ -52,7 +59,8 @@ class CustomDestroyAPIView(generics.DestroyAPIView):
     Provides a DELETE method handler.
     Example: Use to allow users to delete their own blog posts or profiles.
     """
-    pass
+    serializer_class = EmptySerializer
+    queryset = []
 
 
 class CustomListCreateAPIView(generics.ListCreateAPIView):
@@ -61,7 +69,8 @@ class CustomListCreateAPIView(generics.ListCreateAPIView):
     Provides a read-write endpoint to list resources and allow new resources to be created via POST.
     Example: Use in a forum application to list threads and allow the creation of new threads.
     """
-    pass
+    serializer_class = EmptySerializer
+    queryset = []
 
 
 class CustomRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
@@ -70,7 +79,8 @@ class CustomRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
     Provides an endpoint to read (GET) or update (PUT/PATCH) a specific instance.
     Example: Use in a settings page where users can view and modify their settings.
     """
-    pass
+    serializer_class = EmptySerializer
+    queryset = []
 
 
 class CustomRetrieveDestroyAPIView(generics.RetrieveDestroyAPIView):
@@ -79,7 +89,8 @@ class CustomRetrieveDestroyAPIView(generics.RetrieveDestroyAPIView):
     Provides an endpoint to read (GET) or delete (DELETE) a specific instance.
     Example: Use in administrative dashboards where details of a user can be viewed or deleted.
     """
-    pass
+    serializer_class = EmptySerializer
+    queryset = []
 
 
 class CustomRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
@@ -89,4 +100,5 @@ class CustomRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     Provides GET, PUT, PATCH, and DELETE handlers, offering full CRUD functionality for a specific instance.
     Example: Use for a product detail page where you can view, update, or delete a product.
     """
-    pass
+    serializer_class = EmptySerializer
+    queryset = []
