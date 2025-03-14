@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from apps.base.views import CustomGenericAPIView
 from apps.guests.models import Guest
 from apps.guests.serializers import GuestSerializer
+from apps.hotels.serializers import HotelSerializer
 from apps.rooms.models import Room
 from apps.rooms.serializers import RoomSerializer
 
@@ -23,7 +24,7 @@ class HotelStatsAPIView(CustomGenericAPIView):
     Methods:
         get(request, pk, *args, **kwargs): Handles GET requests and returns hotel statistics.
     """
-
+    serializer_class = None
     def get(self, request, pk, *args, **kwargs):
         """
         Retrieve statistical data for a specific hotel.
