@@ -6,23 +6,28 @@ from .models import CustomUser
 
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
-    list_display = ('username', 'fullname', 'email', 'is_staff', 'is_active',)
-    list_filter = ('is_staff', 'is_active',)
+    list_display = ('username', 'full_name', 'role', 'is_staff', 'is_active',)
+    list_filter = ('role', 'is_staff', 'is_active',)
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
-        (_('Personal info'), {'fields': ('fullname', 'email')}),
+        (_('Personal info'), {'fields': ('full_name',)}),
+        (_('Department'), {'fields': ('role',)}),
+        (_('Additional info'), {
+            'fields': ('date_come', 'from_come', 'passport_number', 'given_by', 'validity_period', 
+                      'expenses', 'monthly_salary', 'general_expenses'),
+        }),
         (_('Permissions'), {
             'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
         }),
-        (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
+        (_('Important dates'), {'fields': ('last_login',)}),
     )
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('username', 'fullname', 'email', 'password1', 'password2', 'is_staff', 'is_active')}
+            'fields': ('username', 'full_name', 'role', 'password1', 'password2', 'is_staff', 'is_active')}
         ),
     )
-    search_fields = ('username', 'fullname', 'email',)
+    search_fields = ('username', 'full_name',)
     ordering = ('username',)
 
 admin.site.register(CustomUser, CustomUserAdmin)
