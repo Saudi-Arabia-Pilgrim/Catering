@@ -4,17 +4,20 @@ from django.contrib.auth import get_user_model
 from apps.base.serializers import CustomModelSerializer
 
 
-
 class UserSerializer(CustomModelSerializer):
     """
     Serializer for custom user model
     """
     class Meta:
         model = get_user_model()
-        fields = ['id', 'username', 'email', 'fullname', 'is_active', 'is_staff', 'is_superuser']
-        read_only_fields = ["id", "username"]
+        fields = [
+            'id', 'username', 'full_name', 'birthdate', 'gender',
+            'role', 'is_active', 'is_staff', 'is_superuser'
+        ]
+        read_only_fields = ["id"]
         extra_kwargs = {
             'password': {'write_only': True},
+            'username': {'required': True},
         }
 
     async def create(self, validated_data):
