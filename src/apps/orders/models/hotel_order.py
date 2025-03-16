@@ -46,6 +46,7 @@ class HotelOrder(AbstractBaseModel):
     def save(self, *args, **kwargs):
         if not self.order_id:
             self.order_id = f"{random.randint(1000000, 9999999)}"
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.hotel.name
