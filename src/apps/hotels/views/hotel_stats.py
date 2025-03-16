@@ -24,7 +24,7 @@ class HotelStatsAPIView(CustomGenericAPIView):
     Methods:
         get(request, pk, *args, **kwargs): Handles GET requests and returns hotel statistics.
     """
-    serializer_class = None
+
     def get(self, request, pk, *args, **kwargs):
         """
         Retrieve statistical data for a specific hotel.
