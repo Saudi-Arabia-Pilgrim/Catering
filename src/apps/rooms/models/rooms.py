@@ -21,12 +21,17 @@ class Room(AbstractBaseModel):
         related_name="rooms",
         help_text="Reference to the hotel the room belongs to."
     )
-    room_type = models.ForeignKey(
-        "rooms.RoomType",
-        on_delete=models.CASCADE,
-        related_name="rooms",
-        help_text="Reference to the type of room (e.g., Single, Double, Suite)."
+    # ========== for room_type ============
+    room_type = models.PositiveSmallIntegerField()
+
+    capacity = models.PositiveSmallIntegerField(help_text="The maximum number of guests that can stay in a room of this type.")
+
+    status = models.BooleanField(
+        default=True,
+        help_text="Indicates whether the room type is active or not."
     )
+    # =============   end room_type   =================
+
     count = models.PositiveSmallIntegerField(
         help_text="Total number of rooms available of this type in the hotel."
     )
@@ -34,9 +39,20 @@ class Room(AbstractBaseModel):
         default=0,
         help_text="Number of currently occupied rooms. Defaults to 0."
     )
-    price = models.DecimalField(
+    net_price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
+        help_text="Price per night for the room type."
+    )
+    profit = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        help_text="Price per night for the room type."
+    )
+    gross_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        editable=False,
         help_text="Price per night for the room type."
     )
 
@@ -48,4 +64,12 @@ class Room(AbstractBaseModel):
         Returns:
             int: The number of available rooms. Ensures non-negative values.
         """
-        return self.count - self.occupied_count if self.count >= self.occupied_count else 0
+        return max(self.count - self.occupied_count, 0)
+
+    def save(self, *args, **kwargs):
+        self.gross_price = self.net_price + self.profit
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.room_type} kishilik"
