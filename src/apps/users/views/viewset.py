@@ -34,7 +34,16 @@ class UserViewSet(CustomModelViewSet):
         Superusers and admins can see all users.
         Other users can only see themselves.
         """
+        # Check if this is a schema generation request
+        if getattr(self, 'swagger_fake_view', False):
+            # Return an empty queryset for schema generation
+            return self.queryset.none()
+
         user = self.request.user
-        if user.is_superuser or user.role == 'admin':
+        # Check if user is authenticated and has necessary attributes
+        if not user.is_authenticated:
+            return self.queryset.none()
+
+        if user.is_superuser or getattr(user, 'role', '') == 'admin':
             return self.queryset
         return self.queryset.filter(id=user.id)

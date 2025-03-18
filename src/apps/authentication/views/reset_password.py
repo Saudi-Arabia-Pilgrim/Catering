@@ -2,6 +2,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
 
 from apps.authentication.serializers.reset_password import ResetPasswordSerializer
 
@@ -13,6 +14,22 @@ class ResetPasswordAPIView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        request=ResetPasswordSerializer,
+        responses={200: dict},
+        description="Reset the user's password. Requires the current password for verification and a new password with confirmation.",
+        examples=[
+            OpenApiExample(
+                'Reset Password Example',
+                value={
+                    'current_password': 'currentpassword',
+                    'new_password': 'newpassword123',
+                    'new_password2': 'newpassword123'
+                },
+                request_only=True,
+            ),
+        ]
+    )
     def post(self, request):
         """
         Reset the user's password.

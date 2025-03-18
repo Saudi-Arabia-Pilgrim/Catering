@@ -1,5 +1,6 @@
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
+from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -18,8 +19,8 @@ class CustomUser(AbstractBaseModel, AbstractBaseUser, PermissionsMixin):
     Email is used as the main login identifier.
     """
 
-    EMAIL_FIELD = 'username'
-    USERNAME_FIELD = 'username'  # Using username field to store email
+    EMAIL_FIELD = 'email'
+    USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['full_name']
 
     class UserRole(models.TextChoices):
@@ -46,7 +47,7 @@ class CustomUser(AbstractBaseModel, AbstractBaseUser, PermissionsMixin):
     objects = CustomUserManager()
 
     # Email is now the main identifier
-    username = models.EmailField(_('Email address'), max_length=150, unique=True, validators=[validate_gmail])
+    email = models.EmailField(_('Email address'), max_length=150, unique=True, validators=[validate_gmail], default='*')
     full_name = models.CharField(_('Full name'), max_length=150)
 
     # New fields
@@ -74,9 +75,30 @@ class CustomUser(AbstractBaseModel, AbstractBaseUser, PermissionsMixin):
     passport_number = models.CharField(_('Passport number'), max_length=50, null=True, blank=True)
     given_by = models.CharField(_('Given by'), max_length=255, null=True, blank=True)
     validity_period = models.DateTimeField(_('Validity period'), null=True, blank=True)
-    expenses = models.DecimalField(_('Expenses'), max_digits=10, decimal_places=2, null=True, blank=True)
-    monthly_salary = models.DecimalField(_('Monthly salary'), max_digits=10, decimal_places=2, null=True, blank=True)
-    general_expenses = models.DecimalField(_('General expenses'), max_digits=10, decimal_places=2, null=True, blank=True)
+    expenses = models.DecimalField(
+        _('Expenses'), 
+        max_digits=10, 
+        decimal_places=2, 
+        null=True, 
+        blank=True,
+        help_text=_('Expenses for visa sponsoring, plane tickets, etc. (in USD)')
+    )
+    monthly_salary = models.DecimalField(
+        _('Monthly salary'), 
+        max_digits=10, 
+        decimal_places=2, 
+        null=True, 
+        blank=True,
+        help_text=_('Monthly salary amount (in USD)')
+    )
+    general_expenses = models.DecimalField(
+        _('General expenses'), 
+        max_digits=10, 
+        decimal_places=2, 
+        null=True, 
+        blank=True,
+        help_text=_('Expenses for accommodation, rent, etc. (in USD)')
+    )
 
     is_staff = models.BooleanField(
         _('staff status'),
@@ -95,8 +117,16 @@ class CustomUser(AbstractBaseModel, AbstractBaseUser, PermissionsMixin):
         Check username (which stores email)
         :return:
         """
-        if not self.username:
-            raise CustomExceptionError(code=400, detail='Email is required')
+        if not self.email:
+            # Use ValidationError for form validation in the admin panel
+            raise ValidationError({'Email': _('Email address is required')})
+
+        # For API validation, we can still use CustomExceptionError
+        # This won't be called in the admin panel context
+        try:
+            super().clean()
+        except Exception as e:
+            raise CustomExceptionError(code=400, detail=str(e))
 
 
     class Meta:
@@ -116,4 +146,4 @@ class CustomUser(AbstractBaseModel, AbstractBaseUser, PermissionsMixin):
         send_mail(subject, message, from_email, [self.username], **kwargs)
 
     def __str__(self):
-        return self.username
+        return self.email
