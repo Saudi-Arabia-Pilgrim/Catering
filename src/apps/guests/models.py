@@ -1,5 +1,6 @@
 import random
 
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from apps.base.models import AbstractBaseModel
@@ -28,14 +29,8 @@ class Guest(AbstractBaseModel):
         related_name='guests',
         help_text="The hotel where the guest is staying."
     )
-    hotel_order = models.ForeignKey(
-        'orders.HotelOrder',
-        on_delete=models.PROTECT,
-        related_name='guests',
-        help_text="The hotel order associated with the guest."
-    )
-    room_type = models.ForeignKey(
-        "rooms.RoomType",
+    room = models.ForeignKey(
+        "rooms.Room",
         on_delete=models.CASCADE,
         related_name="guests",
         help_text="The type of room the guest is staying in."
@@ -57,6 +52,7 @@ class Guest(AbstractBaseModel):
     price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
+        editable=False,
         help_text="Price associated with the guest's stay."
     )
     check_in = models.DateField(
@@ -66,10 +62,24 @@ class Guest(AbstractBaseModel):
         help_text="Date of check-out."
     )
 
+    def clean(self):
+        if self.room.available_count < 1:
+            raise ValidationError("This room is fully occupied; no available space.")
+
     def save(self, *args, **kwargs):
         if not self.order_number:
             self.order_number = f"№{random.randint(1000000, 9999999)}"
+        self.price = self.room.gross_price
+        self.full_clean()
         super().save(*args, **kwargs)
+        self.room.occupied_count += 1
+        self.room.save(update_fields=["occupied_count"])
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        if self.room.occupied_count > 0:
+            self.room.occupied_count -= 1
+            self.room.save(update_fields=["occupied_count"])
 
     def __str__(self):
         """
