@@ -48,18 +48,7 @@ class HotelStatsAPIView(CustomGenericAPIView):
         total_guest_price = guest_queryset.aggregate(total=Sum("price"))["total"] or 0
         guest_serializer = GuestSerializer(guest_queryset, many=True)
 
-        # Rooms Analytics
-        room_queryset = Room.objects.filter(hotel_id=pk)
-        total_rooms_price = room_queryset.aggregate(total=Sum("price"))["total"] or 0
-        room_serializer = RoomSerializer(room_queryset, many=True)
-
-        # General Price
-        total_price = total_guest_price + total_rooms_price
-
         return Response({
             "guests": guest_serializer.data,
             "total_guest_price": total_guest_price,
-            "rooms": room_serializer.data,
-            "total_rooms_price": total_rooms_price,
-            "total_price": total_price
         })

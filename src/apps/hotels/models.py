@@ -48,9 +48,9 @@ class Hotel(AbstractBaseModel):
         help_text="The contact phone number (e.g., +966 011 XXX XXXX)."
     )
     rating = models.DecimalField(
-        max_digits=3,
-        decimal_places=2,
-        validators=[MinValueValidator(0.00), MaxValueValidator(5.00)],
+        max_digits=2,
+        decimal_places=1,
+        validators=[MinValueValidator(0.0), MaxValueValidator(10)],
         help_text="The hotel's rating, between 0.00 and 5.00."
     )
 
