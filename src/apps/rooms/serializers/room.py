@@ -2,7 +2,6 @@ from rest_framework import serializers
 
 from apps.base.serializers import CustomModelSerializer
 from apps.rooms.models.rooms import Room
-from apps.rooms.serializers.room_type import RoomTypeSerializer
 
 
 class RoomSerializer(CustomModelSerializer):
@@ -27,18 +26,16 @@ class RoomSerializer(CustomModelSerializer):
         fields = [
             "id",
             "hotel",
-            "room_type",
+            "room",
+            "capacity",
+            "status",
             "count",
             "occupied_count",
             "available_count",
-            "price",
+            "net_price",
+            "profit",
+            "gross_price"
         ]
-
-    def get_hotel(self, obj):
-        return obj.hotel.name
-
-    def get_room_type(self, obj):
-        return obj.room_type.name
 
     def get_available_count(self, obj):
         """
@@ -51,3 +48,37 @@ class RoomSerializer(CustomModelSerializer):
             int: The number of available rooms.
         """
         return obj.available_count
+
+
+class RoomBookedSerializer(CustomModelSerializer):
+    """
+    Serializer for the RoomType model with available and booked counts.
+    """
+    available_count = serializers.SerializerMethodField()
+    booked_count = serializers.SerializerMethodField()
+
+    room_type = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Room
+        fields = [
+            "room_type",
+            "available_count",
+            "booked_count",
+            "price",
+        ]
+
+    def get_room_type(self, obj):
+        return obj.room_type.name
+
+    def get_available_count(self, obj):
+        """
+        Return the number of available (not booked) rooms for this room type.
+        """
+        return obj.count - obj.occupied_count
+
+    def get_booked_count(self, obj):
+        """
+        Return the number of booked rooms for this room type.
+        """
+        return obj.occupied_count
