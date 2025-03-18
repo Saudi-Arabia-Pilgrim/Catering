@@ -9,38 +9,38 @@ class CustomUserManager(UserManager):
     """
     Custom user model manager where email is the unique identifier
     """
-    def _create_user(self, username, password, **extra_fields) -> User: # type: ignore
+    def _create_user(self, email, password, **extra_fields) -> User: # type: ignore
         """
-        Create and save a User with the given username (email) and password.
-        :param username: User's email address stored in username field
+        Create and save a User with the given (email) and password.
+        :param email: User's email address
         :param password: User's password
         :param extra_fields: Additional fields
         :return: User instance
         """
-        if not username:
+        if not email:
             raise ValueError('The Email field must be set')
-        username = self.normalize_email(username)
-        user = self.model(username=username, **extra_fields)
+        email = self.normalize_email(email=email)
+        user = self.model(email=email, **extra_fields)
         user.password = make_password(password)
         user.save(using=self._db)
         return user
 
-    def create_user(self, username=None, password=None, **extra_fields) -> User: # type: ignore
+    def create_user(self, email=None, password=None, **extra_fields) -> User: # type: ignore
         """
         Creates and saves a new user
-        :param username: User's email address stored in username field
+        :param email: User's email address.
         :param password: User's password
         :param extra_fields: Additional fields
         :return: User instance
         """
         extra_fields.setdefault("is_superuser", False)
         extra_fields.setdefault("is_staff", False)
-        return self._create_user(username, password, **extra_fields)
+        return self._create_user(email, password, **extra_fields)
 
-    def create_superuser(self, username=None, password=None, **extra_fields) -> User: # type: ignore
+    def create_superuser(self, email=None, password=None, **extra_fields) -> User: # type: ignore
         """
         Creates and saves a new superuser
-        :param username: User's email address stored in username field
+        :param email: User's email address
         :param password: User's password
         :param extra_fields: Additional fields
         :return: User instance
@@ -53,4 +53,4 @@ class CustomUserManager(UserManager):
         if extra_fields.get("is_superuser") is not True:
             raise ValueError("Superuser must have is_superuser=True.")
 
-        return self._create_user(username, password, **extra_fields)
+        return self._create_user(email, password, **extra_fields)

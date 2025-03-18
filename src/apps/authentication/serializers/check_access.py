@@ -25,7 +25,6 @@ class CheckAccessSerializer(CustomSerializer):
     """
 
     access_token = serializers.CharField()
-    access = serializers.BooleanField(read_only=True)
 
     def save(self, **kwargs):
         try:

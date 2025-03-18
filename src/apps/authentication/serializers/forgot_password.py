@@ -16,13 +16,13 @@ class ForgotPasswordEmailSerializer(serializers.Serializer):
     """
     email = serializers.EmailField(required=True)
 
-    def validate_email(self, value):
+    def validate_email(self, email):
         """
         Validate that the email exists in the database.
         """
-        if not User.objects.filter(email=value).exists():
+        if not User.objects.filter(email=email).exists():
             raise serializers.ValidationError("No user found with this email address.")
-        return value
+        return email
 
     def save(self):
         """
