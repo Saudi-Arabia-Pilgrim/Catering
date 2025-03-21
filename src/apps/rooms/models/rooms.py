@@ -29,8 +29,6 @@ class Room(AbstractBaseModel):
     )
 
     capacity = models.PositiveSmallIntegerField(
-        blank=True,
-        null=True,
         help_text="The maximum number of guests that can stay in a room of this type."
     )
 

@@ -13,7 +13,7 @@ class GuestSerializer(CustomModelSerializer):
     and creating new guest entries with an associated hotel.
     """
     room_type = serializers.CharField(source="room.room_type", read_only=True)
-
+    total_price = serializers.SerializerMethodField()
 
     class Meta:
         model = Guest
@@ -25,9 +25,17 @@ class GuestSerializer(CustomModelSerializer):
             "gender",
             "check_in",
             "check_out",
-            "price",
+            "total_price"
         ]
         read_only_fields = ["order_number", "price", "room_type"]
+
+    def get_total_price(self, obj):
+        if obj.check_in and obj.check_out and obj.room:
+            days_stayed = (obj.check_out - obj.check_in).days
+            if days_stayed < 1:
+                days_stayed = 1
+            return obj.room.gross_price * days_stayed
+        return 0
 
     def create(self, validated_data):
         """
