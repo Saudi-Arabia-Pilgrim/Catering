@@ -22,14 +22,18 @@ class Room(AbstractBaseModel):
         help_text="Reference to the hotel the room belongs to."
     )
     # ========== for room_type ============
-    room_type = models.PositiveSmallIntegerField()
-
-    capacity = models.PositiveSmallIntegerField(help_text="The maximum number of guests that can stay in a room of this type.")
-
-    status = models.BooleanField(
-        default=True,
-        help_text="Indicates whether the room type is active or not."
+    room_type = models.ForeignKey(
+        "rooms.RoomType",
+        on_delete=models.CASCADE,
+        related_name="rooms"
     )
+
+    capacity = models.PositiveSmallIntegerField(
+        blank=True,
+        null=True,
+        help_text="The maximum number of guests that can stay in a room of this type."
+    )
+
     # =============   end room_type   =================
 
     count = models.PositiveSmallIntegerField(
@@ -67,9 +71,11 @@ class Room(AbstractBaseModel):
         return max(self.count - self.occupied_count, 0)
 
     def save(self, *args, **kwargs):
+        self.net_price = self.net_price or 0
+        self.profit = self.profit or 0
         self.gross_price = self.net_price + self.profit
         self.full_clean()
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.room_type} kishilik"
+        return f"{self.room_type}"

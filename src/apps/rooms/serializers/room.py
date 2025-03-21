@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
-from apps.base.serializers import CustomModelSerializer
 from apps.rooms.models.rooms import Room
+from apps.base.serializers import CustomModelSerializer
 
 
 class RoomSerializer(CustomModelSerializer):
@@ -18,35 +18,25 @@ class RoomSerializer(CustomModelSerializer):
         available_count (int): Computed field representing the number of available rooms.
          price (Decimal): Price per night for the room type.
     """
-
-    available_count = serializers.SerializerMethodField()
+    room_name = serializers.CharField(source="room_type.name", read_only=True)
+    capacity = serializers.IntegerField(required=False, allow_null=True, read_only=True)
+    hotel_name = serializers.CharField(source="hotel.name", read_only=True)
 
     class Meta:
         model = Room
         fields = [
             "id",
+            "hotel",
+            "hotel_name",
             "room_type",
-            "capacity",
-            "status",
+            "room_name",
             "count",
-            "occupied_count",
-            "available_count",
+            "capacity",
             "net_price",
             "profit",
             "gross_price"
         ]
-
-    def get_available_count(self, obj):
-        """
-        Calculates the number of available rooms.
-
-        Args:
-            obj (Room): The Room instance.
-
-        Returns:
-            int: The number of available rooms.
-        """
-        return obj.available_count
+        read_only_fields = ["room_name", "capacity", "hotel_name"]
 
 
 class RoomBookedSerializer(CustomModelSerializer):
@@ -56,8 +46,6 @@ class RoomBookedSerializer(CustomModelSerializer):
     available_count = serializers.SerializerMethodField()
     booked_count = serializers.SerializerMethodField()
 
-    room_type = serializers.SerializerMethodField()
-
     class Meta:
         model = Room
         fields = [
@@ -66,9 +54,6 @@ class RoomBookedSerializer(CustomModelSerializer):
             "booked_count",
             "price",
         ]
-
-    def get_room_type(self, obj):
-        return obj.room_type.name
 
     def get_available_count(self, obj):
         """

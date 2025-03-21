@@ -24,13 +24,10 @@ class RoomHotelSerializer(CustomModelSerializer):
     class Meta:
         model = Room
         fields = [
-            "id",
             "room_type",
             "count",
             "occupied_count",
             "available_count",
-            "net_price",
-            "profit",
             "gross_price"
         ]
 
