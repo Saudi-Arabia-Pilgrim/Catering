@@ -1,3 +1,5 @@
+from rest_framework import serializers
+
 from apps.base.serializers import CustomModelSerializer
 from apps.guests.models import Guest
 from apps.hotels.models import Hotel
@@ -10,21 +12,22 @@ class GuestSerializer(CustomModelSerializer):
     This serializer handles guest-related data, including retrieving guest details
     and creating new guest entries with an associated hotel.
     """
+    room_type = serializers.CharField(source="room.room_type", read_only=True)
+
 
     class Meta:
         model = Guest
         fields = [
-            "id",
-            "hotel",
             "full_name",
             "order_number",
             "room",
+            "room_type",
             "gender",
             "check_in",
             "check_out",
             "price",
         ]
-        read_only_fields = ["order_number", "price"]
+        read_only_fields = ["order_number", "price", "room_type"]
 
     def create(self, validated_data):
         """

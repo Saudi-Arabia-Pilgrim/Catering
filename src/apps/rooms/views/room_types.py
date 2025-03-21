@@ -1,33 +1,33 @@
 from rest_framework.response import Response
 
 from apps.base.views import CustomGenericAPIView
-from apps.rooms.models.rooms import Room
-from apps.rooms.serializers.room_lists import RoomSerializer
+from apps.rooms.models.room_type import RoomType
+from apps.rooms.serializers.room_type import RoomTypeSerializer
 
 
-class RoomListsAPIView(CustomGenericAPIView):
-    queryset = Room.objects.all()
-    serializer_class = RoomSerializer
+class RoomTypeListsAPIView(CustomGenericAPIView):
+    queryset = RoomType.objects.all()
+    serializer_class = RoomTypeSerializer
 
     def get(self, *args, **kwargs):
         serializer = self.get_serializer(self.get_queryset(), many=True)
         return Response(serializer.data, status=200)
 
 
-class RoomCreateAPIView(CustomGenericAPIView):
-    queryset = Room.objects.all()
-    serializer_class = RoomSerializer
+class RoomTypeCreateAPIView(CustomGenericAPIView):
+    queryset = RoomType.objects.all()
+    serializer_class = RoomTypeSerializer
 
     def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=201)
 
 
-class RoomRetrieveAPIView(CustomGenericAPIView):
-    queryset = Room.objects.all()
-    serializer_class = RoomSerializer
+class RoomTypeRetrieveAPIView(CustomGenericAPIView):
+    queryset = RoomType.objects.all()
+    serializer_class = RoomTypeSerializer
 
     def get(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -35,9 +35,9 @@ class RoomRetrieveAPIView(CustomGenericAPIView):
         return Response(serializer.data, status=200)
 
 
-class RoomUpdateAPIView(CustomGenericAPIView):
-    queryset = Room.objects.all()
-    serializer_class = RoomSerializer
+class RoomTypeUpdateAPIView(CustomGenericAPIView):
+    queryset = RoomType.objects.all()
+    serializer_class = RoomTypeSerializer
 
     def get(self, *args, **kwargs):
         instance = self.get_object()
@@ -52,9 +52,9 @@ class RoomUpdateAPIView(CustomGenericAPIView):
         return Response(serializer.data, status=200)
 
 
-class RoomDeleteAPIView(CustomGenericAPIView):
-    queryset = Room.objects.all()
-    serializer_class = RoomSerializer
+class RoomTypeDeleteAPIView(CustomGenericAPIView):
+    queryset = RoomType.objects.all()
+    serializer_class = RoomTypeSerializer
 
     def get(self, *args, **kwargs):
         instance = self.get_object()
