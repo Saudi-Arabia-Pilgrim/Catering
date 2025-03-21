@@ -1,6 +1,16 @@
 from django.contrib import admin
 
-from apps.rooms.models import Room
+from apps.rooms.models.rooms import Room
+from apps.rooms.models.room_type import RoomType
+
+
+@admin.register(RoomType)
+class RoomType(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "name",
+        "status"
+    )
 
 
 @admin.register(Room)
@@ -10,7 +20,6 @@ class RoomAdmin(admin.ModelAdmin):
         "hotel",
         "room_type",
         "capacity",
-        "status",
         "count",
         "occupied_count",
         "net_price",
