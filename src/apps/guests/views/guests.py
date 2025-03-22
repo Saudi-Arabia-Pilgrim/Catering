@@ -22,7 +22,7 @@ class HotelGuestListAPIView(CustomGenericAPIView):
             QuerySet: Guests belonging to the given hotel.
         """
         hotel_id = self.kwargs.get("hotel_id")
-        return Guest.objects.filter(hotel_id=hotel_id)
+        return Guest.objects.filter(hotel_id=hotel_id).select_related("room", "room__room_type")
 
     def get(self, request, *args, **kwargs):
         """
