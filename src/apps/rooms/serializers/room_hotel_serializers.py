@@ -25,8 +25,6 @@ class RoomHotelSerializer(CustomModelSerializer):
         model = Room
         fields = [
             "room_type",
-            "count",
-            "occupied_count",
             "available_count",
             "gross_price"
         ]
