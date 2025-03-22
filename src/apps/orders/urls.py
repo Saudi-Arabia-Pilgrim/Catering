@@ -1,6 +1,5 @@
 from django.urls import path
 
-from apps.orders.views.add_guest_to_hotel_order import AddGuestToHotelOrderAPIView
 from apps.orders.views import (HotelOrderCreateAPIView,
                                HotelOrderListAPIView,
                                HotelOrderRetrieveAPIView,
@@ -25,6 +24,4 @@ urlpatterns = [
     path("hotel_order/update/<str:pk>/", HotelOrderUpdateAPIView.as_view(), name="hotel_order_update"),
     path("hotel_order/delete/<str:pk>/", HotelOrderDeleteAPIView.as_view(), name="hotel_order_delete"),
 
-    # ===================  Add Guest for HotelOrder ==========================
-    path("hotel_order/add-guests/<str:pk>/", AddGuestToHotelOrderAPIView.as_view(), name="hotel-order-add-guests"),
 ]
