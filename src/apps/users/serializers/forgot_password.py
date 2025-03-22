@@ -4,17 +4,24 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
+from django.core.cache import cache
 from django.conf import settings
 import secrets
 import string
 
 User = get_user_model()
 
+EMAIL_VERIFY_CODE = "email_verify_code"
+FORGOT_PASSWORD_EMAIL = "forgot_password_email"
+PASSWORD_RESET_UUID = "password_reset_uuid"
+PASSWORD_RESET_TOKEN = "password_reset_token"
+
 class ForgotPasswordEmailSerializer(serializers.Serializer):
     """
     Serializer for sending a verification code to the user's email.
     """
     email = serializers.EmailField(required=True)
+
 
     def validate_email(self, email):
         """
@@ -27,6 +34,7 @@ class ForgotPasswordEmailSerializer(serializers.Serializer):
     def save(self):
         """
         Generate a verification code and send it to the user's email.
+        Store the code and email in Redis with a timeout (e.g. 10 minutes).
         """
         email = self.validated_data['email']
         user = User.objects.get(email=email)
@@ -34,13 +42,15 @@ class ForgotPasswordEmailSerializer(serializers.Serializer):
         # Generate a random 6-digit code
         code = ''.join(secrets.choice(string.digits) for _ in range(6))
         
-        # Store the code in the user's session
-        self.context['request'].session['password_reset_code'] = code
-        self.context['request'].session['password_reset_email'] = email
+        # Store the code in the redis
+        cache.set(EMAIL_VERIFY_CODE, code, timeout=60 * 10)
+        cache.set(FORGOT_PASSWORD_EMAIL, email, timeout=60 * 10)
         
         # Send the code to the user's email
         subject = 'Password Reset Verification Code'
-        message = f'Your verification code is: {code}'
+        message = (f'Your verification code is: {code}'
+                   f"If you didn't request this, please ignore this email!"
+                   f"DON'T give away the code to ANYBODY, Be aware of Scammers!")
         from_email = settings.DEFAULT_FROM_EMAIL
         recipient_list = [email]
         
@@ -53,13 +63,14 @@ class VerifyCodeSerializer(serializers.Serializer):
     """
     Serializer for verifying the code sent to the user's email.
     """
-    code = serializers.CharField(required=True)
+    class Meta:
+        code = serializers.CharField(required=True)
 
     def validate_code(self, value):
         """
-        Validate that the code matches the one stored in the session.
+        Validate that the code matches the one stored in the Redis.
         """
-        stored_code = self.context['request'].session.get('password_reset_code')
+        stored_code = cache.get(EMAIL_VERIFY_CODE)
         if not stored_code or value != stored_code:
             raise serializers.ValidationError("Invalid verification code.")
         return value
@@ -67,19 +78,28 @@ class VerifyCodeSerializer(serializers.Serializer):
     def save(self):
         """
         Generate a token for password reset and return it.
+        Once the code is used, delete it (and the email) from Redis so it can be used only once.
         """
-        email = self.context['request'].session.get('password_reset_email')
-        user = User.objects.get(email=email)
+        email = cache.get(FORGOT_PASSWORD_EMAIL)
+        if not email:
+            raise serializers.ValidationError("Verification session has expired or invalid.")
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("No user found with this email address.")
         
         # Generate a token for password reset
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        uuid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
         
-        # Store the token in the session
-        self.context['request'].session['password_reset_uid'] = uid
-        self.context['request'].session['password_reset_token'] = token
+        # Store the uuid & token in Redis for later use (e.g. 5 minutes)
+        cache.set(PASSWORD_RESET_UUID, uuid, timeout=60 * 5)
+        cache.set(PASSWORD_RESET_TOKEN, token, timeout=60 * 5)
+
+        # === Delete the
+
         
-        return {'success': True, 'uid': uid, 'token': token}
+        return {'success': True, 'uid': uuid, 'token': token}
 
 
 class SetNewPasswordSerializer(serializers.Serializer):

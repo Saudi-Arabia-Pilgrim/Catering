@@ -2,9 +2,9 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
+from drf_spectacular.utils import extend_schema, OpenApiExample
 
-from apps.authentication.serializers.reset_password import ResetPasswordSerializer
+from apps.users.serializers.reset_password import ResetPasswordSerializer
 
 
 class ResetPasswordAPIView(APIView):
