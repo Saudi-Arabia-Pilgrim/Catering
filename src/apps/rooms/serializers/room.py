@@ -19,23 +19,21 @@ class RoomSerializer(CustomModelSerializer):
          price (Decimal): Price per night for the room type.
     """
     room_name = serializers.CharField(source="room_type.name", read_only=True)
-    hotel_name = serializers.CharField(source="hotel.name", read_only=True)
 
     class Meta:
         model = Room
         fields = [
             "id",
             "hotel",
-            "hotel_name",
             "room_type",
             "room_name",
-            "count",
             "capacity",
-            "net_price",
-            "profit",
-            "gross_price"
+            "count",
+            "occupied_count",
+            "available_count",
+            "net_price"
         ]
-        read_only_fields = ["room_name", "hotel_name"]
+        read_only_fields = ["room_name"]
 
 
 class RoomBookedSerializer(CustomModelSerializer):
