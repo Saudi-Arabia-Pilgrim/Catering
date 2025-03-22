@@ -2,12 +2,12 @@ from rest_framework.response import Response
 
 from apps.base.views import CustomGenericAPIView
 from apps.orders.models import HotelOrder
-from apps.orders.serializers import HotelOrderSerializer
+from apps.orders.serializers import HotelOrderGuestSerializer
 
 
 class HotelOrderListAPIView(CustomGenericAPIView):
-    queryset = HotelOrder.objects.all()
-    serializer_class = HotelOrderSerializer
+    queryset = HotelOrder.objects.all().select_related("hotel", "room").prefetch_related("guests")
+    serializer_class = HotelOrderGuestSerializer
 
     def get(self, *args, **kwargs):
         serializer = self.get_serializer(self.get_queryset(), many=True)
@@ -16,7 +16,7 @@ class HotelOrderListAPIView(CustomGenericAPIView):
 
 class HotelOrderCreateAPIView(CustomGenericAPIView):
     queryset = HotelOrder.objects.all()
-    serializer_class = HotelOrderSerializer
+    serializer_class = HotelOrderGuestSerializer
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -27,7 +27,7 @@ class HotelOrderCreateAPIView(CustomGenericAPIView):
 
 class HotelOrderRetrieveAPIView(CustomGenericAPIView):
     queryset = HotelOrder.objects.all()
-    serializer_class = HotelOrderSerializer
+    serializer_class = HotelOrderGuestSerializer
 
     def get(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -37,7 +37,7 @@ class HotelOrderRetrieveAPIView(CustomGenericAPIView):
 
 class HotelOrderUpdateAPIView(CustomGenericAPIView):
     queryset = HotelOrder.objects.all()
-    serializer_class = HotelOrderSerializer
+    serializer_class = HotelOrderGuestSerializer
 
     def get(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -54,7 +54,7 @@ class HotelOrderUpdateAPIView(CustomGenericAPIView):
 
 class HotelOrderDeleteAPIView(CustomGenericAPIView):
     queryset = HotelOrder.objects.all()
-    serializer_class = HotelOrderSerializer
+    serializer_class = HotelOrderGuestSerializer
 
     def get(self, request, *args, **kwargs):
         instance = self.get_object()
