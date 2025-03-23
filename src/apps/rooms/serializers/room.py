@@ -35,31 +35,3 @@ class RoomSerializer(CustomModelSerializer):
         ]
         read_only_fields = ["room_name"]
 
-
-class RoomBookedSerializer(CustomModelSerializer):
-    """
-    Serializer for the RoomType model with available and booked counts.
-    """
-    available_count = serializers.SerializerMethodField()
-    booked_count = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Room
-        fields = [
-            "room_type",
-            "available_count",
-            "booked_count",
-            "price",
-        ]
-
-    def get_available_count(self, obj):
-        """
-        Return the number of available (not booked) rooms for this room type.
-        """
-        return obj.count - obj.occupied_count
-
-    def get_booked_count(self, obj):
-        """
-        Return the number of booked rooms for this room type.
-        """
-        return obj.occupied_count
