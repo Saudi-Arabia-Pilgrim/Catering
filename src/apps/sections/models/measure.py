@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.text import slugify
 
+from apps.base.exceptions import CustomExceptionError
 from apps.base.models import AbstractBaseModel
 
 
@@ -29,10 +30,15 @@ class Measure(AbstractBaseModel):
         """
         return self.name
     
-    def clean(self):
+    def save(self, *args, **kwargs):
         """
-        Override the clean method to automatically generate and set the slug
+        Override the save method to automatically generate and set the slug
         field based on the name field if it is not already set or if it does
         not match the slugified version of the name.
         """
-        self.slug = slugify(self.name)
+        slug = slugify(self.name)
+        obj = self.__class__.objects.filter(slug=slug).exclude(pk=self.pk).first()
+        if obj:
+            raise CustomExceptionError(code=400, detail="A product with this name already exists")
+        self.slug = slug
+        super().save(*args, **kwargs)

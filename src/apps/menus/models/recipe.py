@@ -1,7 +1,12 @@
+from decimal import ROUND_DOWN, Decimal
+
 from django.db import models
+from django.db.models import (Sum, DecimalField,Q,
+                              OuterRef, Exists)
 from django.core.validators import MinValueValidator
 from django.utils.text import slugify
 
+from apps.base.exceptions import CustomExceptionError
 from apps.base.models import AbstractBaseModel
 
 
@@ -31,16 +36,14 @@ class Recipe(AbstractBaseModel):
     name = models.CharField(max_length=255)
     # === Unique slug for the recipe. ===
     slug = models.SlugField(max_length=255, unique=True, blank=True)
-    # === Number of products in the recipe. ===
-    count_of_products = models.PositiveSmallIntegerField()
     # === Status of the recipe, default is True (active). ===
     status = models.BooleanField(default=True)
     # === Net price of the recipe. ===
-    net_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, validators=[MinValueValidator(1)])
+    net_price = models.FloatField(blank=True)
     # === Profit associated with the recipe. ===
     profit = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(1)])
     # === Gross price of the recipe. ===
-    gross_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, validators=[MinValueValidator(1)])
+    gross_price = models.FloatField(blank=True)
 
     class Meta:
         # === The database table name for the model. ===
@@ -54,26 +57,63 @@ class Recipe(AbstractBaseModel):
         """
         Returns a string representation of the recipe, including its name, count of products, and price.
         """
-        return f"{self.name} - {self.count_of_products} - {self.gross_price}"
+        return f"{self.name} - {self.gross_price}"
+    
+    def get_menus(self):
+        menus_id = [self.menu_breakfast_id, self.menu_lunch_id, self.menu_dinner_id]
+        return list(self.menu_breakfast.__class__.objects.filter(id__in=menus_id))
 
-    def clean(self):
-        """
-        Clean method for the Recipe model.
+    def save(self, *args, **kwargs):
+        slug = slugify(self.name)
+        obj = self.__class__.objects.filter(slug=slug).exclude(pk=self.pk).first()
+        if obj:
+            raise CustomExceptionError(code=400, detail="A recipe with this name already exists")
+        self.slug = slug
 
-        This method performs additional operations before saving the instance:
-        1. Generates a slug from the recipe name if it doesn't exist or doesn't match the current slug.
-        2. Calculates the total count of products from associated breakfast, lunch, and dinner menus.
-        3. Calculates the net price from associated menus.
-        4. Calculates the gross price by adding profit to net price.
-        5. Updates status based on associated menus.
-        """
-        self.slug = slugify(self.name)
+        menus = self.get_menus()
 
-        menus = [self.menu_breakfast, self.menu_lunch, self.menu_dinner]
-
-        self.count_of_products = sum(menu.count_of_products for menu in menus)
-        self.net_price = sum(menu.net_price for menu in menus)
-
-        self.gross_price = self.net_price + self.profit
-
+        self.calculate_prices(menus=menus)
         self.status = all(menu.status for menu in menus)
+
+        super().save(*args, **kwargs)
+        del menus
+    
+    def calculate_prices(self, menus=None):
+        Menu = self.menu_dinner.__class__
+
+        if self.pk is None:
+            if menus is None:
+                menus = self.get_menus()
+            has_zero_price = any(menu.net_price == 0 for menu in menus)
+            net_price = Decimal(0) if has_zero_price else sum(
+                menu.net_price for menu in menus if menu
+            )
+        else:
+            has_zero_price_menu = Menu.objects.filter(
+                Q(pk=OuterRef("menu_breakfast_id")) |
+                Q(pk=OuterRef("menu_lunch_id")) |
+                Q(pk=OuterRef("menu_dinner_id")),
+                net_price=0
+            )
+
+            net_price_qs = Recipe.objects.filter(pk=self.pk).annotate(
+                has_zero_price=Exists(has_zero_price_menu),
+                total_price=(
+                    Sum("menu_breakfast__net_price", output_field=DecimalField()) +
+                    Sum("menu_lunch__net_price", output_field=DecimalField()) +
+                    Sum("menu_dinner__net_price", output_field=DecimalField())
+                )
+            ).values("has_zero_price", "total_price").first()
+
+            if not net_price_qs:
+                net_price = Decimal(0)
+            elif net_price_qs["has_zero_price"]:
+                net_price = Decimal(0)
+            else:
+                net_price = net_price_qs["total_price"] or Decimal(0)
+
+        self.net_price = net_price.quantize(Decimal("0.0001"), rounding=ROUND_DOWN)
+        self.gross_price = (
+            (self.net_price + self.profit).quantize(Decimal("0.0001"), rounding=ROUND_DOWN)
+            if net_price > 0 else Decimal(0)
+        )

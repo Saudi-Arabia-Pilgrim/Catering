@@ -41,3 +41,14 @@ urlpatterns += [
     path("api/v1/guests/", include("apps.guests.urls")),
     path("api/v1/orders/", include("apps.orders.urls")),
 ]
+
+
+    # ========== URLS OF MUHAMMADALI ==============
+urlpatterns += [
+    path("api/v1/foods/", include("apps.foods.urls")),
+    path("api/v1/menus/", include("apps.menus.urls")),
+    path("api/v1/products/", include("apps.products.urls")),
+    path("api/v1/warehouses/", include("apps.warehouses.urls")),
+    path("api/v1/counter_agents/", include("apps.counter_agents.urls")),
+    path("api/v1/sections/", include("apps.sections.urls")),
+]
