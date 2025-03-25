@@ -12,6 +12,7 @@ from config.yasg import schema_view
 
 urlpatterns = [
     # ======== Django ========
+    path('i18n/', include('django.conf.urls.i18n')),  # <-- Add this clearly
     path("admin/", admin.site.urls),
 
     # ======== Debug Toolbar ========
