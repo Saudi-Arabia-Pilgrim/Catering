@@ -31,7 +31,7 @@ class HotelOrder(AbstractBaseModel):
         related_name="orders"
     )
     guests = models.ManyToManyField("guests.Guest", related_name="hotel_orders", blank=True)
-    order_status = models.CharField(choices=OrderStatus.choices)
+    order_status = models.CharField(choices=OrderStatus.choices, blank=True, null=True)
 
     order_id = models.CharField(max_length=8, unique=True, editable=False)
     status = models.BooleanField(default=False)
