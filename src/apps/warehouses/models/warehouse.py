@@ -1,6 +1,6 @@
 from django.db import models
-from django.utils.text import slugify
 from django.core.validators import MinValueValidator
+from decimal import Decimal
 
 from apps.base.models import AbstractBaseModel
 
@@ -17,8 +17,6 @@ class Warehouse(AbstractBaseModel):
         related_name='warehouses')
     # === The name of the warehouse. ===
     name = models.CharField(max_length=255)
-    # === A unique slug for the warehouse. ===
-    slug = models.SlugField(max_length=255, unique=True, blank=True)
     # === The status of the warehouse, indicating if it is active. ===
     status = models.BooleanField(default=True)
     # === The gross price of the product in the warehouse. ===
@@ -29,11 +27,6 @@ class Warehouse(AbstractBaseModel):
     count = models.FloatField(validators=[MinValueValidator(0)], blank=True)
     # === The count of products that have arrived in the warehouse. ===
     arrived_count = models.FloatField(validators=[MinValueValidator(1)])
-    # === The net price of the product in the warehouse. ===
-    net_price = models.DecimalField(max_digits=10,
-                                    decimal_places=2,
-                                    validators=[MinValueValidator(1)],
-                                    blank=True)
 
     class Meta:
         # === The name of the database table. ===
@@ -49,9 +42,9 @@ class Warehouse(AbstractBaseModel):
         """
         return self.name
 
-    def clean(self):
+    def save(self, *args, **kwargs):
         """
-        Override the clean method to perform custom actions before validating the model instance.
+        Override the save method to perform custom actions before saving the model instance.
 
         This method performs the following actions:
         1. If the count is 0 and the status is True, set the status to False.
@@ -62,12 +55,17 @@ class Warehouse(AbstractBaseModel):
         Returns:
             None
         """
-        if self.count == 0 and self.status:
+        if self.count == 0 and self.pk:
             self.status = False
-
-        self.net_price = self.gross_price / self.count
-        
-        self.slug = slugify(self.name)
-
-        if not self.count:
+        if self.count > 0:
+            self.status = True
+        else:
             self.count = self.arrived_count
+        super().save(*args, **kwargs)
+
+    def get_net_price(self):
+        measure = self.product.difference_measures
+        if not measure:
+            measure = 1
+
+        return float(self.gross_price / Decimal(self.arrived_count * measure))

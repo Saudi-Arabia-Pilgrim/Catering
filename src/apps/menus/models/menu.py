@@ -1,8 +1,12 @@
+from decimal import ROUND_DOWN, Decimal
 from django.db import models
+from django.db.models import (Q, OuterRef, Exists, 
+                              Sum, DecimalField)
 from django.core.validators import MinValueValidator
 from django.utils.text import slugify
 
-from apps.base.exceptions.exception_error import CustomExceptionError
+from apps.base.exceptions import CustomExceptionError
+from apps.menus.models.recipe import Recipe
 from apps.base.models import AbstractBaseModel
 
 
@@ -17,19 +21,17 @@ class Menu(AbstractBaseModel):
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     # === A many-to-many relationship with the Food model. ===
     foods = models.ManyToManyField('foods.Food', related_name='menus')
-    # === The count of products in the menu. ===
-    count_of_products = models.PositiveSmallIntegerField()
     # === The status of the menu, default is True. ===
     status = models.BooleanField(default=True)
     # === An optional image for the menu, uploaded to 'menus/%Y/%m/%d/'. ===
     image = models.ImageField(upload_to='menus/%Y/%m/%d/', blank=True, null=True)
 
     # === The net price of the menu, optional. ===
-    net_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, validators=[MinValueValidator(1)])
+    net_price = models.FloatField(default=0, blank=True)
     # === The profit associated with the menu. ===
     profit = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(1)])
     # === Menu price considering profit. ===
-    gross_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, validators=[MinValueValidator(1)])
+    gross_price = models.FloatField(default=0, blank=True)
     
     class Meta:
         # === The database table name for the model. ===
@@ -43,29 +45,62 @@ class Menu(AbstractBaseModel):
         """
         Returns a string representation of the menu, including its name, gross price, and count of products.
         """
-        return f"{self.name} - {self.gross_price} - {self.count_of_products}"
+        return f"{self.name} - {self.gross_price}"
     
-    def clean(self):
-        """
-        Override the clean method to automatically generate and update the slug,
-        calculate the net price, count of products, and gross price before saving
-        the Menu instance. Validates the menu to ensure it contains exactly 7 foods.
+    def get_foods(self):
+        return self.foods.only("net_price", "status")
 
-        Raises:
-            CustomExceptionError: If the menu does not contain exactly 7 foods.
-        """
-        food_queryset = self.foods.all()
+    def calculate_prices(self, foods=None):
+        if foods is None:
+            foods = self.foods.all()
 
-        if food_queryset.count() != 7:
-            raise CustomExceptionError('The menu must contain 7 foods.')
+        has_zero_price = foods.filter(net_price=0).exists()
 
-        self.slug = slugify(self.name)
+        if has_zero_price:
+            net_price = Decimal(0)
+        else:
+            net_price = foods.aggregate(
+                total=Sum("net_price", output_field=DecimalField())
+            )["total"] or Decimal(0)
 
-        net_price_agg = food_queryset.aggregate(total_net_price=models.Sum('net_price'))
-        self.net_price = net_price_agg['total_net_price'] or 0
+        self.net_price = net_price.quantize(Decimal("0.0001"), rounding=ROUND_DOWN)
+        self.gross_price = (self.net_price + self.profit).quantize(Decimal("0.0001"), rounding=ROUND_DOWN) \
+            if net_price > 0 else 0
 
-        self.count_of_products = 7
+    def change_status(self, foods=None):
+        if not foods:
+            foods = self.get_foods()
+        self.status = not foods.filter(status=False).exists()
 
-        self.gross_price = self.net_price + self.profit
+    def save(self, *args, **kwargs):
+        slug = slugify(self.name)
+        obj = self.__class__.objects.filter(slug=slug).exclude(pk=self.pk).first()
+        if obj:
+            raise CustomExceptionError(code=400, detail="A menu with this name already exists")
+        self.slug = slug
+        super().save(*args, **kwargs)
 
-        self.status = not food_queryset.exclude(status=True).exists()
+    def changing_dependent_objects(self):
+        recipes = Recipe.objects.annotate(
+            has_inactive_menu=Exists(
+                Menu.objects.filter(
+                    Q(pk=OuterRef("menu_breakfast_id")) |
+                    Q(pk=OuterRef("menu_lunch_id")) |
+                    Q(pk=OuterRef("menu_dinner_id")),
+                    status=False
+                )
+            )
+        )
+
+        for recipe in recipes:
+            recipe.status = not recipe.has_inactive_menu
+            recipe.calculate_prices()
+
+        Recipe.objects.bulk_update(recipes, ["status", "net_price", "gross_price"])
+
+    def change_dependent(self):
+        foods = self.get_foods()
+        self.change_status(foods)
+        self.calculate_prices(foods)
+        self.save()
+        self.changing_dependent_objects()

@@ -27,20 +27,6 @@ class AbstractBaseModel(models.Model):
         editable=False,
         related_name="%(app_label)s_%(class)s_updated",
     )
-    deleted_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        auto_now=True,
-        editable=False,
-    )
-    deleted_by = models.ForeignKey(
-        to=settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        editable=False,
-        related_name="%(app_label)s_%(class)s_deleted",
-    )
 
     def save(self, *args, **kwargs):
         """

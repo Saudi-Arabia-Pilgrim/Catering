@@ -1,8 +1,9 @@
 from django.db import models
 from django.utils.text import slugify
+from django.core.validators import MinValueValidator
 
+from apps.base.exceptions import CustomExceptionError
 from apps.base.models import AbstractBaseModel
-from apps.warehouses.models import Warehouse
 
 
 class Product(AbstractBaseModel):
@@ -12,6 +13,10 @@ class Product(AbstractBaseModel):
 
     # === A foreign key to the Measure model, representing the unit of measurement for the product. ===
     measure = models.ForeignKey('sections.Measure', on_delete=models.PROTECT, related_name='products')
+    # === A foreign key to the Measure model representing the unit of measure of a product in warehouse. ===
+    measure_warehouse = models.ForeignKey('sections.Measure', on_delete=models.PROTECT, related_name='products_warehouse')
+    # === The difference between the measures ===
+    difference_measures = models.FloatField(validators=[MinValueValidator(0)])
     # === A foreign key to the Section model, representing the section/category of the product. ===
     section = models.ForeignKey('sections.Section', on_delete=models.PROTECT, related_name='products')
     # === The name of the product. ===
@@ -37,10 +42,10 @@ class Product(AbstractBaseModel):
         """
         return self.name
 
-    def clean(self):
-        """
-        Cleans the product instance by generating a slug from the product name.
-
-        This method uses the `slugify` function to convert the product name into a URL-friendly slug and assigns it to the `slug` attribute of the product instance.
-        """
-        self.slug = slugify(self.name)
+    def save(self, *args, **kwargs):
+        slug = slugify(self.name)
+        obj = self.__class__.objects.filter(slug=slug).exclude(pk=self.pk).first()
+        if obj:
+            raise CustomExceptionError(code=400, detail="A product with this name already exists")
+        self.slug = slug
+        return super().save(*args, **kwargs)
