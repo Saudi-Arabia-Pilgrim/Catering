@@ -5,5 +5,5 @@ from apps.counter_agents.models import CounterAgent
 class CounterAgentSerializer(CustomModelSerializer):
     class Meta:
         model = CounterAgent
-        fields = '__all__'
+        exclude = ["created_at", "created_by", "updated_at", "updated_by"]
         read_only_fields =["status"]

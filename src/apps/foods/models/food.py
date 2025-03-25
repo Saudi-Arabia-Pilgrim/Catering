@@ -1,8 +1,12 @@
+from decimal import ROUND_DOWN, Decimal
 from django.db import models
+from django.db.models import Sum, DecimalField
 from django.utils.text import slugify
 from django.core.validators import MinValueValidator
 
+from apps.base.exceptions.exception_error import CustomExceptionError
 from apps.base.models import AbstractBaseModel
+from apps.menus.models import Menu
 
 
 class Food(AbstractBaseModel):
@@ -25,14 +29,14 @@ class Food(AbstractBaseModel):
     section = models.PositiveSmallIntegerField(choices=Section.choices)
     # === Status of the food item, default is True. ===
     status = models.BooleanField(default=True)
-    
+
     # === Net price of the food item, with a maximum of 10 digits and 2 decimal places. ===
-    net_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    net_price = models.FloatField(default=0)
     # === Profit associated with the food item. ===
     profit = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(1)])
     # === Gross price of the food item, calculated as the sum of the net price and profit. ===
-    gross_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
-    
+    gross_price = models.FloatField(default=0)
+
     # === Optional image of the food item, uploaded to 'foods/%Y/%m/%d/'. ===
     image = models.ImageField(upload_to='foods/%Y/%m/%d/', null=True, blank=True)
 
@@ -50,37 +54,57 @@ class Food(AbstractBaseModel):
         """
         return self.name
 
-    def get_net_price(self):
-        """
-        Calculate the net price of the food item based on its recipes.
+    def get_food_recipes(self):
+        return self.recipes.only("price", "status")
 
-        This method iterates over all the recipes associated with the food item,
-        sums up their prices, and returns the total price along with a flag indicating
-        whether the product exists.
+    def calculate_prices(self, recipes=None):
+        if not recipes:
+            recipes = self.recipes.all()
+    
+        has_zero_price = recipes.filter(price=0).exists()
+    
+        if has_zero_price:
+            net_price = Decimal(0)
+        else:
+            net_price = recipes.aggregate(
+                total=Sum("price", output_field=DecimalField())
+            )["total"] or Decimal(0)
+    
+        self.net_price = net_price.quantize(Decimal("0.0001"), rounding=ROUND_DOWN)
+        self.gross_price = (self.net_price + self.profit).quantize(Decimal("0.0001"), rounding=ROUND_DOWN) \
+            if net_price > 0 else 0
 
-        Returns:
-            tuple: A tuple containing:
-                - float: The total price of all recipes if the product exists, otherwise 0.
-                - bool: A flag indicating whether the product exists (False if any recipe has a price of 0).
-        """
-        if self.recipes.filter(price=0).exists():
-            return 0, False
+    def check_status(self, recipes=None):
+        if not recipes:
+            self.status = not self.recipes.filter(status=False).exists()
+            print(self.recipes.filter(status=False))
+        else:
+            self.status = all([recipe.status for recipe in recipes])
 
-        total_price = self.recipes.aggregate(total=models.Sum('price'))['total'] or 0
-        return total_price, True if total_price != 0 else False
+    def save(self, *args, **kwargs):
+        slug = slugify(self.name)
+        obj = self.__class__.objects.filter(slug=slug).exclude(pk=self.pk).first()
+        if obj:
+            raise CustomExceptionError(code=400, detail="A measure with this name already exists")
+        self.slug = slug
+        super().save(*args, **kwargs)
 
-    def clean(self):
-        """
-        Override the clean method to perform additional operations before saving the model instance.
-        This method performs the following operations:
-        1. Sets the slug field based on the name field if it is not already set or if it does not match the slug.
-        2. Calculates the net price and checks if the product exists.
-        3. Sets the status to False if the product does not exist.
-        4. Calculates the gross price by adding the profit to the net price.
-        5. Calls the superclass's save method to save the instance.
-        """
-        self.slug = slugify(self.name)
+    def changing_dependent_objects(self):
+        menus = self.menus.annotate(
+            has_inactive_food=models.Exists(self.menus.filter(foods__status=False))
+        ) 
 
-        self.net_price, self.status = self.get_net_price()
+        for menu in menus:
+            menu.status = not menu.has_inactive_food
+            menu.calculate_prices()
 
-        self.gross_price = self.net_price + self.profit if self.net_price else 0
+        Menu.objects.bulk_update(menus, ['net_price', 'gross_price', 'status'])
+        for menu in menus:
+            menu.changing_dependent_objects()
+
+    def change_dependent(self):
+        recipes = self.get_food_recipes()
+        self.check_status(recipes)
+        self.calculate_prices(recipes)
+        self.save()
+        self.changing_dependent_objects()
