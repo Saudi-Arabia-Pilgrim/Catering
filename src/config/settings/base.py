@@ -9,18 +9,6 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-SECRET_KEY = os.getenv("SECRET_KEY")
-SIGNING_KEY = os.getenv("SIGNING_KEY")
-DEBUG = os.getenv("DEBUG")
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(',')
-REDIS_PORT_URL = os.getenv('REDIS_PORT_URL')
-CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS")
-
-TIME_ZONE = os.getenv("TIME_ZONE")
-USE_I18N = os.getenv("USE_I18N")
-USE_L10N = os.getenv("USE_L10N")
-USE_TZ = os.getenv("USE_TZ")
-
 ROOT_URLCONF = "config.urls"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 WSGI_APPLICATION = "config.wsgi.application"
@@ -43,9 +31,11 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    "django_celery_beat",
     "rest_framework",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
+    "corsheaders",
     "drf_yasg"
 
 ]
@@ -106,3 +96,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME":"django.contrib.auth.password_validation.CommonPasswordValidator", },
     {"NAME":"django.contrib.auth.password_validation.NumericPasswordValidator", },
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.openapi.AutoSchema',
+}
