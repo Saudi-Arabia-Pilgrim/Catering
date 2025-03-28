@@ -20,18 +20,16 @@ FORGOT_PASSWORD_KEY = "forgot_password_key{email}"
 PASSWORD_RESET_UUID = "password_reset_uuid"
 PASSWORD_RESET_TOKEN = "password_reset_token"
 
-EMAIL = settings.
-
 class ForgotPasswordSendEmailSerializer(CustomSerializer):
     """
     Serializer for sending a verification code to the user's email.
     """
     email = serializers.EmailField(required=True)
-    sended = serializers.BooleanField(read_only=True)
+    sent = serializers.BooleanField(read_only=True)
 
-
-    def validate_email(self, email):
-        """
+    @staticmethod
+    def validate_email(email):
+        """                                                                                                                                                                                                                                                                                                                                                                                               
         Validate that the email exists in the database.
         """
         if not User.objects.filter(email=email).exists():
