@@ -1,2 +1,3 @@
 -r base.txt
 django-debug-toolbar==4.4.6
+django-filter==25.1 # added from Oybek 29.04.2025
