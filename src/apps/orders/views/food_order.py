@@ -2,12 +2,12 @@ from rest_framework.response import Response
 
 from apps.base.views import CustomGenericAPIView
 from apps.orders.models import FoodOrder
-from apps.orders.serializers import FoodOrderSerializer
+from apps.orders.serializers import OnlyFoodOrderSerializer
 
 
 class FoodOrderListAPIView(CustomGenericAPIView):
     queryset = FoodOrder.objects.all()
-    serializer_class = FoodOrderSerializer
+    serializer_class = OnlyFoodOrderSerializer
 
     def get(self, request, *args, **kwargs):
         serializer = self.get_serializer(self.get_queryset(), many=True)
@@ -16,7 +16,7 @@ class FoodOrderListAPIView(CustomGenericAPIView):
 
 class FoodOrderCreateAPIView(CustomGenericAPIView):
     queryset = FoodOrder.objects.all()
-    serializer_class = FoodOrderSerializer
+    serializer_class = OnlyFoodOrderSerializer
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -27,7 +27,7 @@ class FoodOrderCreateAPIView(CustomGenericAPIView):
 
 class FoodOrderRetrieveAPIView(CustomGenericAPIView):
     queryset = FoodOrder.objects.all()
-    serializer_class = FoodOrderSerializer
+    serializer_class = OnlyFoodOrderSerializer
 
     def get(self, request, pk, *args, **kwargs):
         instance = self.get_object()
