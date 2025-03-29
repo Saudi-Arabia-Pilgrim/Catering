@@ -1,4 +1,7 @@
 from rest_framework.response import Response
+from rest_framework.filters import SearchFilter
+
+from django_filters.rest_framework import DjangoFilterBackend
 
 from apps.base.views import CustomGenericAPIView
 from apps.rooms.models.room_type import RoomType
@@ -8,9 +11,12 @@ from apps.rooms.serializers.room_type import RoomTypeSerializer
 class RoomTypeListsAPIView(CustomGenericAPIView):
     queryset = RoomType.objects.all()
     serializer_class = RoomTypeSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = ["name__icontains"]
 
     def get(self, *args, **kwargs):
-        serializer = self.get_serializer(self.get_queryset(), many=True)
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status=200)
 
 

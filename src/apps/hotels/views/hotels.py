@@ -1,5 +1,8 @@
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.filters import SearchFilter
+
+from django_filters.rest_framework import DjangoFilterBackend
 
 from apps.base.views import CustomGenericAPIView
 from apps.hotels.models import Hotel
@@ -13,6 +16,8 @@ class HotelListAPIView(CustomGenericAPIView):
     """
     queryset = Hotel.objects.all()
     serializer_class = HotelSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = ["name__icontains"]
 
     def get(self, *args, **kwargs):
         """
@@ -21,7 +26,8 @@ class HotelListAPIView(CustomGenericAPIView):
         Returns:
             Response: A response containing the serialized list of hotels.
         """
-        serializer = self.get_serializer(self.get_queryset(), many=True)
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
