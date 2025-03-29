@@ -54,8 +54,9 @@ class Hotel(AbstractBaseModel):
         help_text="The hotel's rating, between 0.00 and 5.00."
     )
 
-    def clean(self):
+    def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         """
