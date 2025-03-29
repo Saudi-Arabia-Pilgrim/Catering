@@ -30,7 +30,7 @@ class FoodOrder(AbstractBaseModel):
                                null=True)
     # === Reference to the counter agent being ordered. ===
     counter_agent = models.ForeignKey('counter_agents.CounterAgent', on_delete=models.PROTECT,
-                                      related_name='food_orders')
+                                      related_name='food_orders', blank=True, null=True)
     # === Reference to the hotel associated with the order. ===
     hotel_order = models.ForeignKey('orders.HotelOrder', on_delete=models.PROTECT, related_name='food_orders',
                                     blank=True, null=True)
