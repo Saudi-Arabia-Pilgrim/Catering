@@ -27,7 +27,10 @@ REST_FRAMEWORK = {
     # Pagination
     'PAGE_SIZE': 10,
 
-    'DEFAULT_FILTER_BACKENDS': [],
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+    ],
 
     # Schema
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',

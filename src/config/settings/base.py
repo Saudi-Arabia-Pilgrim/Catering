@@ -5,8 +5,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
-
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 ROOT_URLCONF = "config.urls"
@@ -17,7 +15,6 @@ MEDIA_URL = 'media/'
 MEDIA_ROOT = os.path.join(BASE_DIR / 'media')
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR / 'static')
-
 
 INSTALLED_APPS = [
     "jazzmin",
@@ -33,13 +30,13 @@ INSTALLED_APPS = [
 
     "django_celery_beat",
     "rest_framework",
+    "django_filters",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "drf_yasg"
 
 ]
-
 
 INSTALLED_APPS += [
     'apps.authentication.apps.AuthenticationConfig',
@@ -91,10 +88,10 @@ TEMPLATES = [
 ]
 
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME":"django.contrib.auth.password_validation.UserAttributeSimilarityValidator", },
-    {"NAME":"django.contrib.auth.password_validation.MinimumLengthValidator", },
-    {"NAME":"django.contrib.auth.password_validation.CommonPasswordValidator", },
-    {"NAME":"django.contrib.auth.password_validation.NumericPasswordValidator", },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator", },
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", },
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator", },
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator", },
 ]
 
 REST_FRAMEWORK = {
