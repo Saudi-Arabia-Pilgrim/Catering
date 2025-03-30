@@ -6,7 +6,7 @@ from apps.rooms.serializers.room import RoomSerializer
 
 
 class RoomListsAPIView(CustomGenericAPIView):
-    queryset = Room.objects.all()
+    queryset = Room.objects.all().select_related("room_type")
     serializer_class = RoomSerializer
 
     def get(self, *args, **kwargs):
