@@ -18,8 +18,8 @@ class RoomHotelSerializer(CustomModelSerializer):
         available_count (int): Computed field representing the number of available rooms.
          price (Decimal): Price per night for the room type.
     """
-
     available_count = serializers.SerializerMethodField()
+
 
     class Meta:
         model = Room

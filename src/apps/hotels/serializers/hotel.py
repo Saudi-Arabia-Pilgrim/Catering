@@ -1,7 +1,7 @@
-from apps.guests.serializers import GuestSerializer
+from apps.guests.serializers.order_guests import GuestForHotelOrderSerializer
 from apps.hotels.models import Hotel
 from apps.base.serializers import CustomModelSerializer
-from apps.rooms.serializers.room import RoomSerializer
+from apps.rooms.serializers import RoomHotelSerializer
 
 
 class HotelSerializer(CustomModelSerializer):
@@ -11,8 +11,8 @@ class HotelSerializer(CustomModelSerializer):
     This serializer includes hotel details along with related rooms and guests.
     """
 
-    rooms = RoomSerializer(many=True, help_text="List of rooms associated with the hotel.", read_only=True)
-    guests = GuestSerializer(many=True, read_only=True)
+    rooms = RoomHotelSerializer(many=True, help_text="List of rooms associated with the hotel.", read_only=True)
+    guests = GuestForHotelOrderSerializer(many=True, read_only=True)
 
     class Meta:
         model = Hotel

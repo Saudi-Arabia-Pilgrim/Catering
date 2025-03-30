@@ -1,9 +1,16 @@
+from django.db.models import Prefetch
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.filters import SearchFilter
+
+from django_filters.rest_framework import DjangoFilterBackend
 
 from apps.base.views import CustomGenericAPIView
+from apps.guests.models import Guest
 from apps.hotels.models import Hotel
 from apps.hotels.serializers import HotelSerializer
+from apps.rooms.models import Room
+
 
 class HotelListAPIView(CustomGenericAPIView):
     """
@@ -11,8 +18,21 @@ class HotelListAPIView(CustomGenericAPIView):
 
     This view fetches all hotels from the database and returns their serialized data.
     """
-    queryset = Hotel.objects.all()
+    queryset = Hotel.objects.prefetch_related(
+        Prefetch(
+            "rooms",
+            queryset=Room.objects.select_related("room_type")
+            .only('id', 'room_type__name', 'gross_price', 'occupied_count', 'count', 'hotel_id', 'room_type_id')
+        ),
+        Prefetch(
+            "guests",
+            queryset=Guest.objects.select_related('room', 'room__room_type')
+            .only('id', 'full_name', 'order_number', 'room_id', 'gender', 'check_in', 'check_out', 'hotel_id')
+        )
+    ).all()
     serializer_class = HotelSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = ["name__icontains"]
 
     def get(self, *args, **kwargs):
         """
@@ -21,7 +41,8 @@ class HotelListAPIView(CustomGenericAPIView):
         Returns:
             Response: A response containing the serialized list of hotels.
         """
-        serializer = self.get_serializer(self.get_queryset(), many=True)
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -29,7 +50,7 @@ class HotelCreateAPIView(CustomGenericAPIView):
     """
     API view to create a new hotel.
     """
-    queryset = Hotel.objects.all()
+    queryset = Hotel.objects.all().prefetch_related("guests", "room")
     serializer_class = HotelSerializer
 
     def post(self, request, *args, **kwargs):
@@ -53,7 +74,21 @@ class HotelRetrieveAPIView(CustomGenericAPIView):
     """
     API view to retrieve a specific hotel.
     """
-    queryset = Hotel.objects.all()
+    queryset = Hotel.objects.prefetch_related(
+        Prefetch(
+            'rooms',
+            queryset=Room.objects.select_related('room_type').only(
+                'id', 'room_type_id', 'hotel_id', 'gross_price', 'occupied_count', 'count'
+            )
+        ),
+        Prefetch(
+            'guests',
+            queryset=Guest.objects.select_related('room', 'room__room_type').only(
+                'id', 'full_name', 'order_number', 'room_id', 'gender',
+                'check_in', 'check_out', 'hotel_id'
+            )
+        )
+    ).only("id", "name", "email", "address", "phone_number", "rating")
     serializer_class = HotelSerializer
 
     def get(self, request, *args, **kwargs):
