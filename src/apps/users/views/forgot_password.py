@@ -2,7 +2,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from apps.base.views import CustomGenericAPIView
 from rest_framework.permissions import AllowAny
-from drf_spectacular.utils import extend_schema, OpenApiExample
+
 
 from apps.users.serializers import (
     ForgotPasswordSendEmailSerializer,

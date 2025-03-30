@@ -64,20 +64,25 @@ class VerifyCodeSerializer(CustomSerializer):
     Serializer for verifying the code sent to the user's email.
     """
     email = serializers.EmailField()
-    code = serializers.IntegerField()
+    code = serializers.CharField()
     verified = serializers.BooleanField(read_only=True)
-    
+
     def validate(self, attrs):
         if not get_user_model().objects.filter(email=attrs['email']).exists():
             raise CustomExceptionError(_('User with this email does not exist!'))
+        return attrs  # ✅ always return validated data
 
     def validate_code(self, code):
-        """
-        Validate that the code matches the one stored in the Redis for the current USER!.
-        """
-        stored_code = cache.get(FORGOT_PASSWORD_KEY.find(code))
-        if not stored_code or code != stored_code:
+        email = self.initial_data.get('email')  # required to fetch correct Redis key
+        if not email:
+            raise serializers.ValidationError("Email is required to validate code.")
+
+        redis_key = FORGOT_PASSWORD_KEY.format(email=email)
+        stored_code = cache.get(redis_key)
+
+        if not stored_code or str(code) != str(stored_code):
             raise serializers.ValidationError("Invalid verification code.")
+
         return code
 
     def save(self):
@@ -85,7 +90,7 @@ class VerifyCodeSerializer(CustomSerializer):
         Generate a token for password reset and return it.
         Once the code is used, delete it (and the email) from Redis so it can be used only once.
         """
-        email = cache.get(FORGOT_PASSWORD_KEY)
+        email = self.validated_data['email']
         if not email:
             raise serializers.ValidationError("Verification session has expired or invalid.")
         try:
@@ -96,15 +101,9 @@ class VerifyCodeSerializer(CustomSerializer):
         # Generate a token for password reset
         uuid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
-        
-        # Store the uuid & token in Redis for later use (e.g. 5 minutes)
-        cache.set(PASSWORD_RESET_UUID, uuid, timeout=60 * 5)
-        cache.set(PASSWORD_RESET_TOKEN, token, timeout=60 * 5)
 
         # === Delete the verification code and email from Redis so they can't be reused. ===
-        cache.delete(EMAIL_VERIFY_CODE)
-        cache.delete(FORGOT_PASSWORD_EMAIL)
-
+        cache.delete(FORGOT_PASSWORD_KEY.format(email=email))
         
         return {'success': True, 'uid': uuid, 'token': token}
 
@@ -113,6 +112,8 @@ class SetNewPasswordSerializer(serializers.Serializer):
     """
     Serializer for setting a new password.
     """
+    uid = serializers.CharField(required=True)
+    token = serializers.CharField(required=True)
     password = serializers.CharField(required=True, write_only=True)
     password2 = serializers.CharField(required=True, write_only=True)
 
@@ -129,8 +130,8 @@ class SetNewPasswordSerializer(serializers.Serializer):
         Set the new password for the user using uid and token stored in Redis. 
         Clears the uid and token from Redis after successful password reset.
         """
-        uid = cache.get(PASSWORD_RESET_UUID)
-        token = cache.get(PASSWORD_RESET_TOKEN)
+        uid = self.validated_data["uid"]
+        token = self.validated_data["token"]
         
         if not uid or not token:
             raise serializers.ValidationError("Invalid or expired password reset session.")
@@ -147,10 +148,6 @@ class SetNewPasswordSerializer(serializers.Serializer):
             # Set the new password
             user.set_password(self.validated_data['password'])
             user.save()
-            
-            # Clear uid and token from Redis
-            cache.delete(PASSWORD_RESET_UUID)
-            cache.delete(PASSWORD_RESET_TOKEN)
             
             return {'success': True, 'message': 'Password has been reset successfully.'}
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
