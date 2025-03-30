@@ -324,7 +324,7 @@ We operate in 2-week sprints with the following recurring events:
 ## 📞 Support & Contact
 
 - **Technical Issues**: Create a GitHub issue
-- **Security Concerns**: ```mukhsinmukhtorov@arizona.edu```
+- **Security Concerns**: ```muxsinmuxtorov01@gmail.com``` => Mukhsin Mukhtorov
 - **Emergency Contact**: +998993233528
 
 ## 👥 Contributors
