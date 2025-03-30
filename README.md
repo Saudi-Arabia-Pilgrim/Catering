@@ -21,59 +21,59 @@ graph TB
     unAuth["UnAuthenticated User"] --> Authorization
     Authorization --> Register
     Register --> HomePage["Home Page"]
-    
+
     %% Main Management Paths
     HomePage --> Hotels
     HomePage --> Catering
-    
+
     %% Hotel Management Flow
     subgraph HotelManagement
         Hotels --> CheckRole["Check Role"]
         CheckRole --> CEO
         CheckRole --> Manager
         CheckRole --> Staff
-        
+
         CEO --> |Manages| Clients
         CEO --> |Oversees| Partners
         CEO --> |Analyzes| Statistics
         CEO --> |Receives| Notification
-        
+
         Manager --> |Controls| Rooms
         Manager --> |Reviews| Financial
         Manager --> |Manages| Personal["Staff Management"]
-        
+
         Staff --> |Handles| Rooms
         Staff --> |Interacts with| Clients
         Staff --> |Checks| Notification
     end
-    
+
     %% Catering Management Flow
     subgraph CateringManagement
         Catering --> CateringCheckRole["Check Role"]
         CateringCheckRole --> CateringManager
         CateringCheckRole --> CateringStaff
-        
+
         CateringManager --> |Manages| Personal
         CateringManager --> |Oversees| Financial
         CateringManager --> |Controls| Warehouse
         CateringManager --> |Interacts with| Partners
         CateringManager --> |Analyzes| Statistics
         CateringManager --> |Receives| Notification
-        
+
         CateringStaff --> |Manages| Warehouse
         CateringStaff --> |Creates| MenuCreation["Menu"]
         CateringStaff --> |Interacts with| Clients
         CateringStaff --> |Checks| Notification
-        
+
         MenuCreation --> MenuDetailsCost["Menu Details & Cost"]
         MenuDetailsCost --> Ingredients["Ingredient Management"]
     end
-    
+
     %% Styling
     classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px
     classDef process fill:#e1f3fd,stroke:#333,stroke-width:1px
     classDef financial fill:#e1fde3,stroke:#333,stroke-width:1px
-    
+
     class unAuth,HomePage,Hotels,Catering,Rooms,Clients,Partners,Statistics,Notification default
     class Authorization,Register,CEO,Manager,Staff,CateringManager,CateringStaff process
     class Financial,Personal,Warehouse,MenuCreation,Ingredients financial
@@ -86,64 +86,64 @@ flowchart TB
     Agencies["Travel Agencies"]
     Request["Agency Request:\n- Group Size\n- Duration"]
     Admin["Admin Panel\n(Manage Partners, Bookings, Reports)"]
-    
+
     %% Main process branches
     RoomAlloc["Dynamic Room Allocation"]
     FoodCalc["Dynamic Food Calculation"]
     PartnerMgmt["Partner Hotel Management"]
     StaffMgmt["Staff Management\n(Scheduling, Payroll)"]
     EventMgmt["Event Management"]
-    
+
     %% Room allocation branch
     PartnerHotels["Partner Hotels"]
     BookingConf["Booking Confirmation"]
     ProfitReports["Profit & Performance Reports"]
     DetailedReports["Detailed Reports:\n- Partner Profits\n- Costs"]
-    
+
     %% Food calculation branch
     Catering["Catering Services\n(Food Menu, Pricing)"]
     Warehouse["Warehouse:\n- Track Ingredients\n- Costs & Stock"]
     DynamicPricing["Dynamic Pricing:\n- Hotels\n- Catering"]
     SupplyChain["Supply Chain:\n- Vendor Management\n- Ingredient Costs"]
-    
+
     %% Financial branch
     FinanceMgmt["Finance Management\n(Costs, Profit, Recurring Revenue)"]
     FinInsights["Financial Insights:\n- Monthly Recurring Revenue\n- Cost Analysis"]
-    
+
     %% Define connections
     Start --> Agencies
     Agencies --> Request
     Request --> Admin
-    
+
     %% Admin panel connections
     Admin --> RoomAlloc
     Admin --> FoodCalc
     Admin --> PartnerMgmt
     Admin --> StaffMgmt
     Admin --> EventMgmt
-    
+
     %% Room allocation flow
     RoomAlloc --> PartnerHotels
     PartnerHotels --> BookingConf
     BookingConf --> ProfitReports
     ProfitReports --> DetailedReports
-    
+
     %% Food calculation flow
     FoodCalc --> Catering
     Catering --> Warehouse
     Warehouse --> DynamicPricing
     Warehouse --> SupplyChain
     Catering --> SupplyChain
-    
+
     %% Financial flow
     DetailedReports --> FinanceMgmt
     FinanceMgmt --> FinInsights
-    
+
     %% Styling
     classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px
     classDef process fill:#e1f3fd,stroke:#333,stroke-width:1px
     classDef financial fill:#e1fde3,stroke:#333,stroke-width:1px
-    
+
     class Start,Agencies,Request default
     class RoomAlloc,FoodCalc,PartnerMgmt,StaffMgmt,EventMgmt process
     class FinanceMgmt,FinInsights,DetailedReports,ProfitReports financial
@@ -314,6 +314,115 @@ We operate in 2-week sprints with the following recurring events:
 - Regular penetration testing
 - GDPR compliance measures
 
+## 🔐 Role-Based Permission System
+
+Our platform implements a comprehensive role-based permission system to ensure secure access control across the application.
+
+### System Architecture
+
+The permission system is primarily **group-based**, leveraging Django's built-in authentication system with the following components:
+
+1. **Custom User Model**: Extends Django's AbstractBaseUser with a role field
+2. **Django Groups**: Automatically created and assigned based on user roles
+3. **Django Permissions**: Assigned to groups based on app access requirements
+4. **Signal Handlers**: Automate group assignment when users are created or updated
+5. **Permission Classes**: Enforce access control in API views
+
+### User Roles
+
+The system supports the following predefined roles:
+
+| Role | Description |
+|------|-------------|
+| Admin | System administrators with broad access |
+| CEO | Executive access to all system components |
+| HR | Human resources personnel |
+| Hotel | Hotel management staff |
+| Catering | Catering service staff |
+| Transportation | Transportation management staff |
+| Analytics | Data analysis personnel |
+| Warehouse | Inventory management staff |
+
+### Permission Assignment
+
+**Q: Is this a group-based or user-based permission system?**
+
+This is primarily a **group-based permission system**. Users are assigned to Django Groups based on their role, and permissions are granted to these groups rather than to individual users. This approach simplifies permission management and ensures consistency.
+
+**Q: Do developers need to manually assign permissions after creating users?**
+
+**No**. Permission assignment is **fully automated** through Django signals:
+- When a user is created or their role is updated, a post_save signal triggers
+- The signal handler assigns the user to the appropriate group based on their role
+- The group is created if it doesn't already exist
+- Permissions are automatically set up for the group based on predefined app access requirements
+
+### Permission Matrix
+
+The following matrix defines which roles have access to which application components:
+
+| Role | Users | Hotels | Rooms | Guests | Orders | Expenses | Transports | Authentication |
+|------|-------|--------|-------|--------|--------|----------|------------|---------------|
+| Superuser | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Admin | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+| CEO | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| HR | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Hotel | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Catering | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| Transportation | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| Analytics | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Warehouse | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+
+### Best Practices for Permission Management
+
+**Q: What's the best practice if we want to override permissions for a specific user?**
+
+1. **Preferred Method**: Add the user to additional groups
+   - This maintains the group-based approach
+   - Example: `user.groups.add(Group.objects.get(name='Hotel Team'))`
+
+2. **Alternative Method**: Modify group permissions
+   - If multiple users need the same override, create a new group with the required permissions
+   - Example: `new_group.permissions.add(*Permission.objects.filter(content_type__app_label='hotels'))`
+
+3. **Last Resort**: Assign individual permissions
+   - Only use for exceptional cases
+   - May be overwritten by the signal handler if the user's role changes
+   - Example: `user.user_permissions.add(Permission.objects.get(codename='view_hotel'))`
+
+### Frontend Implementation
+
+**Q: What role should frontend devs play in this system?**
+
+Frontend developers should:
+
+1. **Use role information from auth tokens** to conditionally render UI elements
+2. **Implement UI-level access control** based on the user's role
+3. **Make API requests** that will be validated by backend permission classes
+4. **Handle permission-denied responses** gracefully with appropriate user feedback
+
+### Permission Enforcement Points
+
+Permissions are enforced at multiple levels:
+
+1. **Backend API Views**: Using Django REST Framework permission classes
+   - `RoleBasedPermission` checks if the user has the required role
+   - Object-level permissions check if the user has access to specific objects
+
+2. **Django Admin**: Using Django's built-in permission system
+   - Admin site respects the permissions assigned to groups
+   - Custom admin classes can implement additional permission checks
+
+3. **Frontend**: Using role information from auth tokens
+   - Conditional rendering of UI elements
+   - Disabling actions that would be rejected by the backend
+
+### Important Notes
+
+- **Do not manually edit user permissions** in the Django admin panel, as they may be overwritten by the signal handler
+- Always use the `role` field to assign permissions, as this triggers the automatic group assignment
+- For complex permission scenarios, consult with the backend team before implementation
+
 ## 🎯 Current Sprint Goals (Sprint 1)
 
 1. Implement dynamic pricing algorithm
@@ -351,4 +460,4 @@ This project is licensed under the No Licenses - see the [LICENSE.md](LICENSE) f
 
 ---
 
-*Last updated: November 18, 2024*
+*Last updated: March 30, 2025*
