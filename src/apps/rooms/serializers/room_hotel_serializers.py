@@ -20,11 +20,14 @@ class RoomHotelSerializer(CustomModelSerializer):
     """
 
     available_count = serializers.SerializerMethodField()
+    room_name = serializers.CharField(source="room_type.name", read_only=True)
+
 
     class Meta:
         model = Room
         fields = [
             "room_type",
+            "room_name",
             "available_count",
             "gross_price"
         ]
