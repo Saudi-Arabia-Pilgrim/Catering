@@ -12,12 +12,13 @@ class GuestForHotelOrderSerializer(CustomModelSerializer):
     This serializer handles guest-related data, including retrieving guest details
     and creating new guest entries with an associated hotel.
     """
-    room_type = serializers.CharField(source="room.room_type.name", read_only=True)
+    room_type = serializers.SerializerMethodField()
     total_price = serializers.SerializerMethodField()
 
     class Meta:
         model = Guest
         fields = [
+            "id",
             "full_name",
             "order_number",
             "room",
@@ -29,6 +30,11 @@ class GuestForHotelOrderSerializer(CustomModelSerializer):
         ]
         read_only_fields = ["order_number", "price", "room_type"]
 
+    def get_room_type(self, obj):
+        if hasattr(obj, 'room') and hasattr(obj.room, 'room_type'):
+            return obj.room.room_type.name
+        return obj.room.room_type.name if obj.room_id else None
+
     def get_total_price(self, obj):
         if obj.check_in and obj.check_out and obj.room:
             days_stayed = (obj.check_out - obj.check_in).days
@@ -36,6 +42,7 @@ class GuestForHotelOrderSerializer(CustomModelSerializer):
                 days_stayed = 1
             return obj.room.gross_price * days_stayed
         return 0
+
 
 
 

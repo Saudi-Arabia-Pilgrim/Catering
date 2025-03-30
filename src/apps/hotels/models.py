@@ -2,6 +2,7 @@ from django.db import models
 from django.core.validators import RegexValidator, MinValueValidator, MaxValueValidator
 from django.utils.text import slugify
 
+from apps.base.exceptions import CustomExceptionError
 from apps.base.models import AbstractBaseModel
 
 
@@ -54,8 +55,15 @@ class Hotel(AbstractBaseModel):
         help_text="The hotel's rating, between 0.00 and 5.00."
     )
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['email'], name='unique_hotel_email'),
+            models.UniqueConstraint(fields=['slug'], name='unique_hotel_slug')
+        ]
+
     def save(self, *args, **kwargs):
-        self.slug = slugify(self.name)
+        if not self.slug:
+            self.slug = slugify(self.name)
         super().save(*args, **kwargs)
 
     def __str__(self):
