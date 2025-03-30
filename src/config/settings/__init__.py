@@ -13,4 +13,6 @@ from .languages import *
 from .logging import *
 from .rest_framework import *
 from .simplejwt import *
+from .swagger import *
+
 

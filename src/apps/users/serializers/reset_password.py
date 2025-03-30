@@ -1,5 +1,8 @@
 from rest_framework import serializers
-from django.contrib.auth import get_user_model, authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from django.contrib.auth import get_user_model
+
 
 User = get_user_model()
 
@@ -12,6 +15,10 @@ class ResetPasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField(required=True, write_only=True)
     new_password2 = serializers.CharField(required=True, write_only=True)
 
+    # JWT token fields that will be returned after password reset
+    refresh = serializers.CharField(read_only=True)
+    access = serializers.CharField(read_only=True)
+
     def validate_current_password(self, value):
         """
         Validate that the current password is correct.
@@ -19,6 +26,10 @@ class ResetPasswordSerializer(serializers.Serializer):
         user = self.context['request'].user
         if not user.check_password(value):
             raise serializers.ValidationError("Current password is incorrect.")
+
+        # Revoke all existing tokens for the user to ensure old tokens are invalidated
+        User.revoke_user_tokens(user)
+
         return value
 
     def validate(self, attrs):
@@ -36,5 +47,16 @@ class ResetPasswordSerializer(serializers.Serializer):
         user = self.context['request'].user
         user.set_password(self.validated_data['new_password'])
         user.save()
+
+        # Generate new JWT tokens for the user after password change
+        refresh = RefreshToken.for_user(user)
+
+        # Add the new tokens to the validated data
+        self.validated_data["refresh"] = str(refresh)
+        self.validated_data["access"] = str(refresh.access_token)
+
+        # Remove sensitive password data from validated_data
+        del self.validated_data["password"]
+        del self.validated_data["old_password"]
         
         return {'success': True, 'message': 'Password has been reset successfully.'}

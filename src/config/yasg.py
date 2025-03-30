@@ -1,15 +1,24 @@
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
+from drf_yasg.generators import OpenAPISchemaGenerator
 from rest_framework import permissions
 from django.conf import settings
 import os
 
+# ======== Custom generator to add Bearer security globally ========
+class BothHttpAndHttpsSchemaGenerator(OpenAPISchemaGenerator):
+    def get_schema(self, request=None, public=False):
+        schema = super().get_schema(request, public)
+        schema.security = [{'Bearer': []}]  # 👈 This makes Swagger use Bearer by default
+        return schema
+
+
 # ======== Pick the correct URL for Swagger depending on ENV ========
 if settings.NGROK:
     swagger_base_url = os.getenv("SWAGGER_DOCS_BASE_URL", "https://catering.com")
-    print(f"Swagger URL: {swagger_base_url}")  # For production, set this in .env file
+    print(f"Swagger URL: {swagger_base_url}")
 else:
-    swagger_base_url = None  # Uses current localhost (no problem)
+    swagger_base_url = None
 
 
 # ======== Swagger/OpenAPI schema view ========
@@ -23,6 +32,7 @@ schema_view = get_schema_view(
     ),
     public=True,
     permission_classes=[permissions.AllowAny],
-    url=swagger_base_url  # 🔁 This auto-switches between local/prod
+    url=swagger_base_url,
+    authentication_classes=[],
+    generator_class=BothHttpAndHttpsSchemaGenerator,
 )
-

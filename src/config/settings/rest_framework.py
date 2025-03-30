@@ -32,9 +32,6 @@ REST_FRAMEWORK = {
         'rest_framework.filters.SearchFilter',
     ],
 
-    # Schema
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-
     # Throttling
     'DEFAULT_THROTTLE_RATES': {
         'user': None,

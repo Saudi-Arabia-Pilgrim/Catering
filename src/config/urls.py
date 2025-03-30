@@ -2,11 +2,6 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from drf_spectacular.views import (
-    SpectacularAPIView,
-    SpectacularRedocView,
-)
-
 from config.yasg import schema_view
 
 
@@ -21,14 +16,9 @@ urlpatterns = [
     # ======== Ckeditor-5 =========
     path("ckeditor5/", include('django_ckeditor_5.urls')),
 
-    # ======== DRF-Spectacular ========
-    path('api/v1/schema/', SpectacularAPIView.as_view(), name='schema'),
-
-    # ======== Swagger UI ========
-    path('', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-
-    # ======== ReDoc UI ========
-    path('docs/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    # ✅ === DRF-YASG Endpoints ===
+    path('', schema_view.with_ui('swagger', cache_timeout=0), name='yasg-swagger'),
+    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='yasg-redoc'),
 
     ]
 

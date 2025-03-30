@@ -14,10 +14,14 @@ NGROK = os.getenv("NGROK", False)
 
 # ===================== Django configurations =====================
 SECRET_KEY = os.getenv("SECRET_KEY")
-SIGNING_KEY = os.getenv("SIGNING_KEY")
 DEBUG = os.getenv("DEBUG")
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(',')
 TIME_ZONE = os.getenv("TIME_ZONE")
 USE_I18N = os.getenv("USE_I18N")
 USE_L10N = os.getenv("USE_L10N")
 USE_TZ = os.getenv("USE_TZ")
+
+ENV = os.getenv("ENV")
+# ===================== JWT configurations =====================
+PRIVATE_KEY = open('./config/secrets/private.pem').read()
+PUBLIC_KEY = open('./config/secrets/public.pem').read()
