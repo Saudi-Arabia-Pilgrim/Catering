@@ -23,17 +23,21 @@ urlpatterns = [
 
     # ======== DRF-Spectacular ========
     path('api/v1/schema/', SpectacularAPIView.as_view(), name='schema'),
-    # Optional UI:
+
+    # ======== Swagger UI ========
     path('', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    path('api/v1/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 
-
-    # === URLs of Mukhsin ===
-        path('api/v1/users/', include('apps.users.urls')),
-        # ======== Authentication =========
-        path('api/v1/auth/', include('apps.authentication.urls')),
+    # ======== ReDoc UI ========
+    path('docs/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 
     ]
+
+    # === URLs of Mukhsin ===
+urlpatterns += [
+    path('api/v1/users/', include('apps.users.urls')),
+    # ======== Authentication =========
+    path('api/v1/auth/', include('apps.authentication.urls')),
+]
 
     # ========== URLS OF OYBEK ==============
 urlpatterns += [

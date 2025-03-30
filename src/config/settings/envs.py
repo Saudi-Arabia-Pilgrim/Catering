@@ -8,12 +8,15 @@ load_dotenv()
 # ===================== REDIS configurations =====================
 REDIS_PORT_URL = os.getenv('REDIS_PORT_URL')
 
+# ===================== Swagger dynamic configurations =====================
+SWAGGER_DOCS_BASE_URL=os.getenv("SWAGGER_DOCS_BASE_URL", "https://catering.com")
+NGROK = os.getenv("NGROK", False)
 
+# ===================== Django configurations =====================
 SECRET_KEY = os.getenv("SECRET_KEY")
 SIGNING_KEY = os.getenv("SIGNING_KEY")
 DEBUG = os.getenv("DEBUG")
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(',')
-
 TIME_ZONE = os.getenv("TIME_ZONE")
 USE_I18N = os.getenv("USE_I18N")
 USE_L10N = os.getenv("USE_L10N")
