@@ -1,4 +1,7 @@
+from django_filters.rest_framework import DjangoFilterBackend
+
 from rest_framework.response import Response
+from rest_framework.filters import SearchFilter
 
 from apps.base.views import CustomGenericAPIView
 from apps.orders.models import HotelOrder
@@ -6,8 +9,11 @@ from apps.orders.serializers import HotelOrderGuestSerializer
 
 
 class HotelOrderListAPIView(CustomGenericAPIView):
-    queryset = HotelOrder.objects.all().select_related("hotel", "room").prefetch_related("guests")
+    queryset = HotelOrder.objects.all().select_related("hotel", "room",
+                                                       ).prefetch_related("guests", "guests__room", "guests__room__room_type")
     serializer_class = HotelOrderGuestSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = ["created_at", "check_in", "check_out"]
 
     def get(self, *args, **kwargs):
         serializer = self.get_serializer(self.get_queryset(), many=True)
@@ -15,7 +21,7 @@ class HotelOrderListAPIView(CustomGenericAPIView):
 
 
 class HotelOrderCreateAPIView(CustomGenericAPIView):
-    queryset = HotelOrder.objects.all()
+    queryset = HotelOrder.objects.all().prefetch_related("guests", "guests__room", "guests__room__room_type", "room__room_type")
     serializer_class = HotelOrderGuestSerializer
 
     def post(self, request, *args, **kwargs):

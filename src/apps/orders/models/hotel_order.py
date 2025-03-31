@@ -1,7 +1,7 @@
 import random
 
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 
 from apps.base.models import AbstractBaseModel
 
@@ -39,7 +39,7 @@ class HotelOrder(AbstractBaseModel):
     check_in = models.DateTimeField()
     check_out = models.DateTimeField()
     count_of_people = models.PositiveSmallIntegerField() # count_of_people xonani nechta kishi sig`ishidan kotta bo`lishi kerak emas.
-    general_cost = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
+    general_cost = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 
     class Meta:
         ordering = ['-created_at']
@@ -62,15 +62,16 @@ class HotelOrder(AbstractBaseModel):
         if not self.order_id:
             self.order_id = f"№{random.randint(1000000, 9999999)}"
 
-        if room.available_count < self.count_of_people:
+        if room.available_count <= 1:
             raise ValidationError("Not enough available rooms for this order.")
 
-        room.occupied_count += self.count_of_people
-        if room.occupied_count >= room.count:
-            room.status = False
-        room.save(update_fields=["occupied_count"])
+        with transaction.atomic():
+            room.occupied_count += self.count_of_people
+            if room.occupied_count >= room.count:
+                room.status = False
+            room.save(update_fields=["occupied_count"])
 
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return self.hotel.name
+        return f"{self.order_id}"
