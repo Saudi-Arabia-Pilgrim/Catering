@@ -34,7 +34,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
-    "drf_yasg"
+    "drf_yasg",
 
 ]
 
@@ -57,10 +57,10 @@ INSTALLED_APPS += [
 ]
 
 MIDDLEWARE = [
+    # ======== CORS Middleware should be at the top! ========
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-
-    "corsheaders.middleware.CorsMiddleware",
 
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",

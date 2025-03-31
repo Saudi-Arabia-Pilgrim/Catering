@@ -1,14 +1,17 @@
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from apps.base.views import CustomGenericAPIView
 from apps.authentication.serializers import (
     CustomTokenObtainPairSerializer,
 )
 
 
-class CustomTokenObtainPairView(TokenObtainPairView):
+class CustomTokenObtainPairView(TokenObtainPairView, CustomGenericAPIView):
     """
-    Custom token view that uses the CustomTokenObtainPairSerializer.
+    API endpoint for login.
+    params: username, password
+    returns: token, refresh_token
     """
     permission_classes = []
     authentication_classes = []
