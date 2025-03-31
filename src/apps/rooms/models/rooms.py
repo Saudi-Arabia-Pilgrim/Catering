@@ -41,6 +41,10 @@ class Room(AbstractBaseModel):
         default=0,
         help_text="Number of currently occupied rooms. Defaults to 0."
     )
+    partial_occupied_count = models.PositiveSmallIntegerField(default=0,
+        help_text="Number of guests in the currently partially occupied room, if any."
+    )
+
     net_price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -61,12 +65,13 @@ class Room(AbstractBaseModel):
     @property
     def available_count(self):
         """
-        Calculates the number of available rooms of this type.
-
-        Returns:
-            int: The number of available rooms. Ensures non-negative values.
+        Fizik xonalar soni:
+          count - (occupied_count + (1 if partial room exists else 0))
+        Agar partial xona mavjud bo‘lsa, u yangi buyurtma uchun ham ishlatiladi,
+        ammo shu xona alohida yangi band xona sifatida hisoblanmaydi.
         """
-        return max(self.count - self.occupied_count, 0)
+        partial_room = 1 if self.partial_occupied_count > 0 else 0
+        return max(self.count - self.occupied_count - partial_room, 0)
 
     def save(self, *args, **kwargs):
         self.net_price = self.net_price or 0
@@ -76,4 +81,4 @@ class Room(AbstractBaseModel):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.room_type}"
+        return f"{self.gross_price}"

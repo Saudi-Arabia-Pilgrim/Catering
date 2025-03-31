@@ -22,12 +22,18 @@ class HotelListAPIView(CustomGenericAPIView):
         Prefetch(
             "rooms",
             queryset=Room.objects.select_related("room_type")
-            .only('id', 'room_type__name', 'gross_price', 'occupied_count', 'count', 'hotel_id', 'room_type_id')
+            .only(
+                'id', 'room_type__name', 'gross_price', 'occupied_count',
+                'count', 'hotel_id', 'room_type_id', 'capacity', 'net_price'
+            )
         ),
         Prefetch(
             "guests",
             queryset=Guest.objects.select_related('room', 'room__room_type')
-            .only('id', 'full_name', 'order_number', 'room_id', 'gender', 'check_in', 'check_out', 'hotel_id')
+            .only(
+                'id', 'full_name', 'order_number', 'room_id',
+                'gender', 'check_in', 'check_out', 'hotel_id'
+            )
         )
     ).all()
     serializer_class = HotelSerializer
