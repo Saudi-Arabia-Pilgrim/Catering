@@ -1,4 +1,4 @@
-from decimal import ROUND_DOWN, Decimal
+from decimal import ROUND_UP, Decimal
 from django.db import models
 from django.db.models import Sum, DecimalField
 from django.utils.text import slugify
@@ -6,6 +6,7 @@ from django.core.validators import MinValueValidator
 
 from apps.base.exceptions.exception_error import CustomExceptionError
 from apps.base.models import AbstractBaseModel
+from apps.foods.utils import CalculatePrices
 from apps.menus.models import Menu
 
 
@@ -58,7 +59,7 @@ class Food(AbstractBaseModel):
         return self.recipes.only("price", "status")
 
     def calculate_prices(self, recipes=None):
-        if not recipes:
+        if recipes is None:
             recipes = self.recipes.all()
     
         has_zero_price = recipes.filter(price=0).exists()
@@ -70,14 +71,13 @@ class Food(AbstractBaseModel):
                 total=Sum("price", output_field=DecimalField())
             )["total"] or Decimal(0)
     
-        self.net_price = net_price.quantize(Decimal("0.0001"), rounding=ROUND_DOWN)
-        self.gross_price = (self.net_price + self.profit).quantize(Decimal("0.0001"), rounding=ROUND_DOWN) \
+        self.net_price = net_price.quantize(Decimal("0.0001"), rounding=ROUND_UP)
+        self.gross_price = (self.net_price + self.profit).quantize(Decimal("0.0001"), rounding=ROUND_UP) \
             if net_price > 0 else 0
 
     def check_status(self, recipes=None):
-        if not recipes:
+        if recipes is None:
             self.status = not self.recipes.filter(status=False).exists()
-            print(self.recipes.filter(status=False))
         else:
             self.status = all([recipe.status for recipe in recipes])
 
@@ -85,7 +85,7 @@ class Food(AbstractBaseModel):
         slug = slugify(self.name)
         obj = self.__class__.objects.filter(slug=slug).exclude(pk=self.pk).first()
         if obj:
-            raise CustomExceptionError(code=400, detail="A measure with this name already exists")
+            raise CustomExceptionError(code=400, detail="A food with this name already exists")
         self.slug = slug
         super().save(*args, **kwargs)
 
@@ -99,12 +99,19 @@ class Food(AbstractBaseModel):
             menu.calculate_prices()
 
         Menu.objects.bulk_update(menus, ['net_price', 'gross_price', 'status'])
-        for menu in menus:
-            menu.changing_dependent_objects()
+        CalculatePrices.calculate_objects(objs=menus, type="food")
 
     def change_dependent(self):
+        self.change_object()
+        self.save()
+        self.changing_dependent_objects()
+    
+    def change_object(self):
         recipes = self.get_food_recipes()
         self.check_status(recipes)
         self.calculate_prices(recipes)
-        self.save()
-        self.changing_dependent_objects()
+
+    def delete(self, using=None, keep_parents=False):
+        if self.menus.exists():
+            raise CustomExceptionError(code=423, detail="This object cannot be deleted because it is referenced by other objects.")
+        return super().delete(using, keep_parents)

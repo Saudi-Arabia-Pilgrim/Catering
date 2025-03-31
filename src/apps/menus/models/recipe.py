@@ -1,8 +1,9 @@
-from decimal import ROUND_DOWN, Decimal
+from decimal import ROUND_UP, Decimal
 
 from django.db import models
-from django.db.models import (Sum, DecimalField,Q,
-                              OuterRef, Exists)
+from django.db.models import (DecimalField,Q, F,
+                              OuterRef, Exists, Value)
+from django.db.models.functions import Coalesce
 from django.core.validators import MinValueValidator
 from django.utils.text import slugify
 
@@ -76,18 +77,16 @@ class Recipe(AbstractBaseModel):
         self.status = all(menu.status for menu in menus)
 
         super().save(*args, **kwargs)
-        del menus
     
     def calculate_prices(self, menus=None):
         Menu = self.menu_dinner.__class__
-
-        if self.pk is None:
+        if self._state.adding:
             if menus is None:
                 menus = self.get_menus()
             has_zero_price = any(menu.net_price == 0 for menu in menus)
-            net_price = Decimal(0) if has_zero_price else sum(
+            net_price = Decimal(0 if has_zero_price else sum(
                 menu.net_price for menu in menus if menu
-            )
+            ))
         else:
             has_zero_price_menu = Menu.objects.filter(
                 Q(pk=OuterRef("menu_breakfast_id")) |
@@ -99,9 +98,9 @@ class Recipe(AbstractBaseModel):
             net_price_qs = Recipe.objects.filter(pk=self.pk).annotate(
                 has_zero_price=Exists(has_zero_price_menu),
                 total_price=(
-                    Sum("menu_breakfast__net_price", output_field=DecimalField()) +
-                    Sum("menu_lunch__net_price", output_field=DecimalField()) +
-                    Sum("menu_dinner__net_price", output_field=DecimalField())
+                    Coalesce(F("menu_breakfast__net_price"), Value(0), output_field=DecimalField()) +
+                    Coalesce(F("menu_lunch__net_price"), Value(0), output_field=DecimalField()) +
+                    Coalesce(F("menu_dinner__net_price"), Value(0), output_field=DecimalField())
                 )
             ).values("has_zero_price", "total_price").first()
 
@@ -112,8 +111,8 @@ class Recipe(AbstractBaseModel):
             else:
                 net_price = net_price_qs["total_price"] or Decimal(0)
 
-        self.net_price = net_price.quantize(Decimal("0.0001"), rounding=ROUND_DOWN)
+        self.net_price = net_price.quantize(Decimal("0.0001"), rounding=ROUND_UP)
         self.gross_price = (
-            (self.net_price + self.profit).quantize(Decimal("0.0001"), rounding=ROUND_DOWN)
+            (self.net_price + self.profit).quantize(Decimal("0.0001"), rounding=ROUND_UP)
             if net_price > 0 else Decimal(0)
         )

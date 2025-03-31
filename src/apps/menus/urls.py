@@ -11,5 +11,6 @@ urlpatterns = [
     # === Menu URLs === 
     path('', views.MenuListCreateAPIView.as_view()),
     path('<str:pk>/', views.MenuRetrieveUpdateDestroyAPIView.as_view()),
+    path('on/recipe/<str:pk>/', views.MenusOnRecipe.as_view()),
 
 ]

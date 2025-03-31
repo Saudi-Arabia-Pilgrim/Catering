@@ -4,12 +4,13 @@ from rest_framework.exceptions import APIException, _get_error_details
 class CustomExceptionError(APIException):
     default_detail = 'Error'
     default_code = 400
+    status_code = 400
 
     def __init__(self, code: int = None, detail: str | dict | list | tuple = None) -> None:
         if detail is None:
             detail = self.default_detail
-        if code is None:
-            code = self.default_code
+        if code is not None:
+            self.status_code = code
 
         if isinstance(detail, tuple):
             detail = list(detail)

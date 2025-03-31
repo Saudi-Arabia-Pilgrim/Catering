@@ -19,20 +19,19 @@ def post_save_warehouse(sender, instance, created, **kwargs):
         if product_count > 0:
             product.status = True
 
-            food_recipes = list(RecipeFood.objects.filter(product=product))
+            food_recipes = RecipeFood.objects.filter(product=product)
             recipes_status = {"False": [], "True": []}
 
-            warehouse = food_recipes[0].get_product_in_warehouse() if food_recipes[0] else None
+            warehouse = food_recipes.first().get_product_in_warehouse() if food_recipes.first() else None
             for food_recipe in food_recipes:
                 food_recipe.status = food_recipe.count <= product_count
                 recipes_status["True" if food_recipe.status else "False"].append(food_recipe.id)
-                food_recipe.calculate_prices(warehouse)
-
+                food_recipe.calculate_prices(warehouse[0])
             RecipeFood.objects.bulk_update(food_recipes, ['status', 'price'])
 
             active_foods = Food.objects.filter(recipes__id__in=recipes_status["True"]).annotate(
-                has_inactive_recipes=Exists(RecipeFood.objects.filter(food=OuterRef("pk"), status=False))).prefetch_related("recipes")
-            inactive_foods = Food.objects.filter(recipes__id__in=recipes_status["False"]).prefetch_related("recipes")
+                has_inactive_recipes=Exists(RecipeFood.objects.filter(foods__id__in=OuterRef("pk"), status=False))).distinct().prefetch_related("recipes")
+            inactive_foods = Food.objects.filter(recipes__id__in=recipes_status["False"]).distinct().prefetch_related("recipes")
 
             for food in active_foods:
                 food.status = not food.has_inactive_recipes
@@ -45,8 +44,8 @@ def post_save_warehouse(sender, instance, created, **kwargs):
 
             active_menus = Menu.objects.filter(foods__in=active_foods.filter(status=True)).annotate(
                 has_inactive_food=Exists(Food.objects.filter(menus=OuterRef("pk"), status=False))
-            ).prefetch_related("foods")
-            inactive_menus = Menu.objects.filter(foods__in=active_foods.filter(status=False) | inactive_foods).prefetch_related("foods")
+            ).distinct().prefetch_related("foods")
+            inactive_menus = Menu.objects.filter(foods__in=active_foods.filter(status=False) | inactive_foods).distinct().prefetch_related("foods")
 
             for menu in active_menus:
                 menu.status = not menu.has_inactive_food
@@ -67,22 +66,18 @@ def post_save_warehouse(sender, instance, created, **kwargs):
             ).annotate(
                 has_inactive_menu=Exists(
                     Menu.objects.filter(
-                        OuterRef("menu_breakfast"),
-                        status=False
-                    ) | Menu.objects.filter(
-                        OuterRef("menu_lunch"),
-                        status=False
-                    ) | Menu.objects.filter(
-                        OuterRef("menu_dinner"),
+                        Q(id=OuterRef("menu_breakfast")) |
+                        Q(id=OuterRef("menu_lunch")) |
+                        Q(id=OuterRef("menu_dinner")),
                         status=False
                     )
                 )
-            )
+            ).distinct()
             inactive_recipes = Recipe.objects.filter(
                 Q(menu_breakfast__in=inactive_menus) |
                 Q(menu_lunch__in=inactive_menus) |
                 Q(menu_dinner__in=inactive_menus)
-            )
+            ).distinct()
 
             for recipe in active_recipes:
                 recipe.status = not recipe.has_inactive_menu

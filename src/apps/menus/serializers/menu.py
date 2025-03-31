@@ -1,9 +1,13 @@
+from rest_framework import serializers
+
 from apps.base.exceptions import CustomExceptionError
 from apps.base.serializers import CustomModelSerializer
 from apps.menus.models import Menu
 
 
 class MenuSerializer(CustomModelSerializer):
+    foods_name = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Menu
         exclude = ["slug", "created_at", "created_by", "updated_at", "updated_by"]
@@ -19,3 +23,6 @@ class MenuSerializer(CustomModelSerializer):
         instance = super().save(**kwargs)
         instance.change_dependent()
         return instance
+    
+    def get_foods_name(self, obj):
+        return [food.name for food in obj.foods.all()]
