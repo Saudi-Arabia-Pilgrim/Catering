@@ -6,13 +6,13 @@ from apps.base.serializers import CustomModelSerializer
 from apps.guests.models import Guest
 from apps.guests.serializers.order_guests import GuestForHotelOrderSerializer
 from apps.orders.models.hotel_order import HotelOrder
-from apps.rooms.serializers import RoomHotelSerializer
 
 
 class HotelOrderGuestSerializer(CustomModelSerializer):
     guests = GuestForHotelOrderSerializer(many=True, read_only=True)
     guest_details = serializers.ListField(write_only=True, child=serializers.DictField())
-    order_status = serializers.ChoiceField(HotelOrder.OrderStatus.choices, required=False)
+
+    order_status = serializers.ChoiceField(choices=HotelOrder.OrderStatus.choices, required=False)
 
     class Meta:
         model = HotelOrder
@@ -26,21 +26,25 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
             "check_in",
             "check_out",
             "count_of_people",
-            "created_at"
+            "created_at",
+            "order_id",
+            "general_cost"
         ]
         read_only_fields = ["order_id", "general_cost"]
 
     def validate(self, data):
-        count_of_people = data["count_of_people"]
+        count_of_people = data.get("count_of_people", 0)
         guests_data = data.get("guest_details", [])
 
-        if len(guests_data) != count_of_people:
-            raise serializers.ValidationError("Number of guests must match the number of people specified.")
+        if count_of_people != len(guests_data):
+            raise serializers.ValidationError("Mehmonlar soni kiritilgan odamlar soniga teng bo‘lishi kerak.")
 
         return data
 
     def create(self, validated_data):
+        """HotelOrder yaratish va mehmonlarni qo‘shish"""
         guests_data = validated_data.pop("guest_details")
+
         with transaction.atomic():
             hotel_order = HotelOrder.objects.create(**validated_data)
             guests = []
@@ -60,17 +64,13 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
 
 
 # {
-#     "hotel": "1203f8fd-4c8e-4e2c-9052-af0fb28194c9",
+#     "hotel": "ad72419c-4dd1-4021-aa5d-e46de1257ee1",
 #     "order_status": "Active",
-#     "room": "5d2cd12b-404a-4c34-a292-1647c2bb927b",
+#     "room": "56c7a8ff-e928-4664-ada1-afd6ec7d03f2",
 #     "guest_details": [
-#       {"full_name": "John Doe", "gender": 1},
-#       {"full_name": "Alex Hakson", "gender": 1},
-#       {"full_name": "John Hetson", "gender": 1},
-#       {"full_name": "Genry Morgan", "gender": 1}
+#     {"full_name": "Sakura", "gender": 1}
 # ],
-#     "check_in": "25.04.2025 14:50",
-#     "check_out": "30.04.2025 14:50",
-#     "count_of_people": 4
+#     "check_in": "22.03.2025 15:50",
+#     "check_out": "28.03.2025 15:50",
+#     "count_of_people": 1
 # }
-
