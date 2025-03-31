@@ -1,4 +1,4 @@
-from decimal import ROUND_DOWN, Decimal
+from decimal import ROUND_UP, Decimal
 from django.db import models
 from django.db.models import (Q, OuterRef, Exists, 
                               Sum, DecimalField)
@@ -54,7 +54,7 @@ class Menu(AbstractBaseModel):
         if foods is None:
             foods = self.foods.all()
 
-        has_zero_price = foods.filter(net_price=0).exists()
+        has_zero_price = any(food.net_price == 0 for food in foods)
 
         if has_zero_price:
             net_price = Decimal(0)
@@ -63,14 +63,14 @@ class Menu(AbstractBaseModel):
                 total=Sum("net_price", output_field=DecimalField())
             )["total"] or Decimal(0)
 
-        self.net_price = net_price.quantize(Decimal("0.0001"), rounding=ROUND_DOWN)
-        self.gross_price = (self.net_price + self.profit).quantize(Decimal("0.0001"), rounding=ROUND_DOWN) \
+        self.net_price = net_price.quantize(Decimal("0.0001"), rounding=ROUND_UP)
+        self.gross_price = (self.net_price + self.profit).quantize(Decimal("0.0001"), rounding=ROUND_UP) \
             if net_price > 0 else 0
 
     def change_status(self, foods=None):
-        if not foods:
+        if foods is None:
             foods = self.get_foods()
-        self.status = not foods.filter(status=False).exists()
+        self.status = all(food.status for food in foods)
 
     def save(self, *args, **kwargs):
         slug = slugify(self.name)
@@ -99,8 +99,11 @@ class Menu(AbstractBaseModel):
         Recipe.objects.bulk_update(recipes, ["status", "net_price", "gross_price"])
 
     def change_dependent(self):
+        self.change_object()
+        self.save()
+        self.changing_dependent_objects()
+
+    def change_object(self):
         foods = self.get_foods()
         self.change_status(foods)
         self.calculate_prices(foods)
-        self.save()
-        self.changing_dependent_objects()

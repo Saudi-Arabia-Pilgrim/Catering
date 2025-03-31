@@ -14,8 +14,11 @@ router = DefaultRouter()
 router.register(r'', UserViewSet)
 
 urlpatterns = [
-    path('', include(router.urls)),
+    # Reset password endpoint (for authenticated users)
+    path('reset-password/', ResetPasswordAPIView.as_view(), name='reset_password'),
     path('profile/', UserProfileAPIView.as_view(), name='profile'),
+
+    path('', include(router.urls)),
 
 
     # User authentication endpoints
@@ -26,6 +29,4 @@ urlpatterns = [
     path('forgot-password/email/verify-code/', ForgotPasswordThroughEmailVerifyCodeAPIView.as_view(), name='forgot_password_email_verify'),
     path('forgot-password/email/set-password/', ForgotPasswordThroughEmailChangePasswordAPIView.as_view(), name='forgot_password_email_new_password'),
 
-    # Reset password endpoint (for authenticated users)
-    path('reset-password/', ResetPasswordAPIView.as_view(), name='reset_password'),
 ]

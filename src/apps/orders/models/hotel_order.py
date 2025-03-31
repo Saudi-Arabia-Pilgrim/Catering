@@ -1,8 +1,10 @@
 import random
+from math import ceil
 
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 
+from apps.base.exceptions import CustomExceptionError
 from apps.base.models import AbstractBaseModel
 
 
@@ -57,21 +59,34 @@ class HotelOrder(AbstractBaseModel):
             raise ValidationError(f"This room can accommodate only {room.capacity} guest(s).")
 
     def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        if is_new:
+            if not self.order_id:
+                self.order_id = f"№{random.randint(1000000, 9999999)}"
+            room = self.room
+
+            needed_rooms = ceil(self.count_of_people / self.room.capacity)
+            if room.available_count < needed_rooms:
+                raise CustomExceptionError(code=400, detail="Here not enough empty rooms for this order.")
+
+            with transaction.atomic():
+                room.occupied_count += needed_rooms
+                room.save(update_fields=["occupied_count"])
+                self.full_clean()
+                super().save(*args, **kwargs)
+        else:
+            self.full_clean()
+            super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
         room = self.room
-
-        if not self.order_id:
-            self.order_id = f"№{random.randint(1000000, 9999999)}"
-
-        if room.available_count <= 1:
-            raise ValidationError("Not enough available rooms for this order.")
+        needed_rooms = ceil(self.count_of_people / room.capacity)
 
         with transaction.atomic():
-            room.occupied_count += self.count_of_people
-            if room.occupied_count >= room.count:
-                room.status = False
+            room.occupied_count = max(room.occupied_count - needed_rooms, 0)
             room.save(update_fields=["occupied_count"])
+            super().delete(*args, **kwargs)
 
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.order_id}"

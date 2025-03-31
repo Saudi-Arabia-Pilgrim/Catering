@@ -70,4 +70,4 @@ class HotelOrderDeleteAPIView(CustomGenericAPIView):
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
-        return Response(instance)
+        return Response(status=204)

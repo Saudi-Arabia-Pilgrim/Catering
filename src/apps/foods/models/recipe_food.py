@@ -1,9 +1,11 @@
-from decimal import ROUND_DOWN, Decimal
+from decimal import ROUND_UP, Decimal
 from django.db import models
 from django.core.validators import MinValueValidator
 
+from apps.base.exceptions import CustomExceptionError
 from apps.base.models import AbstractBaseModel
 from apps.foods.models.food import Food
+from apps.foods.utils import CalculatePrices
 from apps.warehouses.models import Warehouse
 
 
@@ -32,14 +34,15 @@ class RecipeFood(AbstractBaseModel):
         """
         Returns a string representation of the RecipeFood instance.
         """
-        return f'{self.product.name} - {self.count} - {self.price}'
+        return f'{self.count} - {self.price}'
     
     def get_product_in_warehouse(self):
         product = self.product
-        return Warehouse.objects.filter(product=product), product
+        return Warehouse.objects.filter(product=product).select_related("product"), product
 
     def calculate_net_price(self, warehouse):
         warehouse = warehouse.annotate(
+            exact_quantity = models.F("count") * models.F("product__difference_measures"),
             net_price=models.ExpressionWrapper(
                 models.F("gross_price") / models.Case(
                     models.When(product__difference_measures__isnull=False, then=models.F("arrived_count") * models.F("product__difference_measures")),
@@ -50,7 +53,7 @@ class RecipeFood(AbstractBaseModel):
             )
         )
 
-        price_obj = warehouse.filter(count__gte=self.count).order_by("net_price").first() or \
+        price_obj = warehouse.filter(exact_quantity__gte=self.count).order_by("net_price").first() or \
                     warehouse.order_by("-net_price").first()
         return float(price_obj.get_net_price()) if price_obj else float(self.price or 0)
     
@@ -59,14 +62,14 @@ class RecipeFood(AbstractBaseModel):
             warehouse, _ = self.get_product_in_warehouse()
 
         net_price = self.calculate_net_price(warehouse)
-        self.price = Decimal(net_price * self.count).quantize(Decimal("0.0001"), rounding=ROUND_DOWN)
+        self.price = Decimal(net_price * self.count).quantize(Decimal("0.0001"), rounding=ROUND_UP)
 
     def save(self, *args, **kwargs):
         warehouse, product = self.get_product_in_warehouse()
         self.calculate_prices(warehouse=warehouse)
         product_count = warehouse.aggregate(total=models.Sum("count"))['total'] or 0
 
-        if product_count == 0 or self.count > product_count * product.difference_product:
+        if product_count == 0 or self.count > product_count * product.difference_measures:
             self.status = False
         else:
             self.status = True
@@ -75,9 +78,13 @@ class RecipeFood(AbstractBaseModel):
         self.changing_dependent_objects()
 
     def changing_dependent_objects(self):
-        foods = self.foods.all().prefetch_related("recipes")
+        foods = list(self.foods.all().prefetch_related("recipes").distinct())
         for food in foods:
             food.calculate_prices()
         Food.objects.bulk_update(foods, ["net_price", "gross_price"])
-        for food in foods:
-            food.changing_dependent_objects()
+        CalculatePrices.calculate_objects(objs=foods, type="recipe_food")
+
+    def delete(self, using=None, keep_parents=False):
+        if self.foods.exists():
+            raise CustomExceptionError(code=423, detail="This object cannot be deleted because it is referenced by other objects.")
+        return super().delete(using=None, keep_parents=False)

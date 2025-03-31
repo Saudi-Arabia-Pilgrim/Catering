@@ -9,6 +9,9 @@ from apps.base.exceptions import CustomExceptionError
 from apps.base.models import AbstractBaseModel
 from apps.users.utils import CustomUserManager, validate_gmail
 
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
+from rest_framework_simplejwt.tokens import RefreshToken
+
 
 class CustomUser(AbstractBaseModel, AbstractBaseUser, PermissionsMixin):
     """
@@ -128,6 +131,18 @@ class CustomUser(AbstractBaseModel, AbstractBaseUser, PermissionsMixin):
         except Exception as e:
             raise CustomExceptionError(code=400, detail=str(e))
 
+    @classmethod
+    def revoke_user_tokens(cls, user):
+        """
+        Revoke all tokens for the user.
+        """
+        token_strings = OutstandingToken.objects.filter(user_id=user.id).values_list('token', flat=True)
+        try:
+            for token_string in token_strings:
+                refresh_token = RefreshToken(token_string)
+                refresh_token.blacklist()
+        except Exception as e:
+            pass
 
     class Meta:
         db_table = 'user'
