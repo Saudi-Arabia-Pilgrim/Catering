@@ -2,16 +2,21 @@ from datetime import timedelta
 
 from django.conf import settings
 
+
+ACCESS_TOKEN_LIFETIME = timedelta(days=1) if settings.ENV == 'development' else timedelta(minutes=10)
+REFRESH_TOKEN_LIFETIME = timedelta(days=2) if settings.ENV == 'development' else timedelta(days=1)
+
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": ACCESS_TOKEN_LIFETIME,
+    "REFRESH_TOKEN_LIFETIME": REFRESH_TOKEN_LIFETIME,
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": True,
 
-    "ALGORITHM": "HS256",
-    "SIGNING_KEY": settings.SIGNING_KEY,
-    "VERIFYING_KEY": "",
+    "ALGORITHM": "RS512",
+    "SIGNING_KEY": settings.PRIVATE_KEY,
+    "VERIFYING_KEY": settings.PUBLIC_KEY,
+
     "AUDIENCE": None,
     "ISSUER": None,
     "JSON_ENCODER": None,

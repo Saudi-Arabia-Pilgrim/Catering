@@ -36,7 +36,6 @@ class AbstractBaseModel(models.Model):
         :return: None
         """
         normalize_text_fields(self)
-        self.full_clean()
         super().save(*args, **kwargs)
 
     class Meta:

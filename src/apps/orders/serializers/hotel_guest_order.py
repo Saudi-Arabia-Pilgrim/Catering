@@ -6,6 +6,7 @@ from apps.base.serializers import CustomModelSerializer
 from apps.guests.models import Guest
 from apps.guests.serializers.order_guests import GuestForHotelOrderSerializer
 from apps.orders.models.hotel_order import HotelOrder
+from apps.rooms.serializers import RoomHotelSerializer
 
 
 class HotelOrderGuestSerializer(CustomModelSerializer):
@@ -59,15 +60,17 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
 
 
 # {
-#     "hotel": "e6393ea8-8347-4cc4-aff5-de695dfa24d2",
+#     "hotel": "1203f8fd-4c8e-4e2c-9052-af0fb28194c9",
 #     "order_status": "Active",
-#     "room": "14545c65-efa8-43ad-b09e-d509f073c4b5",
-#    "guest_details": [
-#         {"full_name": "John Doe", "gender": 1},
-#         {"full_name": "Alex Hakson", "gender": 1}
-#     ],
-#     "count_of_people": 2,
-#     "check_in": "20.05.2025 14:50",
-#     "check_out": "30.05.2025 17:49"
+#     "room": "5d2cd12b-404a-4c34-a292-1647c2bb927b",
+#     "guest_details": [
+#       {"full_name": "John Doe", "gender": 1},
+#       {"full_name": "Alex Hakson", "gender": 1},
+#       {"full_name": "John Hetson", "gender": 1},
+#       {"full_name": "Genry Morgan", "gender": 1}
+# ],
+#     "check_in": "25.04.2025 14:50",
+#     "check_out": "30.04.2025 14:50",
+#     "count_of_people": 4
 # }
 

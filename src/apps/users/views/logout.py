@@ -3,7 +3,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
 
 class UserLogoutView(APIView):
     """
@@ -11,18 +10,6 @@ class UserLogoutView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(
-        request={'type': 'object', 'properties': {'refresh': {'type': 'string'}}},
-        responses={205: None},
-        description="Logout by blacklisting the refresh token.",
-        examples=[
-            OpenApiExample(
-                'Logout Example',
-                value={'refresh': 'your-refresh-token'},
-                request_only=True,
-            ),
-        ]
-    )
     def post(self, request):
         try:
             refresh_token = request.data["refresh"]
