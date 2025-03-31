@@ -1,3 +1,5 @@
+from rest_framework import serializers
+
 from apps.guests.serializers.order_guests import GuestForHotelOrderSerializer
 from apps.hotels.models import Hotel
 from apps.base.serializers import CustomModelSerializer
@@ -14,6 +16,8 @@ class HotelSerializer(CustomModelSerializer):
     rooms = RoomSerializer(many=True, help_text="List of rooms associated with the hotel.", read_only=True)
     guests = GuestForHotelOrderSerializer(many=True, read_only=True)
 
+    total_guests_price = serializers.SerializerMethodField()
+
     class Meta:
         model = Hotel
         fields = [
@@ -25,6 +29,7 @@ class HotelSerializer(CustomModelSerializer):
             "rating",
             "rooms",
             "guests",
+            "total_guests_price"
         ]
         help_texts = {
             "id": "Unique identifier for the hotel.",
@@ -35,21 +40,24 @@ class HotelSerializer(CustomModelSerializer):
             "rating": "Hotel rating (0.00 - 5.00).",
         }
 
-    def to_representation(self, instance):
-        # Optimize the serialization process
-        representation = super().to_representation(instance)
+    def get_total_guests_price(self, obj):
+        guests_data = GuestForHotelOrderSerializer(obj.guests.all(), many=True).data
+        return sum(
+            guest.get("total_price", 0)
+            for guest in guests_data
+            if guest.get("total_price") is not None
+        )
 
-        # Access prefetched data efficiently
-        representation['rooms'] = RoomSerializer(
-            instance.rooms.all(),
-            many=True,
-            context=self.context
-        ).data
 
-        representation['guests'] = GuestForHotelOrderSerializer(
-            instance.guests.all(),
-            many=True,
-            context=self.context
-        ).data
-
-        return representation
+# {
+#     "hotel": "ad72419c-4dd1-4021-aa5d-e46de1257ee1",
+#     "order_status": "Active",
+#     "room": "e05b85e7-0131-4eca-b157-7917df9bc08e",
+#     "guest_details": [
+#         {"full_name": "John Maxson", "gender": 1},
+#         {"full_name": "Julian", "gender": 1}
+#     ],
+#     "check_in": "31.03.2025 15:50",
+#     "check_out": "5.04.2025 19:50",
+#     "count_of_people": 2
+# }

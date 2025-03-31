@@ -64,14 +64,7 @@ class Room(AbstractBaseModel):
 
     @property
     def available_count(self):
-        """
-        Fizik xonalar soni:
-          count - (occupied_count + (1 if partial room exists else 0))
-        Agar partial xona mavjud bo‘lsa, u yangi buyurtma uchun ham ishlatiladi,
-        ammo shu xona alohida yangi band xona sifatida hisoblanmaydi.
-        """
-        partial_room = 1 if self.partial_occupied_count > 0 else 0
-        return max(self.count - self.occupied_count - partial_room, 0)
+        return max(self.count - self.occupied_count, 0)
 
     def save(self, *args, **kwargs):
         self.net_price = self.net_price or 0
