@@ -83,7 +83,7 @@ class Food(AbstractBaseModel):
 
     def save(self, *args, **kwargs):
         slug = slugify(self.name)
-        obj = self.__class__.objects.filter(slug=slug).exclude(pk=self.pk).first()
+        obj = self.__class__.objects.filter(slug=slug).exclude(pk=self.pk).exists()
         if obj:
             raise CustomExceptionError(code=400, detail="A food with this name already exists")
         self.slug = slug

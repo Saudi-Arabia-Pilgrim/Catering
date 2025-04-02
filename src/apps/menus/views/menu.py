@@ -7,12 +7,17 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from apps.base.views import CustomListCreateAPIView, CustomRetrieveUpdateDestroyAPIView, CustomGenericAPIView
 from apps.menus.models import Menu
-from apps.menus.serializers import MenuSerializer
+from apps.menus.serializers import MenuSerializer, MenuCreateUpdateSerializer
 
 
 class MenuRetrieveUpdateDestroyAPIView(CustomRetrieveUpdateDestroyAPIView):
     queryset = Menu.objects.all().prefetch_related("foods")
     serializer_class = MenuSerializer
+
+    def get_serializer(self, *args, **kwargs):
+        if self.request.method in ["PUT", "PATCH"] and self.request.data:
+            return MenuCreateUpdateSerializer(*args, **kwargs)
+        return super().get_serializer(*args, **kwargs)
 
 
 class MenuListCreateAPIView(CustomListCreateAPIView):
@@ -21,6 +26,11 @@ class MenuListCreateAPIView(CustomListCreateAPIView):
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_fields = ["status"]
     search_fields = ["name", "gross_price", "profit"]
+
+    def get_serializer(self, *args, **kwargs):
+        if self.request.method == "POST":
+            return MenuCreateUpdateSerializer(*args, **kwargs)
+        return super().get_serializer(*args, **kwargs)
 
 
 class MenusOnRecipe(CustomGenericAPIView):
