@@ -1,12 +1,11 @@
 from django.db.models import Q
-from django.db import transaction, connection
+from django.db import transaction
 from django.apps import apps
 
 
 class CalculatePrices():
     @classmethod
     def calculate_objects(cls, objs, type):
-        print(len(connection.queries))
         with transaction.atomic():
             match type:
                 case "recipe_food":
@@ -19,7 +18,6 @@ class CalculatePrices():
                     cls.calculate_recipes(cls.get_recipes(objs))
                 case "menu":
                     cls.calculate_recipes(objs)
-        print(len(connection.queries))
 
     @classmethod
     def get_menus(cls, foods):
