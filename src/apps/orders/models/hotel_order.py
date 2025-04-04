@@ -6,6 +6,7 @@ from django.db import models, transaction
 
 from apps.base.exceptions import CustomExceptionError
 from apps.base.models import AbstractBaseModel
+from apps.orders.utils import new_id
 
 
 class HotelOrderManager(models.Manager):
@@ -32,37 +33,45 @@ class HotelOrder(AbstractBaseModel):
         on_delete=models.CASCADE,
         related_name="orders"
     )
-    guests = models.ManyToManyField("guests.Guest", related_name="hotel_orders", blank=True)
-    order_status = models.CharField(choices=OrderStatus.choices, blank=True, null=True)
+    guests = models.ManyToManyField(
+        "guests.Guest",
+        related_name="hotel_orders",
+        blank=True
+    )
+    order_status = models.CharField(
+        choices=OrderStatus.choices,
+        default=OrderStatus.ACTIVE,
+        blank=True,
+        null=True
+    )
 
-    order_id = models.CharField(max_length=8, unique=True, editable=False)
-    status = models.BooleanField(default=False)
+    order_id = models.CharField(default=new_id,
+                                max_length=8,
+                                unique=True,
+                                editable=False
+                                )
     food_service = models.BooleanField(default=False)
     check_in = models.DateTimeField()
     check_out = models.DateTimeField()
-    count_of_people = models.PositiveSmallIntegerField() # count_of_people xonani nechta kishi sig`ishidan kotta bo`lishi kerak emas.
-    general_cost = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    count_of_people = models.PositiveSmallIntegerField()  # Bu xona sig‘imidan oshmasligi lozim.
+    general_cost = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
 
     class Meta:
         ordering = ['-created_at']
 
     def clean(self):
+        if self.check_in >= self.check_out:
+            raise ValidationError("Check-out sanasi check-in sanasidan keyin bo‘lishi kerak.")
         days = (self.check_out - self.check_in).days
         if days < 1:
-            raise ValidationError("guest must live again 1 days.")
-
-        room = self.room
-
-        self.general_cost = room.gross_price * days
-
-        if self.count_of_people > room.capacity:
-            raise ValidationError(f"This room can accommodate only {room.capacity} guest(s).")
+            raise ValidationError("Mehmon kamida 1 kun qolishi kerak.")
+        if self.count_of_people > self.room.capacity:
+            raise ValidationError(f"Bu xonada faqat {self.room.capacity} kishi yashashi mumkin.")
+        self.general_cost = self.room.gross_price * days
 
     def save(self, *args, **kwargs):
         is_new = self.pk is None
         if is_new:
-            if not self.order_id:
-                self.order_id = f"№{random.randint(1000000, 9999999)}"
             room = self.room
 
             needed_rooms = ceil(self.count_of_people / self.room.capacity)
@@ -86,7 +95,6 @@ class HotelOrder(AbstractBaseModel):
             room.occupied_count = max(room.occupied_count - needed_rooms, 0)
             room.save(update_fields=["occupied_count"])
             super().delete(*args, **kwargs)
-
 
     def __str__(self):
         return f"{self.order_id}"
