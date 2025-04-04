@@ -14,7 +14,7 @@
 .idea
 
 .vscode
-
+src/media
 src/static/
 src/static
 src/celerybeat-schedule
