@@ -9,7 +9,7 @@ from apps.users.permissions import RoleBasedPermission
 class UserViewSet(CustomModelViewSet):
     queryset = get_user_model().objects.all()
     serializer_class = UserSerializer
-    department = 'users'  # This is used by RoleBasedPermission
+    department = 'hr'  # This is used by RoleBasedPermission
 
     def get_permissions(self):
         """
@@ -44,6 +44,7 @@ class UserViewSet(CustomModelViewSet):
         if not user.is_authenticated:
             return self.queryset.none()
 
-        if user.is_superuser or getattr(user, 'role', '') == 'admin':
+        if user.is_superuser or getattr(user, 'role', '') == 'ceo' or getattr(user, 'role', '') == 'hr':
             return self.queryset
         return self.queryset.filter(id=user.id)
+

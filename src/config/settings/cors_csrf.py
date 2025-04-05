@@ -6,7 +6,6 @@ CSRF_TRUSTED_ORIGINS = [
     "http://collie-refined-amazingly.ngrok-free.app",
     r"^http://localhost:\d+$",  # Allow localhost with any port
     r"^http://127\.0\.0\.1:\d+$",  # Allow 127.0.0.1 with any port
-    r"https://wider-app.vercel.app"
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -16,7 +15,6 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     "http://collie-refined-amazingly.ngrok-free.app",
     r"^http://localhost:\d+$",  # Allow localhost with any port
     r"^http://127\.0\.0\.1:\d+$",  # Allow 127.0.0.1 with any port
-    r"https://wider-app.vercel.app"
 ]
 
 CORS_ALLOW_METHODS = (
