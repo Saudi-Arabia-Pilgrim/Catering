@@ -14,7 +14,7 @@ class CustomUserAdmin(UserAdmin):
         (_('Department'), {'fields': ('role',)}),
         (_('Additional info'), {
             'fields': ('date_come', 'from_come', 'passport_number', 'given_by', 'validity_period', 
-                      'expenses', 'monthly_salary', 'general_expenses'),
+                      'total_expenses', 'base_salary', 'total_general_expenses'),
         }),
         (_('Permissions'), {
             'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),

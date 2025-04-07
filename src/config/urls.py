@@ -24,9 +24,14 @@ urlpatterns = [
 
     # === URLs of Mukhsin ===
 urlpatterns += [
-    path('api/v1/users/', include('apps.users.urls')),
     # ======== Authentication =========
     path('api/v1/auth/', include('apps.authentication.urls')),
+    # ======== Users =========
+    path('api/v1/users/', include('apps.users.urls')),
+    # ======== HR =========
+    path('api/v1/employee/', include('apps.expenses.urls')),
+    # ======== Transports =========
+    path('api/v1/transports/', include('apps.transports.urls')),
 ]
 
     # ========== URLS OF OYBEK ==============
@@ -45,4 +50,5 @@ urlpatterns += [
     path("api/v1/warehouses/", include("apps.warehouses.urls")),
     path("api/v1/counter_agents/", include("apps.counter_agents.urls")),
     path("api/v1/sections/", include("apps.sections.urls")),
+    path("api/v1/transports/", include("apps.transports.urls")),
 ]
