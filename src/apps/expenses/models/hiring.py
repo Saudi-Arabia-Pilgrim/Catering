@@ -4,7 +4,7 @@ from django.conf import settings
 
 class HiringExpense(AbstractBaseModel):
     """
-    Model representing expenses for an employee hiring and onboarding.
+    Model representing expenses for an employee hiring like visa, plain tickets, car payments and onboarding.
 
     User (ForeignKey)
     name (CharField)
