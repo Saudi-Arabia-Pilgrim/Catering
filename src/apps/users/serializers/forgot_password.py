@@ -1,5 +1,6 @@
 import string
 import secrets
+import os
 
 from django.conf import settings
 from django.core.cache import cache
@@ -27,6 +28,7 @@ class ForgotPasswordSendEmailSerializer(CustomSerializer):
     email = serializers.EmailField(required=True)
     sent = serializers.BooleanField(read_only=True)
 
+
     @staticmethod
     def validate_email(email):
         """                                                                                                                                                                                                                                                                                                                                                                                               
@@ -46,12 +48,18 @@ class ForgotPasswordSendEmailSerializer(CustomSerializer):
         
         # Generate a random 6-digit code
         code = ''.join(secrets.choice(string.digits) for _ in range(6))
-        
+
+        # === Read the HTML file content ===
+        html_file_path = os.path.join(settings.BASE_DIR, 'config', 'settings', 'emails', 'verify_code.html')
+        with open(html_file_path, 'r') as file:
+            html_content = file.read()
+
+        # === Format the HTML content with the code ===
+        formatted_html = html_content.format(code=code)
         # Send the code to the user's email
         subject = 'Password Reset Verification Code'
-        message = settings.VERIFY_CODE_HTML.format(code=code)
 
-        send_email_to_user.delay(subject=subject, email=email, message=message)
+        send_email_to_user.delay(subject=subject, email=email, message=formatted_html)
         
         # Store the code in the redis
         cache.set(FORGOT_PASSWORD_KEY.format(email=email), code, timeout=60 * 10)

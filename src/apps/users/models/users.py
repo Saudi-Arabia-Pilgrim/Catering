@@ -1,16 +1,17 @@
-from django.contrib.auth.base_user import AbstractBaseUser
-from django.contrib.auth.models import PermissionsMixin
-from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
 from django.db import models
+from django.core.mail import send_mail
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+from django.contrib.auth.models import PermissionsMixin
+from django.contrib.auth.base_user import AbstractBaseUser
 
-from apps.base.exceptions import CustomExceptionError
-from apps.base.models import AbstractBaseModel
-from apps.users.utils import CustomUserManager, validate_gmail
-
-from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
+
+from apps.users.tasks import send_email_to_user
+from apps.base.models import AbstractBaseModel
+from apps.base.exceptions import CustomExceptionError
+from apps.users.utils import CustomUserManager, validate_gmail
 
 
 class CustomUser(AbstractBaseModel, AbstractBaseUser, PermissionsMixin):
@@ -49,12 +50,25 @@ class CustomUser(AbstractBaseModel, AbstractBaseUser, PermissionsMixin):
 
     objects = CustomUserManager()
 
-    # Email is now the main identifier
-    email = models.EmailField(_('Email address'), max_length=150, unique=True, validators=[validate_gmail], default='*')
+    # === Biography ===
     full_name = models.CharField(_('Full name'), max_length=150)
-
-    # New fields
     birthdate = models.DateField(_('Birth date'), null=True, blank=True)
+    date_come = models.DateField(_('Date come'), null=True, blank=True)
+    from_come = models.CharField(_('From come'), max_length=255, null=True, blank=True)
+
+    # === Passport Info ===
+    passport_number = models.CharField(_('Passport number'), max_length=50, null=True, blank=True)
+    given_by = models.CharField(_('Given by'), max_length=255, null=True, blank=True)
+    validity_period = models.DateTimeField(_('Passport Validity period'), null=True, blank=True)
+
+    # Email is now the main identifier
+    email = models.EmailField(
+        _('Email address'),
+        max_length=150,
+        unique=True,
+        validators=[validate_gmail],
+        default='seniordeveloper@catering.sa'
+    )
     gender = models.CharField(
         _('Gender'),
         max_length=10,
@@ -62,7 +76,6 @@ class CustomUser(AbstractBaseModel, AbstractBaseUser, PermissionsMixin):
         null=True,
         blank=True
     )
-
     # Role field to store the user's department
     role = models.CharField(
         _('Role'),
@@ -71,45 +84,42 @@ class CustomUser(AbstractBaseModel, AbstractBaseUser, PermissionsMixin):
         default=UserRole.ADMIN,
         help_text=_('Designates the department this user belongs to and their permissions.')
     )
-
-    # Additional fields as per requirements
-    date_come = models.DateField(_('Date come'), null=True, blank=True)
-    from_come = models.CharField(_('From come'), max_length=255, null=True, blank=True)
-    passport_number = models.CharField(_('Passport number'), max_length=50, null=True, blank=True)
-    given_by = models.CharField(_('Given by'), max_length=255, null=True, blank=True)
-    validity_period = models.DateTimeField(_('Validity period'), null=True, blank=True)
-    expenses = models.DecimalField(
-        _('Expenses'), 
-        max_digits=10, 
-        decimal_places=2, 
-        null=True, 
+    total_expenses = models.DecimalField(
+        _('Total Expenses'),
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
+        null=True,
         blank=True,
-        help_text=_('Expenses for visa sponsoring, plane tickets, etc. (in USD)')
+        help_text=_('Total expenses for visa sponsoring, plane tickets, etc. (in USD)')
     )
-    monthly_salary = models.DecimalField(
-        _('Monthly salary'), 
-        max_digits=10, 
-        decimal_places=2, 
-        null=True, 
+    base_salary = models.DecimalField(
+        _('Base Salary'),
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
+        null=True,
         blank=True,
-        help_text=_('Monthly salary amount (in USD)')
+        help_text=_('Monthly base salary amount (in USD)')
     )
-    general_expenses = models.DecimalField(
+    total_general_expenses = models.DecimalField(
         _('General expenses'), 
         max_digits=10, 
-        decimal_places=2, 
+        decimal_places=2,
+        default=0.00,
         null=True, 
         blank=True,
         help_text=_('Expenses for accommodation, rent, etc. (in USD)')
     )
-
     is_staff = models.BooleanField(
-        _('staff status'),
+        _('Staff status'),
         default=False,
         help_text=_('Designates whether the user can log into this admin site.'),
     )
     is_active = models.BooleanField(
-        _('active'), default=True, help_text=_(
+        _('Active'),
+        default=True,
+        help_text=_(
             'Designates whether this user should be treated as active.'
             'Unselect this instead of deleting accounts.'
         ),
@@ -117,15 +127,11 @@ class CustomUser(AbstractBaseModel, AbstractBaseUser, PermissionsMixin):
 
     def clean(self):
         """
-        Check username (which stores email)
-        :return:
+        Check email.
+        :return: CustomExceptionError
         """
         if not self.email:
-            # Use ValidationError for form validation in the admin panel
             raise ValidationError({'Email': _('Email address is required')})
-
-        # For API validation, we can still use CustomExceptionError
-        # This won't be called in the admin panel context
         try:
             super().clean()
         except Exception as e:
@@ -144,21 +150,22 @@ class CustomUser(AbstractBaseModel, AbstractBaseUser, PermissionsMixin):
         except Exception as e:
             pass
 
+    @staticmethod
+    def email_user(self, subject: str, message: str):
+        """
+        Easily send an email this current user on the go!
+        :param self: User
+        :param subject: The subject/title of the email.
+        :param message: The message to be sent.
+        :return:
+        """
+        send_email_to_user(subject=subject,  email=self.email, message=message)
+
+
     class Meta:
         db_table = 'user'
         verbose_name = _('user')
         verbose_name_plural = _('users')
-
-    def email_user(self, subject, message, from_email=None, **kwargs):
-        """
-        Email this User.
-        :param subject:
-        :param message:
-        :param from_email:
-        :param kwargs:
-        :return:
-        """
-        send_mail(subject, message, from_email, [self.username], **kwargs)
 
     def __str__(self):
         return self.email

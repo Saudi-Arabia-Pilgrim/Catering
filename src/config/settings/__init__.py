@@ -4,7 +4,7 @@ from .envs import *
 from .jazzmin import *
 from .html_messages import *
 from .base import *
-from .email import *
+from config.settings.emails.email import *
 from .celery import *
 from .ckeditor import *
 from .database import *

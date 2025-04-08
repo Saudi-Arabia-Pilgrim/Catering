@@ -21,7 +21,13 @@ USE_I18N = os.getenv("USE_I18N")
 USE_L10N = os.getenv("USE_L10N")
 USE_TZ = os.getenv("USE_TZ")
 
+
+# ===================== Company Email Message configurations =====================
+RESET_PASSWORD_LINK=os.getenv("RESET_PASSWORD_LINK")
+
 ENV = os.getenv("ENV")
+
 # ===================== JWT configurations =====================
 PRIVATE_KEY = open('./config/secrets/private.pem').read()
 PUBLIC_KEY = open('./config/secrets/public.pem').read()
+
