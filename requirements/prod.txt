@@ -1,1 +1,5 @@
 -r base.txt
+gunicorn # web server for Python added by Mukhsin on 2025-04-11
+gevent==24.11.1 # asynchronous worker for Gunicorn added by Mukhsin on 2025-04-11
+django-debug-toolbar==4.4.6
+django-filter==25.1 # added from Oybek 29.04.2025

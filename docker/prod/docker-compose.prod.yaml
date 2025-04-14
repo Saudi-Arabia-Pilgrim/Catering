@@ -1,0 +1,114 @@
+services:
+
+  app:
+    build:
+      context: ../../
+      dockerfile: docker/prod/Dockerfile
+    container_name: catering_app
+    command:
+      sh -c "
+      python manage.py makemigrations --noinput &&
+      python manage.py migrate --noinput &&
+      python manage.py collectstatic --noinput &&
+      gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 8 --worker-class gevent"
+    env_file:
+      - ../../.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - "../../src:/app"
+    depends_on:
+      - postgres_db
+      - redis_db
+
+
+  nginx:
+    image: nginx:latest
+    container_name: catering_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../../nginx/conf.d:/etc/nginx/conf.d             # mounting my nginx config dir
+      - static_data:/static:ro                           # Read-only mount of static files
+      - certbot_www:/var/www/certbot:ro                  # Webroot for ACME challenge
+      - certbot_conf:/etc/letsencrypt:ro                 # Let's Encrypt certs (as read-only in Nginx)
+    restart: always
+    depends_on:
+      - app
+
+
+  certbot:
+    image: certbot/certbot:amd64-latest
+    container_name: catering_certbot
+    volumes:
+      - certbot_conf:/etc/letsencrypt                # Persistent storage for certs/keys
+      - certbot_www:/var/www/certbot                 # Shared webroot for ACME challenges
+      - ../../certbot/entrypoint.sh:/entrypoint.sh   # Mount explicitly!
+    entrypoint: [ "/bin/sh", "/entrypoint.sh" ]
+    restart: unless-stopped
+    depends_on:
+      - nginx
+
+
+  postgres_db:
+    image: postgres:16
+    container_name: catering_postgres_db
+    env_file:
+      - ../../.env
+    ports:
+      - "5431:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+
+  redis_db:
+    image: redis:7.0.15
+    container_name: catering_redis_db
+    ports:
+      - "6378:6379"
+    restart: always
+    volumes:
+      - redis_data:/data
+
+
+  celery_worker:
+    build:
+        context: ../../
+        dockerfile: docker/prod/Dockerfile
+    command: celery -A config worker --loglevel=info
+    container_name: catering_celery_worker
+    env_file:
+      - ../../.env
+    volumes:
+      - "../../src:/app"
+    depends_on:
+      - app
+      - redis_db
+
+
+  celery_beat:
+    build:
+        context: ../../
+        dockerfile: docker/prod/Dockerfile
+    command: celery -A config beat --loglevel=info
+    container_name: catering_celery_beat
+    env_file:
+      - ../../.env
+    volumes:
+      - "../../src:/app"
+    depends_on:
+      - app
+      - redis_db
+      - celery_worker
+
+
+
+volumes:
+  postgres_data:
+  redis_data:
+  static_data:
+  certbot_conf:
+  certbot_www:
+
+

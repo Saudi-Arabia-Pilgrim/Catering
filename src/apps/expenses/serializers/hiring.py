@@ -1,8 +1,8 @@
 from rest_framework import serializers
-from apps.base.serializers import AbstractCustomSerializerMixin
+from apps.base.serializers import AbstractCustomSerializerMixin, CustomModelSerializer
 from apps.expenses.models.hiring import HiringExpense
 
-class HiringExpenseSerializer(AbstractCustomSerializerMixin, serializers.ModelSerializer):
+class HiringExpenseSerializer(CustomModelSerializer):
     """
     Serializer for the HiringExpense model.
     """

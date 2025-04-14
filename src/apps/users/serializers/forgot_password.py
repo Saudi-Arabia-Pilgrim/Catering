@@ -45,9 +45,10 @@ class ForgotPasswordSendEmailSerializer(CustomSerializer):
         """
         email = self.validated_data['email']
         user = User.objects.get(email=email)
-        
+
         # Generate a random 6-digit code
         code = ''.join(secrets.choice(string.digits) for _ in range(6))
+        print(f"Generated code: {code}")
 
         # === Read the HTML file content ===
         html_file_path = os.path.join(settings.BASE_DIR, 'config', 'settings', 'emails', 'verify_code.html')
@@ -55,15 +56,16 @@ class ForgotPasswordSendEmailSerializer(CustomSerializer):
             html_content = file.read()
 
         # === Format the HTML content with the code ===
-        formatted_html = html_content.format(code=code)
+        # Replace the placeholder with the code, using a safer method that doesn't interpret CSS curly braces
+        formatted_html = html_content.replace('{RESET_PASSWORD_LINK}', code)
         # Send the code to the user's email
         subject = 'Password Reset Verification Code'
 
         send_email_to_user.delay(subject=subject, email=email, message=formatted_html)
-        
+
         # Store the code in the redis
         cache.set(FORGOT_PASSWORD_KEY.format(email=email), code, timeout=60 * 10)
-        
+
         return {'success': True, 'message': 'Verification code sent to your email.'}
 
 
@@ -105,18 +107,18 @@ class VerifyCodeSerializer(CustomSerializer):
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             raise serializers.ValidationError("No user found with this email address.")
-        
+
         # Generate a token for password reset
         uuid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
 
         # === Delete the verification code and email from Redis so they can't be reused. ===
         cache.delete(FORGOT_PASSWORD_KEY.format(email=email))
-        
+
         return {'success': True, 'uid': uuid, 'token': token}
 
 
-class SetNewPasswordSerializer(serializers.Serializer):
+class SetNewPasswordSerializer(CustomSerializer):
     """
     Serializer for setting a new password.
     """
@@ -140,24 +142,23 @@ class SetNewPasswordSerializer(serializers.Serializer):
         """
         uid = self.validated_data["uid"]
         token = self.validated_data["token"]
-        
+
         if not uid or not token:
             raise serializers.ValidationError("Invalid or expired password reset session.")
-        
+
         try:
             # Decode the user ID
             user_id = force_str(urlsafe_base64_decode(uid))
             user = User.objects.get(pk=user_id)
-            
+
             # Verify the token
             if not default_token_generator.check_token(user, token):
                 raise serializers.ValidationError("Invalid reset token.")
-            
+
             # Set the new password
             user.set_password(self.validated_data['password'])
             user.save()
-            
+
             return {'success': True, 'message': 'Password has been reset successfully.'}
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             raise serializers.ValidationError("Invalid reset token.")
-        

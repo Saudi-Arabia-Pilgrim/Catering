@@ -19,4 +19,4 @@ RUN apt-get update && \
     pip install --no-cache-dir -r dev.txt
 
 # Copy the rest of your application code into the container at /app
-COPY ./src /app
+COPY ../../src /app
