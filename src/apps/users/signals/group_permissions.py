@@ -27,12 +27,15 @@ def setup_group_permissions(group, app_labels):
 def assign_user_to_group(sender, instance=None, created=False, **kwargs):
     """
     Assign users to default groups based on their role upon creation.
-    
+
     This function assigns users to groups based on their role and sets up appropriate permissions.
     Each user role is granted full permissions for their department.
     """
     # Skip if this signal has been processed already (to avoid recursion)
-    if hasattr(instance, '_skip_signal') and instance._skip_signal:
+    # This check is necessary because at the end of this function we call instance.save(),
+    # which would trigger this signal again, creating an infinite loop.
+    # The _skip_signal attribute is set to True before saving to break this loop.
+    if instance._skip_signal:
         return
 
     # Remove user from all groups first (in case of role change)
@@ -83,3 +86,6 @@ def assign_user_to_group(sender, instance=None, created=False, **kwargs):
     # Mark that the signal has been processed to avoid recursion
     instance._skip_signal = True
     instance.save()
+
+    # Reset the flag after saving
+    instance._skip_signal = False

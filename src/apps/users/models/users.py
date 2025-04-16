@@ -8,6 +8,7 @@ from django.contrib.auth.base_user import AbstractBaseUser
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 
+from apps.base.validators import validate_image_size
 from apps.users.tasks import send_email_to_user
 from apps.base.models import AbstractBaseModel
 from apps.base.exceptions import CustomExceptionError
@@ -26,6 +27,9 @@ class CustomUser(AbstractBaseModel, AbstractBaseUser, PermissionsMixin):
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['full_name']
+
+    # Flag to prevent permission signals' recursion
+    _skip_signal = False
 
     class UserRole(models.TextChoices):
         """
@@ -65,9 +69,15 @@ class CustomUser(AbstractBaseModel, AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(
         _('Email address'),
         max_length=150,
-        unique=True,
-        validators=[validate_gmail],
-        default='seniordeveloper@catering.sa'
+        unique=True
+    )
+    image = models.ImageField(
+        _('Image'),
+        upload_to='users/',
+        validators=[validate_image_size],
+        null=True,
+        blank=True,
+        help_text=_('Upload a profile image. Max size: 5MB')
     )
     gender = models.CharField(
         _('Gender'),
@@ -130,8 +140,6 @@ class CustomUser(AbstractBaseModel, AbstractBaseUser, PermissionsMixin):
         Check email.
         :return: CustomExceptionError
         """
-        if not self.email:
-            raise ValidationError({'Email': _('Email address is required')})
         try:
             super().clean()
         except Exception as e:

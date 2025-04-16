@@ -4,9 +4,11 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.contrib.auth import get_user_model
 
+from apps.base.serializers import CustomSerializer
+
 User = get_user_model()
 
-class ResetPasswordSerializer(serializers.Serializer):
+class ResetPasswordSerializer(CustomSerializer):
     """
     Serializer for resetting a user's password from inside their profile.
     Requires the current password for verification and a new password with confirmation.

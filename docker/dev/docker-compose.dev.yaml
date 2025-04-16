@@ -1,7 +1,9 @@
 services:
 
   app:
-    build: .
+    build:
+        context: .
+        dockerfile: docker/dev/Dockerfile
     container_name: app
     command:
       sh -c "
@@ -10,11 +12,11 @@ services:
       python manage.py collectstatic --noinput &&
       python3 manage.py runserver 0.0.0.0:8000"
     env_file:
-      - .env
+      - ../../.env
     ports:
       - "8000:8000"
     volumes:
-      - "./src:/app"
+      - "../../src:/app"
     depends_on:
       - postgres_db
       - redis_db
@@ -23,7 +25,7 @@ services:
     image: postgres:16
     container_name: postgres_db
     env_file:
-      - .env
+      - ../../.env
     ports:
       - "5431:5432"
     volumes:
@@ -42,9 +44,9 @@ services:
     build: .
     command: celery -A config worker --loglevel=info
     env_file:
-      - .env
+      - ../../.env
     volumes:
-      - ./src:/app
+      - "../../src:/app"
     depends_on:
       - app
       - redis_db
@@ -55,7 +57,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./src:/app
+      - "../../src:/app"
     depends_on:
       - app
       - redis_db

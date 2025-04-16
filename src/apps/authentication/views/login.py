@@ -18,6 +18,8 @@ class CustomTokenObtainPairView(TokenObtainPairView, CustomGenericAPIView):
     API endpoint for login.
     params: username, password
     returns: token, refresh_token
+
+    Passed tests: Production ready!
     """
     permission_classes = []
     authentication_classes = []

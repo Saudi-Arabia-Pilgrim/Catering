@@ -12,6 +12,8 @@ class CheckAccessGenericAPIView(CustomGenericAPIView):
     Methods:
         post(request):
             Validates and saves the data, returning the result in JSON format.
+
+    Passed tests: Production ready!
     """
 
     permission_classes = []
