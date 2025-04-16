@@ -22,35 +22,6 @@ services:
       - redis_db
 
 
-  nginx:
-    image: nginx:latest
-    container_name: catering_nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ../../nginx/conf.d:/etc/nginx/conf.d             # mounting my nginx config dir
-      - static_data:/static:ro                           # Read-only mount of static files
-      - certbot_www:/var/www/certbot:ro                  # Webroot for ACME challenge
-      - certbot_conf:/etc/letsencrypt:ro                 # Let's Encrypt certs (as read-only in Nginx)
-    restart: always
-    depends_on:
-      - app
-
-
-  certbot:
-    image: certbot/certbot:amd64-latest
-    container_name: catering_certbot
-    volumes:
-      - certbot_conf:/etc/letsencrypt                # Persistent storage for certs/keys
-      - certbot_www:/var/www/certbot                 # Shared webroot for ACME challenges
-      - ../../certbot/entrypoint.sh:/entrypoint.sh   # Mount explicitly!
-    entrypoint: [ "/bin/sh", "/entrypoint.sh" ]
-    restart: unless-stopped
-    depends_on:
-      - nginx
-
-
   postgres_db:
     image: postgres:16
     container_name: catering_postgres_db
@@ -107,8 +78,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
-  static_data:
-  certbot_conf:
-  certbot_www:
-
 
