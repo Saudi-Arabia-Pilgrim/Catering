@@ -1,6 +1,4 @@
 # ======== DRF_YASG Swagger Settings (to be put in settings.py) ========
-# ✅ You MUST add this in your `settings.py` file:
-
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {
         'Bearer': {
