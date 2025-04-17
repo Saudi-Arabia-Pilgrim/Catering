@@ -1,5 +1,5 @@
 import os
-from celery.schedules import crontab
+
 from dotenv import load_dotenv
 
 
@@ -16,8 +16,8 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = os.getenv('CELERY_BROKER_CONNECTION_
 
 
 CELERY_BEAT_SCHEDULE = {
-    'example-task': {
-        'task': 'apps.base.tasks.example_task.example_task',
-        'schedule': crontab(hour="1"),  # Run every 1 minute
-    },
+    # 'example-task': {
+    #     'task': 'apps.base.tasks.example_task.example_task',
+    #     'schedule': crontab(hour="1"),  # Run every 1 minute
+    # },
 }

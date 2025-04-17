@@ -2,7 +2,7 @@ services:
 
   app:
     build:
-        context: .
+        context: ../../
         dockerfile: docker/dev/Dockerfile
     container_name: app
     command:
@@ -41,7 +41,9 @@ services:
       - redis_data:/data
 
   celery_worker:
-    build: .
+    build:
+        context: ../../
+        dockerfile: docker/dev/Dockerfile
     command: celery -A config worker --loglevel=info
     env_file:
       - ../../.env
@@ -52,10 +54,12 @@ services:
       - redis_db
 
   celery_beat:
-    build: .
+    build:
+        context: ../../
+        dockerfile: docker/dev/Dockerfile
     command: celery -A config beat --loglevel=info
     env_file:
-      - .env
+      - ../../.env
     volumes:
       - "../../src:/app"
     depends_on:

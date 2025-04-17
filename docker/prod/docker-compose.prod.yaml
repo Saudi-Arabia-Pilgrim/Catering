@@ -14,7 +14,7 @@ services:
     env_file:
       - ../../.env
     ports:
-      - "8000:8000"
+      - "4000:8000"
     volumes:
       - "../../src:/app"
     depends_on:
@@ -28,7 +28,7 @@ services:
     env_file:
       - ../../.env
     ports:
-      - "5431:5432"
+      - "6543:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -37,7 +37,7 @@ services:
     image: redis:7.0.15
     container_name: catering_redis_db
     ports:
-      - "6378:6379"
+      - "6380:6379"
     restart: always
     volumes:
       - redis_data:/data
