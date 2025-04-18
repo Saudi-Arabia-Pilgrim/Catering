@@ -8,12 +8,16 @@ from apps.menus.serializers import RecipeSerializer
 
 
 class RecipeRetrieveUpdateDestroyAPIView(CustomRetrieveUpdateDestroyAPIView):
-    queryset = Recipe.objects.all().select_related("menu_breakfast", "menu_lunch","menu_dinner")
+    queryset = Recipe.objects.all().select_related(
+        "menu_breakfast", "menu_lunch", "menu_dinner"
+    )
     serializer_class = RecipeSerializer
 
 
 class RecipeListCreateAPIView(CustomListCreateAPIView):
-    queryset = Recipe.objects.all().select_related("menu_breakfast", "menu_lunch","menu_dinner")
+    queryset = Recipe.objects.all().select_related(
+        "menu_breakfast", "menu_lunch", "menu_dinner"
+    )
     serializer_class = RecipeSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_fields = ["status"]

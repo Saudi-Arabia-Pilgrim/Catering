@@ -11,11 +11,26 @@ class FoodSerializer(CustomModelSerializer):
     class Meta:
         model = Food
         exclude = ["slug", "created_at", "created_by", "updated_at", "updated_by"]
-        read_only_fields = ["status", "gross_price", "net_price", ]
-    
+        read_only_fields = [
+            "status",
+            "gross_price",
+            "net_price",
+        ]
+
     def get_recipe_foods(self, obj):
         recipes = obj.recipes.all()
         return [f"{recipe.product.name}-{recipe.count}" for recipe in recipes]
+
+
+class FoodSerializerForFoodOrder(CustomModelSerializer):
+    class Meta:
+        model = Food
+        exclude = ["slug", "created_at", "created_by", "updated_at", "updated_by", "recipes"]
+        read_only_fields = [
+            "status",
+            "gross_price",
+            "net_price",
+        ]
 
 
 class FoodCreateUpdateSerializer(CustomSerializer):
@@ -29,7 +44,9 @@ class FoodCreateUpdateSerializer(CustomSerializer):
     def validate(self, attrs):
         recipes = attrs.get("recipes_id", [])
         if len(recipes) == 0:
-            raise CustomExceptionError(code=400, detail="At least one recipe must be provided.")
+            raise CustomExceptionError(
+                code=400, detail="At least one recipe must be provided."
+            )
         return attrs
 
     def create(self, *args, **kwargs):
@@ -54,8 +71,10 @@ class FoodCreateUpdateSerializer(CustomSerializer):
         recipe_foods = RecipeFood.objects.filter(id__in=recipe_foods_id)
 
         if len(recipe_foods) != len(recipe_foods_id):
-            raise CustomExceptionError(code=400, detail="Some recipe IDs are invalid or do not exist.")
-        
+            raise CustomExceptionError(
+                code=400, detail="Some recipe IDs are invalid or do not exist."
+            )
+
         return recipe_foods
 
     def get_validated_data(self):

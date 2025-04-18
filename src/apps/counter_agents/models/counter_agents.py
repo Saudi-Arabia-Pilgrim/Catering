@@ -7,6 +7,7 @@ class CounterAgent(AbstractBaseModel):
     """
     CounterAgent model represents the counter agents in the system.
     """
+
     class Type(models.IntegerChoices):
         B2B = 0, "B2B"
         B2C = 1, "B2C"
@@ -22,11 +23,11 @@ class CounterAgent(AbstractBaseModel):
 
     class Meta:
         # === The name of the database table. ===
-        db_table = 'counter_agents'
+        db_table = "counter_agents"
         # === The human-readable name of the model. ===
-        verbose_name = 'Counter agent'
+        verbose_name = "Counter agent"
         # === The human-readable plural name of the model. ===
-        verbose_name_plural = 'Counter agents'
+        verbose_name_plural = "Counter agents"
 
     def __str__(self):
         """

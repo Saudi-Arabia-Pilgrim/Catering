@@ -9,6 +9,7 @@ class Section(AbstractBaseModel):
     """
     Model representing a Section.
     """
+
     # === The name of the section. ===
     name = models.CharField(max_length=64)
     # === A unique slug for the section. ===
@@ -16,18 +17,18 @@ class Section(AbstractBaseModel):
 
     class Meta:
         # === The name of the database table. ===
-        db_table = 'section'
+        db_table = "section"
         # === The human-readable name of the model. ===
-        verbose_name = 'Section'
+        verbose_name = "Section"
         # === The human-readable plural name of the model. ===
-        verbose_name_plural = 'Sections'
+        verbose_name_plural = "Sections"
 
     def __str__(self):
         """
         Returns the string representation of the section, which is its name.
         """
         return self.name
-    
+
     def save(self, *args, **kwargs):
         """
         Override the save method to automatically generate and set the slug
@@ -42,6 +43,8 @@ class Section(AbstractBaseModel):
         slug = slugify(self.name)
         obj = self.__class__.objects.filter(slug=slug).exclude(pk=self.pk).first()
         if obj:
-            raise CustomExceptionError(code=400, detail="A section with this name already exists")
+            raise CustomExceptionError(
+                code=400, detail="A section with this name already exists"
+            )
         self.slug = slug
         super().save(*args, **kwargs)
