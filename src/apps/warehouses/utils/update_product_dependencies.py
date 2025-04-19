@@ -1,12 +1,13 @@
 from django.db.models import Q
 
-from apps.foods.models import Food, RecipeFood
-from apps.menus.models.menu import Menu
-from apps.menus.models.recipe import Recipe
+from apps.products.models import Product
+from apps.foods.models import RecipeFood, Food
+from apps.menus.models import Menu, Recipe
 from apps.warehouses.models import Warehouse
 
 
 def update_product_dependencies_in_warehouse(product_ids: list):
+    product_list = []
     recipe_food_qs = RecipeFood.objects.filter(product_id__in=product_ids)
     food_qs = Food.objects.filter(recipes__in=recipe_food_qs).prefetch_related(
         "recipes"
@@ -21,6 +22,15 @@ def update_product_dependencies_in_warehouse(product_ids: list):
         "product"
     )
     warehouses_dict = {}
+
+    for warehouse in warehouse_qs:
+        product_list.append(warehouse.product)
+
+    for product in product_list:
+        if warehouse.count > 0:
+            product.status = True
+        else:
+            product.status = False
 
     for product_id in product_ids:
         warehouses_dict[product_id] = warehouse_qs.filter(product_id=product_id)
@@ -55,6 +65,7 @@ def update_product_dependencies_in_warehouse(product_ids: list):
         recipe.calculate_prices()
         recipe.status = status
 
+    Product.objects.bulk_update(product_list, ["status"])
     RecipeFood.objects.bulk_update(recipe_food_qs, ["status", "price"])
     Food.objects.bulk_update(food_qs, ["status", "net_price", "gross_price"])
     Menu.objects.bulk_update(menu_qs, ["status", "net_price", "gross_price"])

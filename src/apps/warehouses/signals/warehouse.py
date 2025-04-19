@@ -13,6 +13,7 @@ from apps.foods.models import Food, RecipeFood
 def post_save_warehouse(sender, instance, created, **kwargs):
 
     product = instance.product
+
     product_count_in_warehouse = (
         Warehouse.objects.filter(product=product).aggregate(total=Sum("count"))["total"]
         or 0
@@ -24,8 +25,10 @@ def post_save_warehouse(sender, instance, created, **kwargs):
     )
 
     with transaction.atomic():
+        product.status = instance.status
+        product.save()
+
         if product_count > 0:
-            product.status = True
 
             food_recipes = RecipeFood.objects.filter(product=product)
             recipes_status = {"False": [], "True": []}
@@ -145,7 +148,6 @@ def post_save_warehouse(sender, instance, created, **kwargs):
             )
 
         else:
-            product.status = False
 
             recipe_foods = RecipeFood.objects.filter(product=product)
             foods = Food.objects.filter(recipes__in=recipe_foods).distinct()
@@ -169,5 +171,3 @@ def post_save_warehouse(sender, instance, created, **kwargs):
             Recipe.objects.bulk_update(
                 recipes, ["status", "slug", "net_price", "gross_price"]
             )
-
-        product.save()
