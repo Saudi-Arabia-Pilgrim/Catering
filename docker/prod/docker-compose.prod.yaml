@@ -3,7 +3,7 @@ services:
   app:
     build:
         context: ../../
-        dockerfile: docker/dev/Dockerfile
+        dockerfile: docker/prod/Dockerfile
     container_name: app
     command:
       sh -c "
@@ -43,7 +43,7 @@ services:
   celery_worker:
     build:
         context: ../../
-        dockerfile: docker/dev/Dockerfile
+        dockerfile: docker/prod/Dockerfile
     command: celery -A config worker --loglevel=info
     env_file:
       - ../../.env
@@ -56,7 +56,7 @@ services:
   celery_beat:
     build:
         context: ../../
-        dockerfile: docker/dev/Dockerfile
+        dockerfile: docker/prod/Dockerfile
     command: celery -A config beat --loglevel=info
     env_file:
       - ../../.env
