@@ -14,7 +14,7 @@ services:
     env_file:
       - ../../.env
     ports:
-      - "4000:8000"
+      - "8000:8000"
     volumes:
       - "../../src:/app"
       - "./static:/app/static"
