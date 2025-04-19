@@ -2,7 +2,6 @@ from .cors_csrf import *
 from .auth import *
 from .envs import *
 from .jazzmin import *
-from .html_messages import *
 from .base import *
 from config.settings.emails.email import *
 from .celery import *

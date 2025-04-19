@@ -1,7 +1,9 @@
 import os
 from pathlib import Path
-
 from dotenv import load_dotenv
+
+from config.settings.envs import ENV
+
 
 load_dotenv()
 
@@ -60,6 +62,8 @@ MIDDLEWARE = [
     # ======== CORS Middleware should be at the top! ========
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    # Whitenoise middleware for serving static files in production
+    "whitenoise.middleware.WhiteNoiseMiddleware" if ENV == "production" else None,
     "django.contrib.sessions.middleware.SessionMiddleware",
 
     "django.middleware.locale.LocaleMiddleware",
@@ -70,6 +74,15 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+# Remove None values from middleware
+MIDDLEWARE = [middleware for middleware in MIDDLEWARE if middleware is not None]
+
+# Whitenoise configuration for serving static files in production
+if ENV == "production":
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+    # Add Whitenoise settings for better performance
+    WHITENOISE_MAX_AGE = 31536000  # 1 year in seconds
 
 TEMPLATES = [
     {
