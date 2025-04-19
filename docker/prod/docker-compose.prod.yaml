@@ -11,6 +11,8 @@ services:
       python manage.py migrate --noinput &&
       python manage.py collectstatic --noinput &&
       gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2"
+    environment:
+      - ENV=production
     env_file:
       - ../../.env
     ports:
@@ -45,6 +47,8 @@ services:
         context: ../../
         dockerfile: docker/prod/Dockerfile
     command: celery -A config worker --loglevel=info
+    environment:
+      - ENV=production
     env_file:
       - ../../.env
     volumes:
@@ -58,6 +62,8 @@ services:
         context: ../../
         dockerfile: docker/prod/Dockerfile
     command: celery -A config beat --loglevel=info
+    environment:
+      - ENV=production
     env_file:
       - ../../.env
     volumes:
@@ -71,4 +77,3 @@ services:
 volumes:
   postgres_data:
   redis_data:
-
