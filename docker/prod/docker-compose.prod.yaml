@@ -17,6 +17,7 @@ services:
       - "4000:8000"
     volumes:
       - "../../src:/app"
+      - "./static:/app/static"
     depends_on:
       - postgres_db
       - redis_db
