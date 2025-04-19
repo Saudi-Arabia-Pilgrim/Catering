@@ -2,9 +2,9 @@ services:
 
   app:
     build:
-      context: ../../
-      dockerfile: docker/prod/Dockerfile
-    container_name: catering_app
+        context: ../../
+        dockerfile: docker/dev/Dockerfile
+    container_name: app
     command:
       sh -c "
       python manage.py makemigrations --noinput &&
@@ -17,39 +17,34 @@ services:
       - "8000:8000"
     volumes:
       - "../../src:/app"
-      - "./static:/app/static"
     depends_on:
       - postgres_db
       - redis_db
 
-
   postgres_db:
     image: postgres:16
-    container_name: catering_postgres_db
+    container_name: postgres_db
     env_file:
       - ../../.env
     ports:
-      - "6543:5432"
+      - "5431:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-
   redis_db:
     image: redis:7.0.15
-    container_name: catering_redis_db
+    container_name: redis_db
     ports:
-      - "6380:6379"
+      - "6378:6379"
     restart: always
     volumes:
       - redis_data:/data
 
-
   celery_worker:
     build:
         context: ../../
-        dockerfile: docker/prod/Dockerfile
+        dockerfile: docker/dev/Dockerfile
     command: celery -A config worker --loglevel=info
-    container_name: catering_celery_worker
     env_file:
       - ../../.env
     volumes:
@@ -58,13 +53,11 @@ services:
       - app
       - redis_db
 
-
   celery_beat:
     build:
         context: ../../
-        dockerfile: docker/prod/Dockerfile
+        dockerfile: docker/dev/Dockerfile
     command: celery -A config beat --loglevel=info
-    container_name: catering_celery_beat
     env_file:
       - ../../.env
     volumes:
@@ -73,7 +66,6 @@ services:
       - app
       - redis_db
       - celery_worker
-
 
 
 volumes:
