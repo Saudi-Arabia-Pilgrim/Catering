@@ -1,35 +1,47 @@
+from django.shortcuts import get_object_or_404
+
 from rest_framework.response import Response
+from rest_framework.filters import SearchFilter
 
-from apps.base.views import CustomGenericAPIView
+from django_filters.rest_framework import DjangoFilterBackend
+
+from apps.base.views import CustomRetrieveAPIView, CustomListCreateAPIView
+from apps.base.views.generics import CustomGenericAPIView
 from apps.orders.models import FoodOrder
-from apps.orders.serializers import OnlyFoodOrderSerializer
+from apps.orders.serializers import OnlyFoodOrderSerializer, FoodOrderRetrieveSerializer
 
 
-class FoodOrderListAPIView(CustomGenericAPIView):
-    queryset = FoodOrder.objects.all()
+class FoodOrderListCreateAPIView(CustomListCreateAPIView):
+    queryset = FoodOrder.objects.all().order_by("-created_at")
     serializer_class = OnlyFoodOrderSerializer
-
-    def get(self, request, *args, **kwargs):
-        serializer = self.get_serializer(self.get_queryset(), many=True)
-        return Response(serializer.data, status=200)
-
-
-class FoodOrderCreateAPIView(CustomGenericAPIView):
-    queryset = FoodOrder.objects.all()
-    serializer_class = OnlyFoodOrderSerializer
-
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=201)
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_fields = ["product_type", "order_type"]
+    search_fields = ["food_order_id", "counter_agent__name"]
 
 
-class FoodOrderRetrieveAPIView(CustomGenericAPIView):
-    queryset = FoodOrder.objects.all()
-    serializer_class = OnlyFoodOrderSerializer
+class FoodOrderRetrieveAPIView(CustomRetrieveAPIView):
+    queryset = (
+        FoodOrder.objects.all()
+        .order_by("-created_at")
+        .select_related(
+            "food",
+            "menu",
+            "recipe",
+            "counter_agent",
+            "recipe__menu_breakfast",
+            "recipe__menu_lunch",
+            "recipe__menu_dinner",
+        )
+        .prefetch_related("menu__foods")
+    )
+    serializer_class = FoodOrderRetrieveSerializer
 
-    def get(self, request, pk, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data, status=200)
+
+class ReadyFodOrderAPIView(CustomGenericAPIView):
+    queryset = FoodOrder.objects.all().order_by("-created_at")
+    serializer_class = FoodOrderRetrieveSerializer
+
+    def get(self, request, pk):
+        instance = get_object_or_404(FoodOrder, pk=pk)
+        instance.order_ready()
+        return Response("The order is ready", status=200)

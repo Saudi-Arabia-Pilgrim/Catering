@@ -13,7 +13,7 @@ class MenuSerializer(CustomModelSerializer):
         model = Menu
         exclude = ["slug", "created_at", "created_by", "updated_at", "updated_by"]
         read_only_fields = ["net_price", "gross_price", "status"]
-    
+
     def get_foods_name(self, obj):
         return [food.name for food in obj.foods.all()]
 
@@ -26,11 +26,13 @@ class MenuCreateUpdateSerializer(CustomSerializer):
     image = serializers.ImageField(required=False, allow_null=True)
 
     def validate(self, attrs):
-        foods = attrs.get('foods_id', [])
+        foods = attrs.get("foods_id", [])
         if len(foods) != 7:
-            raise CustomExceptionError(code=400, detail="One menu can only have 7 dishes")
+            raise CustomExceptionError(
+                code=400, detail="One menu can only have 7 dishes"
+            )
         return attrs
-        
+
     def create(self, *args, **kwargs):
         validated_data, foods = self.get_validated_data()
         instance = Menu.objects.create(**validated_data)
@@ -53,8 +55,10 @@ class MenuCreateUpdateSerializer(CustomSerializer):
         foods = Food.objects.filter(id__in=foods_id)
 
         if len(foods) != len(foods_id):
-            raise CustomExceptionError(code=400, detail="Some recipe IDs are invalid or do not exist.")
-        
+            raise CustomExceptionError(
+                code=400, detail="Some recipe IDs are invalid or do not exist."
+            )
+
         return foods
 
     def get_validated_data(self):
