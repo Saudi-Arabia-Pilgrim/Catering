@@ -21,7 +21,7 @@ jobs:
 
       - name: Deploy Application
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@ec2-34-235-146-35.compute-1.amazonaws.com '
+          ssh -o StrictHostKeyChecking=no ubuntu@ec2-54-86-124-254.compute-1.amazonaws.com '
             cd /home/ubuntu/Catering
             git pull origin main
             docker-compose -f docker/prod/docker-compose.prod.yaml down
