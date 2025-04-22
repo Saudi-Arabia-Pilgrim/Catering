@@ -14,6 +14,8 @@ class Menu(AbstractBaseModel):
     A menu model representing a menu (breakfast, lunch or dinner) in a catering application.
     """
 
+    # translation_fields = ["name"]
+
     # === The name of the menu. ===
     name = models.CharField(max_length=255)
     # === A unique slug for the menu. ===

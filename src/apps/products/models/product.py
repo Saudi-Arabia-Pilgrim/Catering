@@ -10,6 +10,8 @@ class Product(AbstractBaseModel):
     """
     Represents a product in the catering application.
     """
+    
+    # translation_fields = ["name"]
 
     # === A foreign key to the Measure model, representing the unit of measurement for the product. ===
     measure = models.ForeignKey(

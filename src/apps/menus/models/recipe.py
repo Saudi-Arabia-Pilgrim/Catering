@@ -15,6 +15,8 @@ class Recipe(AbstractBaseModel):
     Recipe model representing a recipe associated with different menus (breakfast, lunch, dinner).
     """
 
+    # translation_fields = ["name"]
+
     # === Foreign key to the Menu model for breakfast recipes. ===
     menu_breakfast = models.ForeignKey(
         "menus.Menu",
