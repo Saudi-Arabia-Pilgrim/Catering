@@ -8,12 +8,12 @@ class CounterAgent(AbstractBaseModel):
     CounterAgent model represents the counter agents in the system.
     """
 
-    class Type(models.IntegerChoices):
-        B2B = 0, "B2B"
-        B2C = 1, "B2C"
+    class Type(models.TextChoices):
+        B2B = "B2B"
+        B2C = "B2C"
 
-    # === The type of the counter agent(B2B or B2C).
-    order_type = models.PositiveSmallIntegerField(choices=Type.choices)
+    # === The type of the counter agent(B2B or B2C). ===
+    counter_agent_type = models.CharField(choices=Type.choices, default=Type.B2C)
     # === The name of the counter agent. ===
     name = models.CharField(max_length=255)
     # === The address of the counter agent. ===
