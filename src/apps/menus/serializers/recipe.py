@@ -5,7 +5,9 @@ from apps.menus.models import Recipe
 
 
 class RecipeSerializer(CustomModelSerializer):
-    menu_breakfast_name = serializers.CharField(source="menu_breakfast.name", read_only=True)
+    menu_breakfast_name = serializers.CharField(
+        source="menu_breakfast.name", read_only=True
+    )
     menu_lunch_name = serializers.CharField(source="menu_lunch.name", read_only=True)
     menu_dinner_name = serializers.CharField(source="menu_dinner.name", read_only=True)
 

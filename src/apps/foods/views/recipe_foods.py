@@ -3,7 +3,11 @@ from rest_framework.filters import SearchFilter
 
 from django_filters.rest_framework import DjangoFilterBackend
 
-from apps.base.views import CustomListCreateAPIView, CustomRetrieveUpdateDestroyAPIView, CustomGenericAPIView
+from apps.base.views import (
+    CustomListCreateAPIView,
+    CustomRetrieveUpdateDestroyAPIView,
+    CustomGenericAPIView,
+)
 from apps.foods.models import RecipeFood
 from apps.foods.serializers import RecipeFoodSerializer, RecipeUpdateFoodSerializer
 

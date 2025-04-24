@@ -9,7 +9,6 @@ urlpatterns = [
     path('recipe_foods/<str:pk>/', views.RecipeFoodRetrieveUpdateDestroyAPIView.as_view()),
     path('recipe_foods/on/food/<str:pk>/', views.RecipeFoodsOnFood.as_view()),
 
-
     # === Food URLs === 
     path('', views.FoodListCreateAPIView.as_view()),
     path('<str:pk>/', views.FoodRetrieveUpdateDestroyAPIView.as_view()),

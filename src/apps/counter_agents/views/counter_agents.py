@@ -14,6 +14,7 @@ class CounterAgentListCreateAPIView(CustomListCreateAPIView):
     filterset_fields = ["status", "order_type"]
     search_fields = ["name", "address"]
 
+
 class CounterAgentRetrieveUpdateDestroyAPIView(CustomRetrieveUpdateDestroyAPIView):
     serializer_class = CounterAgentSerializer
     queryset = CounterAgent.objects.all()

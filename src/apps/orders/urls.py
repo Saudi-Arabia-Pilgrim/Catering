@@ -6,16 +6,16 @@ from apps.orders.views import (HotelOrderCreateAPIView,
                                HotelOrderUpdateAPIView,
                                HotelOrderDeleteAPIView)
 
-from apps.orders.views.food_order import (FoodOrderListAPIView,
-                                          FoodOrderCreateAPIView,
-                                          FoodOrderRetrieveAPIView)
+from apps.orders.views.food_order import (FoodOrderListCreateAPIView,
+                                          FoodOrderRetrieveAPIView,
+                                          ReadyFodOrderAPIView)
 
 
 urlpatterns = [
     # ===================  Food Orders ===================
-    path("food_orders/", FoodOrderListAPIView.as_view(), name="food_orders"),
-    path("food_order/create/", FoodOrderCreateAPIView.as_view(), name="create_food_order"),
-    path("food_order/<str:pk>/", FoodOrderRetrieveAPIView.as_view(), name="food_order"),
+    path("food_orders/", FoodOrderListCreateAPIView.as_view(), name="food_orders_create_list"),
+    path("food_orders/<str:pk>/", FoodOrderRetrieveAPIView.as_view(), name="food_order_retrieve"),
+    path("food_orders/ready/<str:pk>/", ReadyFodOrderAPIView.as_view(), name="food_order_ready"),
 
     # ===================  Hotel Orders ===================
     path("hotel_orders/", HotelOrderListAPIView.as_view(), name="hotel_orders"),

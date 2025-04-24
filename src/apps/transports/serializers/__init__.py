@@ -1,3 +1,2 @@
-from apps.transports.serializers.transport import TransportSerializer
-
-__all__ = ["TransportSerializer"]
+# from apps.transports.serializers.orders import *
+from apps.transports.serializers.transport import *
