@@ -13,8 +13,8 @@ from django.core.exceptions import ValidationError
 def populate_data():
     # Create Room Types
     single_room = RoomType.objects.create(name="Single Room", status=True)
-    double_room = RoomType.objects.create(name="Double Room", status=True)
-    suite_room = RoomType.objects.create(name="Suite", status=True)
+    double_room = RoomType.objects.create(name="Double Room", status=False)
+    suite_room = RoomType.objects.create(name="Fourth Room", status=True)
 
     print("Room types created!")
 
@@ -38,11 +38,11 @@ def populate_data():
     print("Hotels created!")
 
     # Create Rooms
-    Room.objects.create(hotel=hotel1, room_type=single_room, capacity=1, count=10, occupied_count=2, net_price=150,
+    Room.objects.create(hotel=hotel1, room_type=single_room, capacity=1, count=10, occupied_count=0, net_price=150,
                         profit=50)
-    Room.objects.create(hotel=hotel1, room_type=double_room, capacity=2, count=15, occupied_count=5, net_price=250,
+    Room.objects.create(hotel=hotel1, room_type=double_room, capacity=2, count=15, occupied_count=0, net_price=250,
                         profit=75)
-    Room.objects.create(hotel=hotel2, room_type=suite_room, capacity=4, count=5, occupied_count=1, net_price=500,
+    Room.objects.create(hotel=hotel2, room_type=suite_room, capacity=4, count=5, occupied_count=0, net_price=500,
                         profit=150)
 
     print("Rooms created!")

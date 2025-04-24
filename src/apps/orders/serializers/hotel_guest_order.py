@@ -2,14 +2,15 @@ from django.db import transaction
 
 from rest_framework import serializers
 
-from apps.base.serializers import CustomModelSerializer
+from apps.base.exceptions import CustomExceptionError
 from apps.guests.models import Guest
-from apps.guests.serializers.order_guests import GuestForHotelOrderSerializer
 from apps.orders.models.hotel_order import HotelOrder
+from apps.base.serializers import CustomModelSerializer
+from apps.guests.serializers.order_guests import GuestListSerializer
 
 
 class HotelOrderGuestSerializer(CustomModelSerializer):
-    guests = GuestForHotelOrderSerializer(many=True, read_only=True)
+    guests = GuestListSerializer(many=True, read_only=True)
     guest_details = serializers.ListField(write_only=True, child=serializers.DictField())
 
     order_status = serializers.ChoiceField(choices=HotelOrder.OrderStatus.choices, required=False)
@@ -37,7 +38,7 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
         guests_data = data.get("guest_details", [])
 
         if count_of_people != len(guests_data):
-            raise serializers.ValidationError("Mehmonlar soni kiritilgan odamlar soniga teng bo‘lishi kerak.")
+            raise CustomExceptionError(code=404, detail="Mehmonlar soni kiritilgan odamlar soniga teng bo‘lishi kerak.")
 
         return data
 
@@ -63,15 +64,14 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
         return hotel_order
 
 
-# {
-#     "hotel": "c3776dbb-09ee-4b37-8d51-342c7dacae08",
-#     "order_status": "Active",
-#     "room": "4940017b-9f46-47a3-9ca4-1928c3967a45",
-#     "guest_details": [
-#     {"full_name": "Alkash", "gender": 2},
-#     {"full_name": "Bo`mish", "gender": 2}
-# ],
-#     "check_in": "22.03.2025 15:50",
-#     "check_out": "28.03.2025 15:50",
-#     "count_of_people": 2
-# }
+{
+    "hotel": "a821b753-ef42-4416-ae5d-df74b9b019d7",
+    "order_status": "Active",
+    "room": "eb1b4f01-b8c2-4cde-af90-3a41284d8dc2",
+    "guest_details": [
+    {"full_name": "Miya", "gender": 2}
+],
+    "check_in": "22.04.2025 15:50",
+    "check_out": "25.04.2025 15:50",
+    "count_of_people": 1
+}
