@@ -27,10 +27,10 @@ class RoomSerializer(CustomModelSerializer):
             "hotel",
             "room_type",
             "room_name",
-            "capacity",
             "count",
             "occupied_count",
             "available_count",
+            "remaining_capacity",
             "gross_price"
         ]
         read_only_fields = ["room_name"]
