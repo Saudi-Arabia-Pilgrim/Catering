@@ -1,6 +1,8 @@
+from django.db import models
+
 from rest_framework import serializers
 
-from apps.guests.serializers.order_guests import GuestForHotelOrderSerializer
+from apps.guests.serializers.order_guests import GuestListSerializer
 from apps.hotels.models import Hotel
 from apps.base.serializers import CustomModelSerializer
 from apps.rooms.serializers import RoomSerializer
@@ -14,7 +16,7 @@ class HotelSerializer(CustomModelSerializer):
     """
 
     rooms = RoomSerializer(many=True, help_text="List of rooms associated with the hotel.", read_only=True)
-    guests = GuestForHotelOrderSerializer(many=True, read_only=True)
+    guests = GuestListSerializer(many=True, read_only=True)
 
     total_guests_price = serializers.SerializerMethodField()
 
@@ -41,12 +43,7 @@ class HotelSerializer(CustomModelSerializer):
         }
 
     def get_total_guests_price(self, obj):
-        guests_data = GuestForHotelOrderSerializer(obj.guests.all(), many=True).data
-        return sum(
-            guest.get("total_price", 0)
-            for guest in guests_data
-            if guest.get("total_price") is not None
-        )
+        return obj.guests.aggregate(total=models.Sum("price"))["total"] or 0
 
 
 # {
