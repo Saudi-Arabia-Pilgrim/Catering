@@ -15,7 +15,9 @@ class FoodSerializer(CustomModelSerializer):
             "status",
             "gross_price",
             "net_price",
+            # "name"
         ]
+        # required_fields = ["name_uz", "name_ru", "name_ar", "name_en"]
 
     def get_recipe_foods(self, obj):
         recipes = obj.recipes.all()
@@ -30,7 +32,9 @@ class FoodSerializerForFoodOrder(CustomModelSerializer):
             "status",
             "gross_price",
             "net_price",
+            # "name",
         ]
+        # required_fields = ["name_uz", "name_ru", "name_ar", "name_en"]
 
 
 class FoodCreateUpdateSerializer(CustomSerializer):

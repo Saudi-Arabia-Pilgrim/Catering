@@ -1,4 +1,8 @@
 from rest_framework import serializers
+# from django.conf import settings
+
+# from apps.base.exceptions.exception_error import CustomExceptionError
+
 
 class AbstractCustomSerializerMixin:
     """
@@ -42,3 +46,38 @@ class AbstractCustomSerializerMixin:
                 kwargs['created_by'] = user
             kwargs['updated_by'] = user
         return super().save(**kwargs)
+    
+    # def to_representation(self, instance):
+    #     request = self.context.get("request", None)
+    #     translation_fields = getattr(instance, "translation_fields", None)
+    #     data = super().to_representation(instance)
+
+    #     if not translation_fields or not request:
+    #         return data
+
+    #     default_lang = settings.MODELTRANSLATION_DEFAULT_LANGUAGE
+    #     languages = [lang[0] for lang in settings.LANGUAGES]
+    #     lang = request.query_params.get('lang', default_lang)
+
+    #     if lang not in languages:
+    #         lang = default_lang
+
+    #     for field_name in translation_fields:
+    #         data[field_name] = getattr(instance, f"{field_name}_{lang}")
+    #         for lang in languages:
+    #             data.pop(f"{field_name}_{lang}")
+
+    #     return data
+
+    # def to_internal_value(self, data):
+    #     data = super().to_internal_value(data)
+    #     required_fields = getattr(self.Meta, "required_fields", None)
+        
+    #     if not required_fields:
+    #         return data
+
+    #     for field in required_fields:
+    #         if field in data and not str(data[field]).strip():
+    #             raise CustomExceptionError(code=400, detail=f"The field '{field}' is required and cannot be empty.")
+        
+    #     return data

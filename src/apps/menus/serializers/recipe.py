@@ -14,4 +14,9 @@ class RecipeSerializer(CustomModelSerializer):
     class Meta:
         model = Recipe
         exclude = ["slug", "created_at", "created_by", "updated_at", "updated_by"]
-        read_only_fields = ["net_price", "gross_price", "status"]
+        read_only_fields = ["net_price",
+                            "gross_price",
+                            "status",
+                            # "name"
+                            ]
+        # required_fields = ["name_uz", "name_ru", "name_ar", "name_en"]

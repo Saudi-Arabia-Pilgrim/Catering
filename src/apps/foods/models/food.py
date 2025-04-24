@@ -18,6 +18,8 @@ class Food(AbstractBaseModel):
         LIQUID = 0, "Suyuq"
         DEEP = 1, "Quyuq"
 
+    # translation_fields = ["name"]
+
     # === Name of the food item, with a maximum length of 255 characters. ===
     name = models.CharField(max_length=255)
     # === Unique slug for the food item, with a maximum length of 255 characters. ===

@@ -10,6 +10,8 @@ class Section(AbstractBaseModel):
     Model representing a Section.
     """
 
+    # translation_fields = ["name"]
+
     # === The name of the section. ===
     name = models.CharField(max_length=64)
     # === A unique slug for the section. ===

@@ -16,4 +16,7 @@ class ProductSerializer(CustomModelSerializer):
     class Meta:
         model = Product
         exclude = ["slug", "created_at", "created_by", "updated_at", "updated_by"]
-        read_only_fields = ["status"]
+        read_only_fields = ["status",
+                            # "name"
+                            ]
+        # required_fields = ["name_uz", "name_ru", "name_ar", "name_en"]
