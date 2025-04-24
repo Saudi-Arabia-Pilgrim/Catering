@@ -7,7 +7,7 @@ class CounterAgentSerializer(CustomModelSerializer):
         model = CounterAgent
         fields = [
             "id",
-            "order_type",
+            "counter_agent_type",
             "name",
             "address",
             "status",
