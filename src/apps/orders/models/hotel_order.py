@@ -6,6 +6,7 @@ from django.db import models, transaction
 
 from apps.base.exceptions import CustomExceptionError
 from apps.base.models import AbstractBaseModel
+from apps.guests.utils.calculate_price import calculate_guest_price
 from apps.orders.utils import new_id
 
 
@@ -83,6 +84,11 @@ class HotelOrder(AbstractBaseModel):
                 room.save(update_fields=["occupied_count"])
                 self.full_clean()
                 super().save(*args, **kwargs)
+
+                for guest in self.guests.all():
+                    calculate_guest_price(guest)
+                    guest.save(update_fields=["price"])
+
         else:
             self.full_clean()
             super().save(*args, **kwargs)
