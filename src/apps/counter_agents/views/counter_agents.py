@@ -11,7 +11,7 @@ class CounterAgentListCreateAPIView(CustomListCreateAPIView):
     serializer_class = CounterAgentSerializer
     queryset = CounterAgent.objects.all()
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    filterset_fields = ["status", "order_type"]
+    filterset_fields = ["status", "counter_agent_type"]
     search_fields = ["name", "address"]
 
 
