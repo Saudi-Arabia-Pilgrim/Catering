@@ -20,7 +20,7 @@ if settings.NGROK or settings.ENV == "production":
     swagger_base_url = os.getenv("SWAGGER_DOCS_BASE_URL", "https://catering.mukhsin.space")
     print(f"Swagger URL: {swagger_base_url}")
 else:
-    swagger_base_url = None
+    swagger_base_url = "http://localhost:8000/"
 
 
 # ======== Swagger/OpenAPI schema view ========
