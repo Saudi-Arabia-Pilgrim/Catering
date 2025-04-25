@@ -1,9 +1,11 @@
 from apps.transports.views.transport import (
     TransportCreateAPIView,
-    TransportRetrieveUpdateDestroyAPIView
+    TransportRetrieveUpdateDestroyAPIView,
+    TransportListAPIView
 )
 
 __all__ = [
     "TransportCreateAPIView",
-    "TransportRetrieveUpdateDestroyAPIView"
+    "TransportRetrieveUpdateDestroyAPIView",
+    "TransportListAPIView"
 ]
