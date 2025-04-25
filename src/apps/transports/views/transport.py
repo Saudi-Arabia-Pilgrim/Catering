@@ -1,25 +1,33 @@
-from rest_framework import status
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter
 
-from apps.base.response.responses import CustomSuccessResponse
-from apps.base.views.generics import (CustomCreateAPIView, CustomRetrieveUpdateDestroyAPIView)
+from apps.base.views.generics import (CustomCreateAPIView, CustomRetrieveUpdateDestroyAPIView, CustomListAPIView)
+from apps.transports.filters import TransportFilter
 from apps.transports.models import Transport
 from apps.transports.serializers import TransportSerializer
-from apps.transports.tasks.create_new_transport import create_new_transport
+
+
+class TransportListAPIView(CustomListAPIView):
+    """
+    API view for listing and filtering transports.
+    """
+    is_authenticated = True
+    serializer_class = TransportSerializer
+    queryset = Transport.objects.all()
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_class = TransportFilter
+    search_fields = ['name', 'name_of_driver', 'address', 'phone_number']
+
 
 
 class TransportCreateAPIView(CustomCreateAPIView):
     """
     API view for creating a new transport.
     """
+    is_authenticated = True
     serializer_class = TransportSerializer
     queryset = Transport.objects.all()
 
-    def create(self, request, *args, **kwargs):
-        """
-        Override the create method to handle custom logic.
-        """
-        create_new_transport.delay(data=request.data, user_id=request.user.id)
-        return CustomSuccessResponse(message="Transport created successfully.", status_code=status.HTTP_201_CREATED)
 
 
 class TransportRetrieveUpdateDestroyAPIView(CustomRetrieveUpdateDestroyAPIView):
@@ -28,4 +36,3 @@ class TransportRetrieveUpdateDestroyAPIView(CustomRetrieveUpdateDestroyAPIView):
     """
     serializer_class = TransportSerializer
     queryset = Transport.objects.all()
-

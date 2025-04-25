@@ -1,3 +1,9 @@
-from django.test import TestCase
+import os
 
-# Create your tests here.
+from distutils.util import strtobool
+
+DEBUG = bool(strtobool(os.getenv("DEBUG", "False")))
+
+print(bool("False"))
+
+print(strtobool("False"))
