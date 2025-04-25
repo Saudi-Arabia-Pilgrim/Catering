@@ -1,15 +1,14 @@
-from rest_framework import serializers
-from apps.base.serializers import AbstractCustomSerializerMixin
+from apps.base.serializers import CustomModelSerializer
 from apps.transports.models import Transport
 
-class TransportSerializer(AbstractCustomSerializerMixin, serializers.ModelSerializer):
+class TransportSerializer(CustomModelSerializer):
     """
     Serializer for the Transport model.
     """
     class Meta:
         model = Transport
         fields = [
-            'id', 'name', 'slug', 'name_of_driver', 'address', 
+            'id', 'name', 'name_of_driver', 'address',
             'phone_number', 'amount_of_people', 'status',
             'created_at', 'updated_at', 'created_by', 'updated_by'
         ]
