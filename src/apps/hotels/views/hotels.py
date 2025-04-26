@@ -8,8 +8,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from apps.base.views import CustomGenericAPIView
 from apps.guests.models import Guest
 from apps.hotels.models import Hotel
-from apps.hotels.serializers import HotelSerializer
 from apps.rooms.models import Room
+from apps.hotels.serializers import HotelSerializer
 
 
 class HotelListAPIView(CustomGenericAPIView):
