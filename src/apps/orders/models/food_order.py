@@ -61,8 +61,6 @@ class FoodOrder(AbstractBaseModel):
         "counter_agents.CounterAgent",
         on_delete=models.PROTECT,
         related_name="orders",
-        blank=True,
-        null=True,
         limit_choices_to={"status": True}
     )
 
