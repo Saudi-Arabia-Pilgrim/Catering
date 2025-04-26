@@ -6,6 +6,7 @@ import string
 
 import django
 from django.utils import timezone
+from decimal import Decimal
 
 # Disable Django's logging to avoid permission issues
 logging.disable(logging.CRITICAL)
@@ -18,6 +19,16 @@ from apps.rooms.models import RoomType, Room
 from apps.hotels.models import Hotel
 from apps.transports.models import Transport, Order
 from apps.users.models import CustomUser
+from apps.expenses.models.hiring import HiringExpense
+from apps.expenses.models.monthly_salary import MonthlySalary
+from apps.foods.models.food import Food
+from apps.foods.models.recipe_food import RecipeFood
+from apps.menus.models.menu import Menu
+from apps.menus.models.recipe import Recipe
+from apps.products.models.product import Product
+from apps.sections.models.measure import Measure
+from apps.sections.models.section import Section
+from apps.warehouses.models.warehouse import Warehouse
 from django.core.exceptions import ValidationError
 
 
@@ -29,11 +40,21 @@ def populate_data():
         # First, clear data that depends on other models
         Order.objects.all().delete()
         Room.objects.all().delete()
+        Recipe.objects.all().delete()
+        Food.objects.all().delete()
+        RecipeFood.objects.all().delete()
+        Menu.objects.all().delete()
+        Warehouse.objects.all().delete()
+        HiringExpense.objects.all().delete()
+        MonthlySalary.objects.all().delete()
 
         # Then clear the models they depend on
         Transport.objects.all().delete()
         Hotel.objects.all().delete()
         RoomType.objects.all().delete()
+        Product.objects.all().delete()
+        Section.objects.all().delete()
+        Measure.objects.all().delete()
 
         # Clear users last as they might be referenced by other models
         # Note: This will also delete the superuser, so only uncomment if necessary
@@ -383,6 +404,389 @@ def populate_data():
     # Verify order data
     for order in Order.objects.all():
         print(f"Order: {order.order_number} | Transport: {order.transport.name} | From: {order.from_location} | To: {order.to_location} | Fee: {order.service_fee}")
+
+    # Create Measures
+    try:
+        measures = [
+            {"name": "Kilogram", "abbreviation": "kg"},
+            {"name": "Gram", "abbreviation": "g"},
+            {"name": "Liter", "abbreviation": "L"},
+            {"name": "Milliliter", "abbreviation": "ml"},
+            {"name": "Piece", "abbreviation": "pc"},
+            {"name": "Box", "abbreviation": "box"},
+            {"name": "Packet", "abbreviation": "pkt"},
+            {"name": "Bottle", "abbreviation": "btl"},
+            {"name": "Can", "abbreviation": "can"},
+            {"name": "Dozen", "abbreviation": "dz"}
+        ]
+
+        for measure_data in measures:
+            Measure.objects.create(
+                name=measure_data["name"],
+                abbreviation=measure_data["abbreviation"]
+            )
+
+        print("Measures created!")
+    except ValidationError as e:
+        print("Validation Error in Measures Creation:", e)
+        return
+    except Exception as e:
+        print(f"Error in Measures Creation: {str(e)}")
+        return
+
+    # Verify measure data
+    for measure in Measure.objects.all():
+        print(f"Measure: {measure.name} | Abbreviation: {measure.abbreviation}")
+
+    # Create Sections
+    try:
+        sections = [
+            "Fruits",
+            "Vegetables",
+            "Meat",
+            "Dairy",
+            "Bakery",
+            "Beverages",
+            "Spices",
+            "Grains",
+            "Seafood",
+            "Snacks"
+        ]
+
+        for section_name in sections:
+            Section.objects.create(name=section_name)
+
+        print("Sections created!")
+    except ValidationError as e:
+        print("Validation Error in Sections Creation:", e)
+        return
+    except Exception as e:
+        print(f"Error in Sections Creation: {str(e)}")
+        return
+
+    # Verify section data
+    for section in Section.objects.all():
+        print(f"Section: {section.name}")
+
+    # Create Products
+    try:
+        # Sample product data
+        product_names = [
+            "Tomatoes", "Potatoes", "Onions", "Carrots", "Chicken", "Beef", "Rice", 
+            "Pasta", "Flour", "Sugar", "Salt", "Pepper", "Olive Oil", "Milk", 
+            "Cheese", "Eggs", "Bread", "Apples", "Oranges", "Bananas"
+        ]
+
+        # Get all measures and sections
+        measures = list(Measure.objects.all())
+        sections = list(Section.objects.all())
+
+        for product_name in product_names:
+            # Randomly select measures and section
+            measure = random.choice(measures)
+            measure_warehouse = random.choice(measures)
+            section = random.choice(sections)
+
+            # Generate random difference_measures
+            difference_measures = round(random.uniform(0.1, 10.0), 2)
+
+            Product.objects.create(
+                measure=measure,
+                measure_warehouse=measure_warehouse,
+                difference_measures=difference_measures,
+                section=section,
+                name=product_name,
+                status=random.choice([True, False])
+            )
+
+        print("Products created!")
+    except ValidationError as e:
+        print("Validation Error in Products Creation:", e)
+        return
+    except Exception as e:
+        print(f"Error in Products Creation: {str(e)}")
+        return
+
+    # Verify product data
+    for product in Product.objects.all():
+        print(f"Product: {product.name} | Section: {product.section.name} | Status: {product.status}")
+
+    # Create Warehouses
+    try:
+        # Get all products
+        products = list(Product.objects.all())
+
+        # Sample warehouse names
+        warehouse_names = [
+            "Main Storage", "Cold Storage", "Dry Goods", "Fresh Produce", 
+            "Meat Storage", "Dairy Storage", "Bakery Storage", "Beverage Storage"
+        ]
+
+        # Create 30 warehouse entries with random products
+        for i in range(30):
+            product = random.choice(products)
+            name = random.choice(warehouse_names) + f" {i+1}"
+            gross_price = round(random.uniform(10.0, 1000.0), 2)
+            arrived_count = round(random.uniform(10.0, 100.0), 2)
+            count = round(random.uniform(0.0, arrived_count), 2)
+
+            Warehouse.objects.create(
+                product=product,
+                name=name,
+                status=True,
+                gross_price=gross_price,
+                count=count,
+                arrived_count=arrived_count
+            )
+
+        print("Warehouses created!")
+    except ValidationError as e:
+        print("Validation Error in Warehouses Creation:", e)
+        return
+    except Exception as e:
+        print(f"Error in Warehouses Creation: {str(e)}")
+        return
+
+    # Verify warehouse data
+    for warehouse in Warehouse.objects.all()[:5]:  # Show just the first 5 to avoid too much output
+        print(f"Warehouse: {warehouse.name} | Product: {warehouse.product.name} | Count: {warehouse.count}/{warehouse.arrived_count}")
+
+    # Create RecipeFood
+    try:
+        # Get all products
+        products = list(Product.objects.all())
+
+        # Create 30 recipe food entries with random products
+        for i in range(30):
+            product = random.choice(products)
+            count = round(random.uniform(1.0, 10.0), 2)
+            price = round(random.uniform(5.0, 100.0), 2)
+
+            RecipeFood.objects.create(
+                product=product,
+                count=count,
+                price=price,
+                status=random.choice([True, False])
+            )
+
+        print("Recipe Foods created!")
+    except ValidationError as e:
+        print("Validation Error in Recipe Foods Creation:", e)
+        return
+    except Exception as e:
+        print(f"Error in Recipe Foods Creation: {str(e)}")
+        return
+
+    # Verify recipe food data
+    for recipe_food in RecipeFood.objects.all()[:5]:  # Show just the first 5 to avoid too much output
+        print(f"Recipe Food: Product: {recipe_food.product.name} | Count: {recipe_food.count} | Price: {recipe_food.price}")
+
+    # Create Foods
+    try:
+        # Sample food names
+        food_names = [
+            "Grilled Chicken", "Beef Stew", "Vegetable Soup", "Caesar Salad", 
+            "Pasta Carbonara", "Margherita Pizza", "Chicken Curry", "Beef Burger", 
+            "Fish and Chips", "Vegetable Stir Fry", "Mushroom Risotto", "Lamb Kebab"
+        ]
+
+        # Get all recipe foods
+        recipe_foods = list(RecipeFood.objects.all())
+
+        for food_name in food_names:
+            # Create food
+            food = Food.objects.create(
+                name=food_name,
+                section=random.choice([Food.Section.LIQUID, Food.Section.DEEP]),
+                status=True,
+                net_price=0,  # Will be calculated based on recipes
+                profit=Decimal(str(round(random.uniform(10.0, 50.0), 2))),
+                gross_price=0  # Will be calculated based on recipes
+            )
+
+            # Add random recipe foods (between 2 and 5)
+            num_recipes = random.randint(2, 5)
+            selected_recipes = random.sample(recipe_foods, min(num_recipes, len(recipe_foods)))
+            food.recipes.set(selected_recipes)
+
+            # Calculate prices
+            food.calculate_prices()
+            food.save()
+
+        print("Foods created!")
+    except ValidationError as e:
+        print("Validation Error in Foods Creation:", e)
+        return
+    except Exception as e:
+        print(f"Error in Foods Creation: {str(e)}")
+        return
+
+    # Verify food data
+    for food in Food.objects.all():
+        print(f"Food: {food.name} | Net Price: {food.net_price} | Gross Price: {food.gross_price} | Recipes: {food.recipes.count()}")
+
+    # Create Menus
+    try:
+        # Sample menu names
+        menu_names = [
+            "Breakfast Special", "Lunch Combo", "Dinner Deluxe", 
+            "Weekend Brunch", "Holiday Feast", "Light Lunch", 
+            "Executive Dinner", "Kids Menu", "Vegetarian Special"
+        ]
+
+        # Get all foods
+        foods = list(Food.objects.all())
+
+        for menu_name in menu_names:
+            # Create menu
+            menu = Menu.objects.create(
+                name=menu_name,
+                status=True,
+                net_price=0,  # Will be calculated based on foods
+                profit=Decimal(str(round(random.uniform(20.0, 100.0), 2))),
+                gross_price=0  # Will be calculated based on foods
+            )
+
+            # Add random foods (between 3 and 6)
+            num_foods = random.randint(3, 6)
+            selected_foods = random.sample(foods, min(num_foods, len(foods)))
+            menu.foods.set(selected_foods)
+
+            # Calculate prices
+            menu.calculate_prices()
+            menu.save()
+
+        print("Menus created!")
+    except ValidationError as e:
+        print("Validation Error in Menus Creation:", e)
+        return
+    except Exception as e:
+        print(f"Error in Menus Creation: {str(e)}")
+        return
+
+    # Verify menu data
+    for menu in Menu.objects.all():
+        print(f"Menu: {menu.name} | Net Price: {menu.net_price} | Gross Price: {menu.gross_price} | Foods: {menu.foods.count()}")
+
+    # Create Recipes
+    try:
+        # Sample recipe names
+        recipe_names = [
+            "Daily Special", "Weekly Plan", "Monthly Package", 
+            "Corporate Event", "Wedding Catering", "Birthday Party"
+        ]
+
+        # Get all menus
+        menus = list(Menu.objects.all())
+
+        for recipe_name in recipe_names:
+            # Ensure we have at least 3 menus
+            if len(menus) < 3:
+                print("Not enough menus to create recipes")
+                break
+
+            # Randomly select 3 different menus for breakfast, lunch, and dinner
+            selected_menus = random.sample(menus, 3)
+
+            Recipe.objects.create(
+                name=recipe_name,
+                menu_breakfast=selected_menus[0],
+                menu_lunch=selected_menus[1],
+                menu_dinner=selected_menus[2],
+                net_price=0,  # Will be calculated during save
+                profit=Decimal(str(round(random.uniform(50.0, 200.0), 2))),
+                gross_price=0  # Will be calculated during save
+            )
+
+        print("Recipes created!")
+    except ValidationError as e:
+        print("Validation Error in Recipes Creation:", e)
+        return
+    except Exception as e:
+        print(f"Error in Recipes Creation: {str(e)}")
+        return
+
+    # Verify recipe data
+    for recipe in Recipe.objects.all():
+        print(f"Recipe: {recipe.name} | Net Price: {recipe.net_price} | Gross Price: {recipe.gross_price}")
+
+    # Create HiringExpenses
+    try:
+        # Sample expense titles
+        expense_titles = [
+            "Visa Processing", "Flight Ticket", "Accommodation", "Transportation", 
+            "Medical Check-up", "Work Permit", "Relocation Allowance", "Training", 
+            "Equipment", "Uniform", "Documentation", "Recruitment Agency Fee"
+        ]
+
+        # Get all users
+        users = list(CustomUser.objects.all())
+
+        # Create hiring expenses for random users
+        for _ in range(20):
+            user = random.choice(users)
+            title = random.choice(expense_titles)
+
+            # Generate a random date in the past year
+            days_ago = random.randint(1, 365)
+            date = timezone.now() - timedelta(days=days_ago)
+
+            # Generate a random cost between $100 and $5000
+            cost = round(random.uniform(100.0, 5000.0), 2)
+
+            HiringExpense.objects.create(
+                user=user,
+                title=title,
+                date=date,
+                cost=cost,
+                status=random.choice([True, False])
+            )
+
+        print("Hiring Expenses created!")
+    except ValidationError as e:
+        print("Validation Error in Hiring Expenses Creation:", e)
+        return
+    except Exception as e:
+        print(f"Error in Hiring Expenses Creation: {str(e)}")
+        return
+
+    # Verify hiring expense data
+    for expense in HiringExpense.objects.all()[:5]:  # Show just the first 5 to avoid too much output
+        print(f"Hiring Expense: {expense.title} | User: {expense.user.full_name} | Cost: ${expense.cost} | Paid: {expense.status}")
+
+    # Create MonthlySalaries
+    try:
+        # Get all users
+        users = list(CustomUser.objects.all())
+
+        # Create monthly salaries for the past 6 months for random users
+        for month in range(1, 7):
+            # Generate a date for the first day of the month
+            current_month = timezone.now().replace(day=1) - timedelta(days=30 * month)
+
+            # Create salary records for random users
+            for user in random.sample(users, min(10, len(users))):
+                # Use the user's base_salary if available, otherwise generate a random one
+                salary = user.base_salary if user.base_salary else round(random.uniform(2000.0, 10000.0), 2)
+
+                MonthlySalary.objects.create(
+                    user=user,
+                    salary=salary,
+                    date=current_month,
+                    status=random.choice([True, False])
+                )
+
+        print("Monthly Salaries created!")
+    except ValidationError as e:
+        print("Validation Error in Monthly Salaries Creation:", e)
+        return
+    except Exception as e:
+        print(f"Error in Monthly Salaries Creation: {str(e)}")
+        return
+
+    # Verify monthly salary data
+    for salary in MonthlySalary.objects.all()[:5]:  # Show just the first 5 to avoid too much output
+        print(f"Monthly Salary: {salary.user.full_name} | Month: {salary.month_year} | Amount: ${salary.salary} | Paid: {salary.status}")
 
 
 if __name__ == "__main__":
