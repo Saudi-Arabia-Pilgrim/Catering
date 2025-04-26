@@ -68,12 +68,13 @@ class Room(AbstractBaseModel):
         editable=False,
         help_text="Price per night for the room type."
     )
+    is_busy = models.BooleanField(default=False)
 
     @property
     def current_occupied_count(self):
         return Guest.objects.filter(room=self, status=Guest.Status.COMPLETED).count()
 
-    def refresh_occupancy(self):
+    def refresh_occupancy(self, save=True):
         today = timezone.now().date()
 
         active_guests = Guest.objects.filter(
@@ -94,6 +95,14 @@ class Room(AbstractBaseModel):
         self.remaining_capacity = max((self.count * self.capacity) - total_people, 0)
         self.is_fully_occupied = self.occupied_count >= self.count
 
+        if save:
+            self.save(update_fields=[
+                "occupied_count",
+                "available_count",
+                "remaining_capacity",
+                "is_fully_occupied"
+            ])
+
     def clean(self):
         if self.count < self.occupied_count:
             raise CustomExceptionError(code=400, detail="Occupied count cannot be greater than total room count.")
@@ -101,7 +110,7 @@ class Room(AbstractBaseModel):
             raise CustomExceptionError(code=400, detail="Room count must be non-negative.")
 
     def save(self, *args, **kwargs):
-        self.refresh_occupancy()
+        self.refresh_occupancy(save=False)
 
         self.net_price = self.net_price or 0
         self.profit = self.profit or 0
