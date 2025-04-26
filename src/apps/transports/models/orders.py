@@ -83,11 +83,25 @@ class Order(AbstractBaseModel):
 
     @staticmethod
     def generate_order_number():
-        timestamps = int(time.time()) % 1000000
-        random_digits = random.randint(10, 99)
-        order_number = f"{timestamps}{random_digits}"
+        # Try to generate a unique order number
+        for _ in range(10):  # Try up to 10 times
+            timestamps = int(time.time()) % 1000000
+            random_digits = random.randint(10, 99)
+            order_number = f"{timestamps}{random_digits}"
 
-        return order_number
+            # Check if this order number already exists
+            if not Order.objects.filter(order_number=order_number).exists():
+                return order_number
+
+            # If it exists, wait a bit and try again
+            time.sleep(0.1)
+
+        # If we still can't generate a unique number after 10 tries,
+        # use a completely random 8-digit number
+        while True:
+            order_number = str(random.randint(10000000, 99999999))
+            if not Order.objects.filter(order_number=order_number).exists():
+                return order_number
 
     def clean(self):
 
@@ -100,6 +114,4 @@ class Order(AbstractBaseModel):
         if not self.order_number:
             order_number = self.generate_order_number()
             self.order_number = order_number
-            super(Order, self).save(*args, **kwargs)
         super().save(*args, **kwargs)
-

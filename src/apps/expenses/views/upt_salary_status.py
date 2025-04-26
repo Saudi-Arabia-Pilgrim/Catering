@@ -18,7 +18,7 @@ class MonthlySalaryUpdateAPIView(CustomUpdateAPIView):
     """
     permission_classes = [IsAuthenticated]
     serializer_class = MonthlySalarySerializer
-    model = "MonthlySalary"
+    queryset = MonthlySalary.objects.all()
     lookup_field = "id"
 
     def get_object(self):
