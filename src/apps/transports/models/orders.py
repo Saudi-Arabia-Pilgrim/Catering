@@ -6,6 +6,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from apps.base.exceptions import CustomExceptionError
 from apps.base.models import AbstractBaseModel
 from apps.transports.models import Transport
 
@@ -72,6 +73,18 @@ class Order(AbstractBaseModel):
         help_text=_("The service fee of the order")
     )
 
+    gross_fee = models.DecimalField(
+        _("Taxi service price of profit"),
+        max_digits=10,
+        decimal_places=2,
+        help_text=_("The service fee of profit the order"),
+        default=0
+    )
+
+    @property
+    def profit(self):
+        return self.gross_fee - self.service_fee
+
     class Meta:
         verbose_name = _("Order")
         verbose_name_plural = _("Orders")
@@ -104,13 +117,13 @@ class Order(AbstractBaseModel):
                 return order_number
 
     def clean(self):
-
-        super().clean()
-
+        if self.gross_fee < self.service_fee:
+            raise CustomExceptionError(detail="Gross fee cannot be less than the service fee.", code=400)
         if self.perform_date and self.perform_date < timezone.now():
             raise ValidationError(_("Perform Date cannot be in the past!"))
 
     def save(self, *args, **kwargs):
+        self.full_clean()
         if not self.order_number:
             order_number = self.generate_order_number()
             self.order_number = order_number

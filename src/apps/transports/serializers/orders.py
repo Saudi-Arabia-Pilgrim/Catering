@@ -15,6 +15,7 @@ class OrderSerializer(CustomModelSerializer):
             "status",
             "passenger_count",
             "service_fee",
+            "gross_fee"
         )
         read_only_fields = (
             "id",
