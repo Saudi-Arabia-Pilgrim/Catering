@@ -2,6 +2,7 @@ import random
 
 from django.db import models
 from django.db.models import Sum
+from django.utils.timezone import now
 
 from apps.base.models import AbstractBaseModel
 from apps.base.exceptions import CustomExceptionError
@@ -78,7 +79,6 @@ class Guest(AbstractBaseModel):
     )
 
     def clean(self):
-        from django.utils.timezone import now
         today = now().date()
 
         if self.check_out <= self.check_in:

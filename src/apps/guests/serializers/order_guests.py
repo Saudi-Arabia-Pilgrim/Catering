@@ -1,3 +1,5 @@
+from rest_framework import serializers
+
 from apps.guests.models import Guest
 from apps.base.exceptions import CustomExceptionError
 from apps.base.serializers import CustomModelSerializer
@@ -50,7 +52,7 @@ class GuestUpdateSerializer(GuestBaseSerializer):
         return instance
 
 
-class GuestListSerializer(CustomModelSerializer):
+class GuestListSerializer(GuestBaseSerializer):
     class Meta:
         model = Guest
         fields = [
@@ -59,6 +61,35 @@ class GuestListSerializer(CustomModelSerializer):
             "check_in", "check_out", "created_at"
         ]
 
+
+class OrderGuestSerializer(CustomModelSerializer):
+    duration = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Guest
+        fields = [
+            "id",
+            "full_name",
+            "hotel",
+            "room",
+            "gender",
+            "price",
+            "duration",
+            "created_at",
+        ]
+        read_only_fields = [
+            "id",
+            "order_number",
+            "price",
+            "created_at",
+        ]
+
+    def get_duration(self, obj):
+        days = (obj.check_out - obj.check_in).days
+        return f"{days} day"
+
+    def get_total_price(self, obj):
+        return obj.total_price
 
 # class GuestForHotelOrderSerializer(CustomModelSerializer):
 #     """
