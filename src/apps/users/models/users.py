@@ -12,7 +12,7 @@ from apps.base.validators import validate_image_size
 from apps.users.tasks import send_email_to_user
 from apps.base.models import AbstractBaseModel
 from apps.base.exceptions import CustomExceptionError
-from apps.users.utils import CustomUserManager, validate_gmail
+from apps.users.utils import CustomUserManager
 
 
 class CustomUser(AbstractBaseModel, AbstractBaseUser, PermissionsMixin):
@@ -70,6 +70,13 @@ class CustomUser(AbstractBaseModel, AbstractBaseUser, PermissionsMixin):
         _('Email address'),
         max_length=150,
         unique=True
+    )
+    phone_number = models.CharField(
+        _("Phone Number"),
+        max_length=15,
+        null=True,
+        blank=True,
+        help_text=_("Employee's phone number if exists")
     )
     image = models.ImageField(
         _('Image'),

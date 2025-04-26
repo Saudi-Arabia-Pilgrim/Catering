@@ -1,9 +1,12 @@
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
+from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 
 from apps.users.serializers.custom_user import UserSerializer
+from apps.users.filters import EmployeeFilter
 
 
 class UserProfileAPIView(APIView):
@@ -12,6 +15,9 @@ class UserProfileAPIView(APIView):
     Allows users to view and update their profile information.
     """
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_class = EmployeeFilter
+    search_fields = ["email", "full_name", "phone_number", "passport_number", "role", "gender", "base_salary"]
 
     def get(self, request):
         """
