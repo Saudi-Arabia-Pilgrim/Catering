@@ -1,16 +1,35 @@
-import datetime
+from django.http import Http404
 from django.utils import timezone
-from dateutil.relativedelta import relativedelta
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
-from django.http import Http404
+from rest_framework.filters import SearchFilter
+from dateutil.relativedelta import relativedelta
+from rest_framework.permissions import IsAuthenticated
+from django_filters.rest_framework import DjangoFilterBackend
 
-from apps.base.views import CustomGenericAPIView
-from apps.expenses.serializers import MonthlySalarySerializer
-from apps.expenses.models import MonthlySalary
 from apps.users.models import CustomUser
+from apps.expenses.models import MonthlySalary
+from apps.expenses.filters import MonthlySalaryFilter
+from apps.expenses.serializers import MonthlySalarySerializer
+from apps.base.views import CustomGenericAPIView, CustomListAPIView
+
+
+class MonthlySalaryListAPIView(CustomListAPIView):
+    """
+    Provides an API view to handle the list/filter/search of monthly salaries.
+
+    This view is designed to fetch and return a list of monthly salaries,
+    typically associated with a specific dataset or model. It extends
+    the functionality of the `CustomListAPIView` to implement any custom
+    behavior for management and retrieval of monthly salary-related data.
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = MonthlySalarySerializer
+    queryset = MonthlySalary.objects.all()
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_class = MonthlySalaryFilter
+    search_fields = ['user__email', 'user__full_name', 'month_year']
 
 class MonthlySalaryGenericAPIView(CustomGenericAPIView):
     """
@@ -19,7 +38,7 @@ class MonthlySalaryGenericAPIView(CustomGenericAPIView):
     Returns a list of monthly salaries for the authenticated employees.
     HR can use this endpoint to see a monthly breakdown and mark salaries as paid.
     """
-    permission_classes = [IsAuthenticated]\
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         """

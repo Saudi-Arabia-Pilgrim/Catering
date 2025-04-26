@@ -1,15 +1,39 @@
+from django.http import Http404
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import PermissionDenied
-
-from apps.base.response.responses import CustomSuccessResponse
-from apps.base.views import CustomCreateAPIView, CustomRetrieveUpdateDestroyAPIView
-from apps.expenses.serializers import HiringExpenseSerializer
-from apps.expenses.models import HiringExpense
-from apps.users.models import CustomUser
 from django.shortcuts import get_object_or_404
-from django.http import Http404
+from rest_framework.filters import SearchFilter
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import IsAuthenticated
+from django_filters.rest_framework import DjangoFilterBackend
+
+from apps.users.models import CustomUser
+from apps.expenses.models import HiringExpense
+from apps.expenses.filters import HiringExpenseFilter
+from apps.expenses.serializers import HiringExpenseSerializer
+from apps.base.response.responses import CustomSuccessResponse
+from apps.base.views import CustomCreateAPIView, CustomRetrieveUpdateDestroyAPIView, CustomListAPIView
+
+
+class HiringExpenseListAPIView(CustomListAPIView):
+    """
+    Provides an API view for listing/filtering/searching hiring expenses.
+
+    This class is designed to handle the logic for retrieving and
+    displaying lists of hiring-related expenses. It extends the
+    CustomListAPIView class, which provides custom functionality
+    specific to the application's needs. The usage of this class
+    is appropriate for endpoints that require listing expenses
+    related to hiring processes. Customizable filtering, ordering,
+    and pagination can be applied as needed.
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = HiringExpenseSerializer
+    queryset = HiringExpense.objects.all()
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_class = HiringExpenseFilter
+    search_fields = ['title', 'user__email', 'user__full_name']
+
 
 class HiringExpenseCreateAPIView(CustomCreateAPIView):
     """
@@ -18,7 +42,7 @@ class HiringExpenseCreateAPIView(CustomCreateAPIView):
     """
     permission_classes = [IsAuthenticated]
     serializer_class = HiringExpenseSerializer
-    model = HiringExpense
+    queryset = HiringExpense.objects.all()
 
     def create(self, request, *args, **kwargs):
         """
@@ -61,7 +85,10 @@ class HiringExpenseRetrieveUpdateDestroyAPIView(CustomRetrieveUpdateDestroyAPIVi
     """
     permission_classes = [IsAuthenticated]
     serializer_class = HiringExpenseSerializer
-    model = HiringExpense
+    queryset = HiringExpense.objects.all()
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_class = HiringExpenseFilter
+    search_fields = ['title', 'user__email', 'user__full_name']
 
     def get_object(self):
         """
