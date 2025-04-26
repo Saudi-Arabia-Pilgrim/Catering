@@ -41,23 +41,6 @@ class HotelOrderRetrieveAPIView(CustomGenericAPIView):
         return Response(serializer.data, status=200)
 
 
-class HotelOrderUpdateAPIView(CustomGenericAPIView):
-    queryset = HotelOrder.objects.all()
-    serializer_class = HotelOrderGuestSerializer
-
-    def get(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data, status=200)
-
-    def patch(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=200)
-
-
 class HotelOrderDeleteAPIView(CustomGenericAPIView):
     queryset = HotelOrder.objects.all()
     serializer_class = HotelOrderGuestSerializer

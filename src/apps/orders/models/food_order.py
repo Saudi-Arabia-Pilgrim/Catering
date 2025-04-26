@@ -61,8 +61,7 @@ class FoodOrder(AbstractBaseModel):
         "counter_agents.CounterAgent",
         on_delete=models.PROTECT,
         related_name="orders",
-        blank=True,
-        null=True,
+        limit_choices_to={"status": True}
     )
 
     # === The time when the order was placed. ===
@@ -99,6 +98,16 @@ class FoodOrder(AbstractBaseModel):
         Returns a string representation of the food order.
         """
         return f"{self.food_order_id} - {self.get_order_type_display()} - {self.price}"
+
+    @property
+    def profit(self):
+        products = {
+            self.ProductType.FOOD: "food",
+            self.ProductType.MENU: "menu",
+            self.ProductType.RECIPE: "recipe",
+        }
+        product = getattr(self, products[self.product_type])
+        return product.profit
 
     @property
     def total_price(self):

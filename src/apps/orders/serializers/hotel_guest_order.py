@@ -12,7 +12,7 @@ from apps.guests.serializers.order_guests import GuestListSerializer
 class HotelOrderGuestSerializer(CustomModelSerializer):
     guests = GuestListSerializer(many=True, read_only=True)
     guest_details = serializers.ListField(write_only=True, child=serializers.DictField())
-
+    # guest_status = serializers.ChoiceField(choices=Guest.Status.choices, read_only=True)
     order_status = serializers.ChoiceField(choices=HotelOrder.OrderStatus.choices, required=False)
 
     class Meta:
@@ -65,13 +65,13 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
 
 
 {
-    "hotel": "a821b753-ef42-4416-ae5d-df74b9b019d7",
+    "hotel": "1ce24225-481b-4a00-aa9a-843656791190",
     "order_status": "Active",
-    "room": "eb1b4f01-b8c2-4cde-af90-3a41284d8dc2",
+    "room": "90326857-4319-4439-85c9-18bb5f58612a",
     "guest_details": [
-    {"full_name": "Miya", "gender": 2}
+    {"full_name": "Pudge", "gender": 1}
 ],
-    "check_in": "22.04.2025 15:50",
-    "check_out": "25.04.2025 15:50",
+    "check_in": "26.04.2025 15:50",
+    "check_out": "29.04.2025 15:50",
     "count_of_people": 1
 }

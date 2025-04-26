@@ -39,6 +39,13 @@ class HotelOrder(AbstractBaseModel):
         related_name="hotel_orders",
         blank=True
     )
+
+    food_order = models.ManyToManyField(
+        "orders.FoodOrder",
+        related_name="hotel_orders",
+        blank=True
+    )
+
     order_status = models.CharField(
         choices=OrderStatus.choices,
         default=OrderStatus.ACTIVE,
@@ -59,6 +66,10 @@ class HotelOrder(AbstractBaseModel):
 
     class Meta:
         ordering = ['-created_at']
+
+    @property
+    def profit(self):
+        return self.room.profit
 
     def clean(self):
         if self.check_in >= self.check_out:
