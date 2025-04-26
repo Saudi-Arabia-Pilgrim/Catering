@@ -3,13 +3,13 @@ from django.urls import path
 from apps.orders.views import (HotelOrderCreateAPIView,
                                HotelOrderListAPIView,
                                HotelOrderRetrieveAPIView,
-                               HotelOrderUpdateAPIView,
                                HotelOrderDeleteAPIView)
-
+from apps.orders.views.active_orders import (ActiveHotelOrderListAPIView,
+                                             HotelFoodOrderCreateAPIView)
 from apps.orders.views.food_order import (FoodOrderListCreateAPIView,
                                           FoodOrderRetrieveAPIView,
                                           ReadyFodOrderAPIView)
-
+from apps.orders.views.noactive_orders import NoActiveHotelOrderListAPIView
 
 urlpatterns = [
     # ===================  Food Orders ===================
@@ -21,7 +21,12 @@ urlpatterns = [
     path("hotel_orders/", HotelOrderListAPIView.as_view(), name="hotel_orders"),
     path("hotel_order/create/", HotelOrderCreateAPIView.as_view(), name="create_hotel_orders"),
     path("hotel_order/<str:pk>/", HotelOrderRetrieveAPIView.as_view(), name="hotel_order"),
-    path("hotel_order/update/<str:pk>/", HotelOrderUpdateAPIView.as_view(), name="hotel_order_update"),
     path("hotel_order/delete/<str:pk>/", HotelOrderDeleteAPIView.as_view(), name="hotel_order_delete"),
 
+    # ========================== ACTIVE Orders =======================
+    path('hotel_orders/active/', ActiveHotelOrderListAPIView.as_view(), name='active-orders-list'),
+    path('hotel_orders/active/create', HotelFoodOrderCreateAPIView.as_view(), name='active-orders-list'),
+
+    # ========================== NO ACTIVE ORDERS ==========================
+    path("hotel_orders/no-active/", NoActiveHotelOrderListAPIView.as_view(), name="no-active-orders-list")
 ]
