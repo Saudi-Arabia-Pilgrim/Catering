@@ -16,6 +16,8 @@ class Section(AbstractBaseModel):
     name = models.CharField(max_length=64)
     # === A unique slug for the section. ===
     slug = models.SlugField(max_length=64, unique=True, blank=True)
+    # === The status of the section ===
+    status = models.BooleanField(default=True)
 
     class Meta:
         # === The name of the database table. ===
