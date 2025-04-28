@@ -2,11 +2,23 @@ from rest_framework import serializers
 
 from apps.base.exceptions import CustomExceptionError
 from apps.base.serializers import CustomModelSerializer, CustomSerializer
-from apps.foods.models import Food, RecipeFood
+from apps.foods.models import Food, RecipeFood, FoodSection
+
+
+class FoodSectionSerializer(CustomModelSerializer):
+    class Meta:
+        model = FoodSection
+        fields = [
+            "id",
+            "name",
+            "status",
+            "created_at"
+        ]
 
 
 class FoodSerializer(CustomModelSerializer):
     recipe_foods = serializers.SerializerMethodField(read_only=True)
+    section_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Food
@@ -22,6 +34,9 @@ class FoodSerializer(CustomModelSerializer):
     def get_recipe_foods(self, obj):
         recipes = obj.recipes.all()
         return [f"{recipe.product.name}-{recipe.count}" for recipe in recipes]
+
+    def get_section_name(self, obj):
+        return obj.section.name
 
 
 class FoodSerializerForFoodOrder(CustomModelSerializer):
@@ -41,7 +56,7 @@ class FoodCreateUpdateSerializer(CustomSerializer):
 
     name = serializers.CharField()
     recipes_id = serializers.ListField(write_only=True)
-    section = serializers.ChoiceField(choices=Food.Section.choices)
+    section = serializers.PrimaryKeyRelatedField(queryset=FoodSection.objects.filter(status=True))
     profit = serializers.DecimalField(max_digits=10, decimal_places=2)
     image = serializers.ImageField(required=False, allow_null=True)
 

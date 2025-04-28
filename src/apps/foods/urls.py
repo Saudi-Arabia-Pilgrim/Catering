@@ -1,9 +1,11 @@
 from django.urls import path
 
-from apps.foods import views 
-
+from apps.foods import views
 
 urlpatterns = [
+    # === Food Section URLS ===
+    path("sections/", views.FoodSectionListCreateAPIView.as_view()),
+    path("sections/<str:pk>/", views.FoodSectionUpdateDestroyRetrieveAPIView.as_view()),
     # === RecipeFood URLs === 
     path('recipe_foods/', views.RecipeFoodListCreateAPIView.as_view()),
     path('recipe_foods/<str:pk>/', views.RecipeFoodRetrieveUpdateDestroyAPIView.as_view()),
