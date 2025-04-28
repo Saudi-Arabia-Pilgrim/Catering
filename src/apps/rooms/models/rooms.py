@@ -86,6 +86,9 @@ class Room(AbstractBaseModel):
 
         total_people = active_guests["total"] or 0
 
+        if self.capacity is None or self.capacity == 0:
+            raise ValueError("Capacity cannot be None or zero.")
+
         occupied_rooms = total_people // self.capacity
         if total_people % self.capacity:
             occupied_rooms += 1
