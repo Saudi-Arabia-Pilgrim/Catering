@@ -110,6 +110,16 @@ class FoodOrder(AbstractBaseModel):
         return product.profit
 
     @property
+    def net_price(self):
+        products = {
+            self.ProductType.FOOD: "food",
+            self.ProductType.MENU: "menu",
+            self.ProductType.RECIPE: "recipe",
+        }
+        product = getattr(self, products[self.product_type])
+        return product.net_price
+
+    @property
     def total_price(self):
         return Decimal(self.price * self.product_count).quantize(
                 Decimal("0.001"), rounding=ROUND_UP
