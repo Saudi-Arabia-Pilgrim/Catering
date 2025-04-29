@@ -1,12 +1,14 @@
 from rest_framework.response import Response
 
-from apps.base.views import CustomGenericAPIView
+from apps.statistics.views.abstract import AbstractStatisticsAPIView
 from apps.transports.models import Transport
 
 
-class TransportStatisticListAPIView(CustomGenericAPIView):
+class TransportStatisticListAPIView(AbstractStatisticsAPIView):
+    queryset = Transport.objects.all().prefetch_related("order_set")
+
     def get(self, *args, **kwargs):
-        transports = Transport.objects.all().prefetch_related("order_set")
+        transports = self.get_queryset()
         data = []
 
         for transport in transports:

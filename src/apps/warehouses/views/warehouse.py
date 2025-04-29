@@ -1,5 +1,4 @@
 from django.shortcuts import get_object_or_404
-from redis.commands.search.reducers import count
 
 from rest_framework.response import Response
 from rest_framework.filters import SearchFilter
@@ -9,6 +8,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from apps.base.views import CustomListCreateAPIView, CustomGenericAPIView
 from apps.warehouses.models import Warehouse, Experience
 from apps.warehouses.serializers import WarehouseSerializer, WarehouseExpensesSerializer
+from apps.warehouses.utils import validate_uuid
 
 
 class WarehouseExpensesRetrieveAPIView(CustomGenericAPIView):
@@ -16,11 +16,13 @@ class WarehouseExpensesRetrieveAPIView(CustomGenericAPIView):
     serializer_class = WarehouseSerializer
 
     def get(self, request, pk):
+        validate_uuid(pk)
         warehouse = get_object_or_404(Warehouse, pk=pk)
         serializer = self.get_serializer(warehouse)
         return Response(serializer.data, status=200)
 
     def post(self, request, pk):
+        validate_uuid(pk)
         warehouse = get_object_or_404(Warehouse, pk=pk)
         serializer = self.get_serializer(
             data=request.data, context={"warehouse": warehouse}
