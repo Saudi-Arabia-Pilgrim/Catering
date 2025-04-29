@@ -118,8 +118,8 @@ class MonthlySalaryAdmin(admin.ModelAdmin):
 
     def employee_name(self, obj):
         url = reverse("admin:users_customuser_change", args=[obj.user.id])
-        full_name = "{} {}".format(obj.user.first_name, obj.user.last_name) if obj.user.first_name else obj.user.email
-        return format_html('<a href="{}">{}</a>', url, full_name)
+        display_name = obj.user.full_name if obj.user.full_name else obj.user.email
+        return format_html('<a href="{}">{}</a>', url, display_name)
     employee_name.short_description = 'Employee'
     employee_name.admin_order_field = 'user__email'
 
