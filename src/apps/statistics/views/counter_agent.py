@@ -1,20 +1,21 @@
 from django.db.models import Prefetch
 from rest_framework.response import Response
 
-from apps.base.views import CustomGenericAPIView
 from apps.counter_agents.models import CounterAgent
 from apps.orders.models import FoodOrder
+from apps.statistics.views.abstract import AbstractStatisticsAPIView
 
 
-class CounterAgentListAPIView(CustomGenericAPIView):
+class CounterAgentListAPIView(AbstractStatisticsAPIView):
+    queryset = CounterAgent.objects.prefetch_related(
+        Prefetch(
+            "orders",
+            queryset=FoodOrder.objects.select_related("food", "menu", "recipe"),
+        )
+    )
 
     def get(self, *args, **kwargs):
-        counter_agents = CounterAgent.objects.prefetch_related(
-            Prefetch(
-                "orders",
-                queryset=FoodOrder.objects.select_related("food", "menu", "recipe"),
-            )
-        )
+        counter_agents = self.get_queryset()
 
         data = []
 
@@ -23,7 +24,7 @@ class CounterAgentListAPIView(CustomGenericAPIView):
                 counter_datas = {
                     "name": counter_agent.name,
                     "order_count": counter_agent.orders.count(),
-                    "price": 0
+                    "price": 0,
                 }
                 for order in counter_agent.orders.all():
                     counter_datas["price"] += order.profit

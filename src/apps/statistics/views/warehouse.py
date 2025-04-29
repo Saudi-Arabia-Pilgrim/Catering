@@ -1,29 +1,161 @@
+import calendar
+
 from rest_framework.response import Response
 
 from apps.base.views import CustomGenericAPIView
-from apps.warehouses.models import Experience
+from apps.orders.models import FoodOrder
+from apps.statistics.utils import iterate_months, validate_from_and_date_to_date
+from apps.statistics.views.abstract import AbstractStatisticsAPIView
+from apps.warehouses.models import Warehouse, ProductsUsed, Experience
 
 
-class CheckoutListAPIView(CustomGenericAPIView):
+class CheckoutListAPIView(AbstractStatisticsAPIView):
+    queryset = Experience.objects.all().select_related(
+        "warehouse",
+        "warehouse__product",
+        "warehouse__product__section",
+        "warehouse__product__measure",
+    )
+
     def get(self, request, *args, **kwargs):
-        experiences = Experience.objects.all()
+        experiences = self.get_queryset()
         data = {}
 
         for experience in experiences:
             product = experience.warehouse.product
+            measure_warehouse = product.measure_warehouse
 
             if experience.warehouse.product.name not in data:
                 data = {
-                    product.name : {
-                        "measure": product.measure_warehouse.abbreviation,
-                        "count": int(experience.count) / product.measure_warehouse.difference_measures,
+                    product.name: {
+                        "measure": measure_warehouse.abbreviation,
+                        "count": (
+                            int(experience.count) / product.difference_measures
+                            if product.difference_measures > 0
+                            else 1
+                        ),
                         "section": product.section.name,
                         "price": experience.price,
-                        "image": request.build_absolute_uri(product.image.url) if product.image else None
+                        "image": (
+                            request.build_absolute_uri(product.image.url)
+                            if product.image
+                            else None
+                        ),
                     }
                 }
             else:
-                data[product.name]["count"] += int(experience.count) / product.measure_warehouse.difference_measures
+                data[product.name]["count"] += (
+                    int(experience.count) / product.difference_measures
+                    if product.difference_measures > 0
+                    else 1
+                )
                 data[product.name]["price"] += experience.price
+
+        return Response(data)
+
+
+class CheckInListAPIView(AbstractStatisticsAPIView):
+    queryset = Warehouse.objects.all().select_related(
+        "product", "product__measure", "product__section"
+    )
+
+    def get(self, request, *args, **kwargs):
+        warehouses = self.get_queryset()
+        data = {}
+        for warehouse in warehouses:
+            if warehouse.product.name not in data:
+                data = {
+                    warehouse.product.name: {
+                        "measure": warehouse.product.measure_warehouse.abbreviation,
+                        "count": warehouse.arrived_count,
+                        "section": warehouse.product.section.name,
+                        "price": warehouse.gross_price,
+                        "image": (
+                            request.build_absolute_uri(warehouse.product.image.url)
+                            if warehouse.product.image
+                            else None
+                        ),
+                    }
+                }
+            else:
+                data[warehouse.product.name]["count"] = +warehouse.arrived_count
+                data[warehouse.product.name]["price"] = +warehouse.gross_price
+        return Response(data)
+
+
+class MostUsedProductsListAPIView(AbstractStatisticsAPIView):
+    queryset = ProductsUsed.objects.all().select_related(
+        "warehouse", "warehouse__product", "warehouse__product__measure_warehouse"
+    )
+
+    def get(self, request, *args, **kwargs):
+        used_products = self.get_queryset()
+        data = {}
+
+        for used_product in used_products:
+            product = used_product.warehouse.product
+
+            if product.name not in data:
+                data = {
+                    product.name: {
+                        "measure": product.measure_warehouse.abbreviation,
+                        "count": float(used_product.count),
+                        "section": product.section.name,
+                        "price": float(used_product.price),
+                        "image": (
+                            request.build_absolute_uri(product.image.url)
+                            if product.image
+                            else None
+                        ),
+                    }
+                }
+            else:
+                data[product.name]["count"] = +float(used_product.count)
+                data[product.name]["price"] = +float(used_product.price)
+        return Response(data)
+
+
+class CheckInCheckoutDiagramAPIView(CustomGenericAPIView):
+    def get(self, request, *args, **kwargs):
+
+        from_date, to_date = validate_from_and_date_to_date(request)
+
+        data = []
+
+        warehouses = list(
+            Warehouse.objects.filter(created_at__lte=to_date, created_at__gte=from_date)
+        )
+        orders = list(
+            FoodOrder.objects.filter(
+                created_at__lte=to_date, created_at__gte=from_date, status=True
+            )
+        )
+
+        for month_date in iterate_months(from_date, to_date):
+
+            month_warehouses = []
+            month_orders = []
+            month_name = calendar.month_name[month_date.month]
+
+            for warehouse in warehouses:
+                if warehouse.created_at.month == month_date.month:
+                    month_warehouses.append(warehouse)
+
+            for order in orders:
+                if order.created_at.month == month_date.month:
+                    month_orders.append(order)
+
+            diagram = {
+                "name": month_name,
+                "checkout": 0,
+                "check_in": 0,
+            }
+
+            for warehouse in month_warehouses:
+                diagram["check_in"] += float(warehouse.gross_price)
+
+            for order in month_orders:
+                diagram["checkout"] += float(order.profit)
+            data.append(diagram)
 
         return Response(data)
