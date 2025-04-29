@@ -1,7 +1,7 @@
 from django.contrib import admin
-from django.utils.html import format_html
-from django.urls import reverse
 from django.db.models import Sum
+from django.urls import reverse
+from django.utils.html import format_html
 
 from apps.expenses.models.hiring import HiringExpense
 from apps.expenses.models.monthly_salary import MonthlySalary
@@ -117,7 +117,7 @@ class MonthlySalaryAdmin(admin.ModelAdmin):
         return queryset.select_related('user', 'created_by', 'updated_by')
 
     def employee_name(self, obj):
-        url = reverse("admin:users_user_change", args=[obj.user.id])
+        url = reverse("admin:users_customuser_change", args=[obj.user.id])
         full_name = "{} {}".format(obj.user.first_name, obj.user.last_name) if obj.user.first_name else obj.user.email
         return format_html('<a href="{}">{}</a>', url, full_name)
     employee_name.short_description = 'Employee'
