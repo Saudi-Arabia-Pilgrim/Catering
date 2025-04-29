@@ -13,7 +13,7 @@ class CounterAgent(AbstractBaseModel):
         B2C = "B2C"
 
     # === The type of the counter agent(B2B or B2C). ===
-    counter_agent_type = models.CharField(choices=Type.choices, default=Type.B2C)
+    counter_agent_type = models.CharField(choices=Type.choices)
     # === The name of the counter agent. ===
     name = models.CharField(max_length=255)
     # === The address of the counter agent. ===

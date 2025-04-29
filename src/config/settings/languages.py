@@ -1,6 +1,6 @@
 from django.conf import settings
 
-LANGUAGE_CODE = 'uz'
+LANGUAGE_CODE = 'en'
 
 LANGUAGES = [
     ('ar', 'Arabic'),

@@ -16,6 +16,8 @@ class Measure(AbstractBaseModel):
     slug = models.SlugField(max_length=64, unique=True, blank=True)
     # === Abbreviation name of the measure ===
     abbreviation = models.CharField(max_length=8)
+    # === The status of the measure ===
+    status = models.BooleanField(default=True)
 
     class Meta:
         # === The name of the database table. ===

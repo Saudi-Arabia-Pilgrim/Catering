@@ -1,6 +1,7 @@
-from django.db import models
-from apps.base.models import AbstractBaseModel
 from django.conf import settings
+from django.db import models
+
+from apps.base.models import AbstractBaseModel
 
 
 class MonthlySalary(AbstractBaseModel):
@@ -37,4 +38,4 @@ class MonthlySalary(AbstractBaseModel):
         return self.date.strftime("%B %Y")  # e.g., "March 2025"
 
     def __str__(self):
-        return self.salary
+        return str(self.salary)
