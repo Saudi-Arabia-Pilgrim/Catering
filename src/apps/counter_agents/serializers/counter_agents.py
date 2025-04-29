@@ -11,4 +11,6 @@ class CounterAgentSerializer(CustomModelSerializer):
             "name",
             "address",
             "status",
+            "created_at",
         ]
+        read_only_fields = ["created_at"]
