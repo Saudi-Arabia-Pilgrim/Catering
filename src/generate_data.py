@@ -1,12 +1,12 @@
 import logging
 import os
 import random
-from datetime import timedelta, datetime
 import string
+from datetime import timedelta, datetime
+from decimal import Decimal
 
 import django
 from django.utils import timezone
-from decimal import Decimal
 
 # Disable Django's logging to avoid permission issues
 logging.disable(logging.CRITICAL)
@@ -21,7 +21,7 @@ from apps.transports.models import Transport, Order
 from apps.users.models import CustomUser
 from apps.expenses.models.hiring import HiringExpense
 from apps.expenses.models.monthly_salary import MonthlySalary
-from apps.foods.models.food import Food
+from apps.foods.models.food import Food, FoodSection
 from apps.foods.models.recipe_food import RecipeFood
 from apps.menus.models.menu import Menu
 from apps.menus.models.recipe import Recipe
@@ -29,6 +29,11 @@ from apps.products.models.product import Product
 from apps.sections.models.measure import Measure
 from apps.sections.models.section import Section
 from apps.warehouses.models.warehouse import Warehouse
+from apps.counter_agents.models.counter_agents import CounterAgent
+from apps.guests.models import Guest
+from apps.orders.models.food_order import FoodOrder
+from apps.orders.models.hotel_order import HotelOrder
+from apps.warehouses.models.experience import Experience
 from django.core.exceptions import ValidationError
 
 
@@ -38,27 +43,32 @@ def populate_data():
         # Delete in the correct order to avoid foreign key constraint violations
         print("Clearing existing data...")
         # First, clear data that depends on other models
-        Order.objects.all().delete()
-        Room.objects.all().delete()
-        Recipe.objects.all().delete()
-        Food.objects.all().delete()
-        RecipeFood.objects.all().delete()
-        Menu.objects.all().delete()
-        Warehouse.objects.all().delete()
-        HiringExpense.objects.all().delete()
-        MonthlySalary.objects.all().delete()
+        HotelOrder.objects.all().delete()  # Delete hotel orders first as they reference hotels, rooms, guests, and food orders
+        FoodOrder.objects.all().delete()  # Delete food orders first as they reference Food, Menu, Recipe, and CounterAgent
+        Guest.objects.all().delete()  # Delete guests before rooms as they reference rooms
+        Order.objects.all().delete()  # Delete orders before transports
+        Experience.objects.all().delete()  # Delete experiences before warehouses
+        HiringExpense.objects.all().delete()  # Delete hiring expenses before users
+        MonthlySalary.objects.all().delete()  # Delete monthly salaries before users
+        CustomUser.objects.all().delete()  # Delete users
 
-        # Then clear the models they depend on
-        Transport.objects.all().delete()
-        Hotel.objects.all().delete()
-        RoomType.objects.all().delete()
-        Product.objects.all().delete()
-        Section.objects.all().delete()
-        Measure.objects.all().delete()
+        # Delete models with dependencies
+        Room.objects.all().delete()  # Now safe to delete rooms
+        Recipe.objects.all().delete()  # Delete recipes before menus
+        Menu.objects.all().delete()  # Delete menus before foods
+        Food.objects.all().delete()  # Delete foods before recipe foods and food sections
+        RecipeFood.objects.all().delete()  # Delete recipe foods
+        FoodSection.objects.all().delete()  # Delete food sections
+        Warehouse.objects.all().delete()  # Delete warehouses before products
+        CounterAgent.objects.all().delete()  # Delete counter agents
 
-        # Clear users last as they might be referenced by other models
-        # Note: This will also delete the superuser, so only uncomment if necessary
-        # CustomUser.objects.filter(is_superuser=False).delete()
+        # Then clear the base models
+        Transport.objects.all().delete()  # Delete transports
+        Hotel.objects.all().delete()  # Delete hotels before room types
+        RoomType.objects.all().delete()  # Delete room types
+        Product.objects.all().delete()  # Delete products before sections and measures
+        Section.objects.all().delete()  # Delete sections
+        Measure.objects.all().delete()  # Delete measures
     except Exception as e:
         print(f"Error clearing existing data: {str(e)}")
         return
@@ -155,7 +165,12 @@ def populate_data():
                                 random.randint(1, 28)).date()
 
             # Ensure date_come is after birthdate and not in the future
-            date_come_year = random.randint(max(2015, birthdate.year + 18), min(current_year, 2023))
+            start_year = max(2015, birthdate.year + 18)
+            end_year = min(current_year, 2024)  # Updated to 2024
+            # Ensure start_year is not greater than end_year
+            if start_year > end_year:
+                start_year = end_year
+            date_come_year = random.randint(start_year, end_year)
             date_come = datetime(date_come_year, 
                                 random.randint(1, 12), 
                                 random.randint(1, 28)).date()
@@ -378,6 +393,8 @@ def populate_data():
 
                 # Ensure service_fee is positive
                 service_fee = random.randint(50, 300)
+                gross_fee = random.randint(400, 800)
+
 
                 Order.objects.create(
                     transport=transport,
@@ -386,7 +403,8 @@ def populate_data():
                     to_location=to_loc,
                     status=Order.Status.CREATED,
                     passenger_count=str(passenger_count),
-                    service_fee=service_fee
+                    service_fee=service_fee,
+                    gross_fee=gross_fee
                 )
 
         print("Orders created!")
@@ -468,34 +486,70 @@ def populate_data():
     for section in Section.objects.all():
         print(f"Section: {section.name}")
 
+    # Create Food Sections
+    try:
+        # Sample food section names
+        food_section_names = [
+            "Suyuq", "Quyuq", "Xamirli", "Salatlar", "Ichimliklar"
+        ]
+
+        for section_name in food_section_names:
+            FoodSection.objects.create(name=section_name)
+
+        print("Food Sections created!")
+    except ValidationError as e:
+        print("Validation Error in Food Sections Creation:", e)
+        return
+    except Exception as e:
+        print(f"Error in Food Sections Creation: {str(e)}")
+        return
+
     # Create Products
     try:
-        # Sample product data
-        product_names = [
-            "Tomatoes", "Potatoes", "Onions", "Carrots", "Chicken", "Beef", "Rice", 
-            "Pasta", "Flour", "Sugar", "Salt", "Pepper", "Olive Oil", "Milk", 
-            "Cheese", "Eggs", "Bread", "Apples", "Oranges", "Bananas"
+        # Sample product data with appropriate measures
+        product_data = [
+            {"name": "Tomatoes", "measure": "kg"},
+            {"name": "Potatoes", "measure": "kg"},
+            {"name": "Onions", "measure": "kg"},
+            {"name": "Carrots", "measure": "kg"},
+            {"name": "Chicken", "measure": "kg"},
+            {"name": "Beef", "measure": "kg"},
+            {"name": "Rice", "measure": "kg"},
+            {"name": "Pasta", "measure": "kg"},
+            {"name": "Flour", "measure": "kg"},
+            {"name": "Sugar", "measure": "kg"},
+            {"name": "Salt", "measure": "g"},
+            {"name": "Pepper", "measure": "g"},
+            {"name": "Olive Oil", "measure": "L"},
+            {"name": "Milk", "measure": "L"},
+            {"name": "Cheese", "measure": "kg"},
+            {"name": "Eggs", "measure": "dz"},
+            {"name": "Bread", "measure": "pc"},
+            {"name": "Apples", "measure": "kg"},
+            {"name": "Oranges", "measure": "kg"},
+            {"name": "Bananas", "measure": "kg"}
         ]
 
         # Get all measures and sections
-        measures = list(Measure.objects.all())
+        measures_dict = {m.abbreviation: m for m in Measure.objects.all()}
         sections = list(Section.objects.all())
 
-        for product_name in product_names:
-            # Randomly select measures and section
-            measure = random.choice(measures)
-            measure_warehouse = random.choice(measures)
+        for product_info in product_data:
+            # Get the appropriate measure for this product
+            measure = measures_dict[product_info["measure"]]
+            # Use the same measure for warehouse to ensure consistency
+            measure_warehouse = measure
             section = random.choice(sections)
 
-            # Generate random difference_measures
-            difference_measures = round(random.uniform(0.1, 10.0), 2)
+            # Set difference_measures to 1.0 for simplicity
+            difference_measures = 1.0
 
             Product.objects.create(
                 measure=measure,
                 measure_warehouse=measure_warehouse,
                 difference_measures=difference_measures,
                 section=section,
-                name=product_name,
+                name=product_info["name"],
                 status=random.choice([True, False])
             )
 
@@ -527,8 +581,8 @@ def populate_data():
             product = random.choice(products)
             name = random.choice(warehouse_names) + f" {i+1}"
             gross_price = round(random.uniform(10.0, 1000.0), 2)
-            arrived_count = round(random.uniform(10.0, 100.0), 2)
-            count = round(random.uniform(0.0, arrived_count), 2)
+            arrived_count = round(random.uniform(100.0, 500.0), 2)
+            count = arrived_count  # Set count equal to arrived_count to ensure full stock
 
             Warehouse.objects.create(
                 product=product,
@@ -590,14 +644,15 @@ def populate_data():
             "Fish and Chips", "Vegetable Stir Fry", "Mushroom Risotto", "Lamb Kebab"
         ]
 
-        # Get all recipe foods
+        # Get all recipe foods and food sections
         recipe_foods = list(RecipeFood.objects.all())
+        food_sections = list(FoodSection.objects.all())
 
         for food_name in food_names:
             # Create food
             food = Food.objects.create(
                 name=food_name,
-                section=random.choice([Food.Section.LIQUID, Food.Section.DEEP]),
+                section=random.choice(food_sections),
                 status=True,
                 net_price=0,  # Will be calculated based on recipes
                 profit=Decimal(str(round(random.uniform(10.0, 50.0), 2))),
@@ -787,6 +842,294 @@ def populate_data():
     # Verify monthly salary data
     for salary in MonthlySalary.objects.all()[:5]:  # Show just the first 5 to avoid too much output
         print(f"Monthly Salary: {salary.user.full_name} | Month: {salary.month_year} | Amount: ${salary.salary} | Paid: {salary.status}")
+
+    # Create CounterAgents
+    try:
+        # Sample counter agent data
+        counter_agent_names = [
+            "Royal Catering", "Elite Events", "Gourmet Solutions", "Deluxe Dining", 
+            "Premium Provisions", "Luxury Feasts", "Corporate Cuisine", "Executive Eats"
+        ]
+
+        counter_agent_addresses = [
+            "123 Main St, Riyadh, Saudi Arabia",
+            "456 Business Ave, Jeddah, Saudi Arabia",
+            "789 Corporate Blvd, Dammam, Saudi Arabia",
+            "321 Commerce Way, Mecca, Saudi Arabia",
+            "654 Industry Road, Medina, Saudi Arabia",
+            "987 Enterprise Lane, Tabuk, Saudi Arabia",
+            "147 Market Street, Abha, Saudi Arabia",
+            "258 Trade Center, Taif, Saudi Arabia"
+        ]
+
+        for i in range(len(counter_agent_names)):
+            counter_agent_type = random.choice([CounterAgent.Type.B2B, CounterAgent.Type.B2C])
+            name = counter_agent_names[i]
+            address = counter_agent_addresses[i]
+
+            CounterAgent.objects.create(
+                counter_agent_type=counter_agent_type,
+                name=name,
+                address=address,
+                status=random.choice([True, False])
+            )
+
+        print("Counter Agents created!")
+    except ValidationError as e:
+        print("Validation Error in Counter Agents Creation:", e)
+        return
+    except Exception as e:
+        print(f"Error in Counter Agents Creation: {str(e)}")
+        return
+
+    # Verify counter agent data
+    for counter_agent in CounterAgent.objects.all():
+        print(f"Counter Agent: {counter_agent.name} | Type: {counter_agent.counter_agent_type} | Status: {counter_agent.status}")
+
+    # Create Guests
+    try:
+        # Sample guest data
+        guest_names = [
+            "Abdullah Al-Saud", "Mohammed Al-Qahtani", "Fatima Al-Ghamdi", "Aisha Al-Harbi", 
+            "Omar Al-Shammari", "Khalid Al-Otaibi", "Layla Al-Zahrani", "Zainab Al-Dossari"
+        ]
+
+        # Get all hotels and rooms
+        hotels = list(Hotel.objects.all())
+        rooms = list(Room.objects.all())
+
+        # Generate dates for check-in and check-out
+        today = timezone.now().date()
+
+        for i in range(len(guest_names)):
+            # Select random hotel and room
+            hotel = random.choice(hotels)
+            room = random.choice([r for r in rooms if r.hotel == hotel])
+
+            # Generate random check-in and check-out dates
+            check_in = today + timedelta(days=random.randint(1, 30))
+            check_out = check_in + timedelta(days=random.randint(1, 14))
+
+            # Ensure count doesn't exceed room capacity
+            count = random.randint(1, room.capacity)
+
+            # Create guest
+            guest = Guest(
+                hotel=hotel,
+                room=room,
+                status=random.choice([Guest.Status.NEW, Guest.Status.COMPLETED, Guest.Status.CANCELED]),
+                gender=random.choice([Guest.Gender.MALE, Guest.Gender.FEMALE]),
+                full_name=guest_names[i],
+                count=count,
+                check_in=check_in,
+                check_out=check_out
+            )
+
+            # The order_number is generated in the save method
+            guest.save()
+
+        print("Guests created!")
+    except ValidationError as e:
+        print("Validation Error in Guests Creation:", e)
+        return
+    except Exception as e:
+        print(f"Error in Guests Creation: {str(e)}")
+        return
+
+    # Verify guest data
+    for guest in Guest.objects.all():
+        print(f"Guest: {guest.full_name} | Hotel: {guest.hotel.name} | Room: {guest.room.room_type.name} | Check-in: {guest.check_in} | Check-out: {guest.check_out}")
+
+    # Create FoodOrders
+    try:
+        # ======== comment: helpers and imports ========
+        from collections import defaultdict
+        from django.db.models import Sum
+
+        def get_available_stock(product):
+            """
+            ======== comment: returns current stock count for a given raw product ========
+            """
+            agg = (
+                    Warehouse.objects
+                    .filter(product=product, status=True)
+                    .aggregate(total=Sum('count'))
+                    or {}
+            )
+            return agg.get('total') or 0
+
+        # ======== comment: preload foods and agents ========
+        foods = list(Food.objects.prefetch_related('recipes__product'))
+        counter_agents = list(CounterAgent.objects.filter(status=True))
+
+        # ======== comment: sample delivery addresses ========
+        addresses = [
+            "123 Main St, Riyadh, Saudi Arabia",
+            "456 Business Ave, Jeddah, Saudi Arabia",
+            "789 Corporate Blvd, Dammam, Saudi Arabia",
+            "321 Commerce Way, Mecca, Saudi Arabia",
+            "654 Industry Road, Medina, Saudi Arabia",
+            "987 Enterprise Lane, Tabuk, Saudi Arabia",
+        ]
+
+        # ======== comment: only seed orders for foods with sufficient raw-stock ========
+        for _ in range(10):
+            # ======== comment: pick a random dish ========
+            food = random.choice(foods)
+
+            # ======== comment: compute total ingredients needed ========
+            products_needed = defaultdict(float)
+            for rf in food.recipes.all():
+                products_needed[rf.product] += float(rf.count) * 1  # quantity=1
+
+            # ======== comment: skip if any ingredient is below requirement ========
+            if any(get_available_stock(prod) < qty for prod, qty in products_needed.items()):
+                continue
+
+            # ======== comment: all ingredients available—create order ========
+            counter_agent = random.choice(counter_agents)
+            order_time    = timezone.now().date() + timedelta(days=random.randint(0, 30))
+            address       = random.choice(addresses)
+
+            FoodOrder.objects.create(
+                food          = food,
+                menu          = None,
+                recipe        = None,
+                counter_agent = counter_agent,
+                order_time    = order_time,
+                order_type    = FoodOrder.OrderType.ONCE,
+                product_type  = FoodOrder.ProductType.FOOD,
+                price         = food.gross_price,
+                address       = address,
+                product_count = 1,
+                status        = random.choice([True, False]),
+            )
+
+        print("Food Orders created!")
+    except ValidationError as e:
+        print("Validation Error in Food Orders Creation:", e)
+        return
+    except Exception as e:
+        print(f"Error in Food Orders Creation: {str(e)}")
+        return
+
+    # Verify food order data
+    for food_order in FoodOrder.objects.all():
+        product_info = ""
+        if food_order.product_type == FoodOrder.ProductType.FOOD and food_order.food:
+            product_info = f"Food: {food_order.food.name}"
+        elif food_order.product_type == FoodOrder.ProductType.MENU and food_order.menu:
+            product_info = f"Menu: {food_order.menu.name}"
+        elif food_order.product_type == FoodOrder.ProductType.RECIPE and food_order.recipe:
+            product_info = f"Recipe: {food_order.recipe.name}"
+
+        print(
+            f"Food Order: {food_order.food_order_id} | "
+            f"{product_info} | "
+            f"Counter Agent: {food_order.counter_agent.name} | "
+            f"Price: {food_order.price} | "
+            f"Count: {food_order.product_count}"
+        )
+
+    # Create HotelOrders
+    try:
+        # Get all hotels, rooms, guests, and food orders
+        hotels = list(Hotel.objects.all())
+        rooms = list(Room.objects.all())
+        guests = list(Guest.objects.filter(status=Guest.Status.NEW))
+        food_orders = list(FoodOrder.objects.filter(status=True))
+
+        # Create hotel orders
+        for _ in range(5):  # Create 5 hotel orders
+            # Skip if no hotels, rooms, or guests available
+            if not hotels or not rooms or not guests:
+                continue
+
+            # Select random hotel
+            hotel = random.choice(hotels)
+
+            # Select random room from the chosen hotel
+            hotel_rooms = [r for r in rooms if r.hotel == hotel]
+            if not hotel_rooms:
+                continue
+            room = random.choice(hotel_rooms)
+
+            # Generate random check-in and check-out dates
+            today = timezone.now()
+            check_in = today + timedelta(days=random.randint(1, 30))
+            check_out = check_in + timedelta(days=random.randint(1, 14))
+
+            # Ensure count_of_people doesn't exceed room capacity
+            count_of_people = random.randint(1, room.capacity)
+
+            # Create hotel order
+            hotel_order = HotelOrder.objects.create(
+                hotel=hotel,
+                room=room,
+                order_status=random.choice([HotelOrder.OrderStatus.ACTIVE, HotelOrder.OrderStatus.COMPLETED]),
+                food_service=random.choice([True, False]),
+                check_in=check_in,
+                check_out=check_out,
+                count_of_people=count_of_people
+            )
+
+            # Add random guests to the hotel order
+            available_guests = [g for g in guests if g.hotel == hotel and g.room == room]
+            if available_guests:
+                # Add up to 3 guests or all available guests, whichever is less
+                selected_guests = random.sample(available_guests, min(3, len(available_guests)))
+                hotel_order.guests.set(selected_guests)
+
+            # Add random food orders to the hotel order if food_service is True
+            if hotel_order.food_service and food_orders:
+                # Add up to 3 food orders or all available food orders, whichever is less
+                selected_food_orders = random.sample(food_orders, min(3, len(food_orders)))
+                hotel_order.food_order.set(selected_food_orders)
+
+        print("Hotel Orders created!")
+    except ValidationError as e:
+        print("Validation Error in Hotel Orders Creation:", e)
+        return
+    except Exception as e:
+        print(f"Error in Hotel Orders Creation: {str(e)}")
+        return
+
+    # Verify hotel order data
+    for hotel_order in HotelOrder.objects.all():
+        print(f"Hotel Order: {hotel_order.order_id} | Hotel: {hotel_order.hotel.name} | Room: {hotel_order.room.room_type.name} | Check-in: {hotel_order.check_in} | Check-out: {hotel_order.check_out} | People: {hotel_order.count_of_people} | Food Service: {hotel_order.food_service}")
+
+    # Create Experiences
+    try:
+        # Get all warehouses
+        warehouses = list(Warehouse.objects.all())
+
+        if not warehouses:
+            print("No warehouses available to create experiences")
+        else:
+            # Create experiences for each warehouse
+            for warehouse in warehouses[:10]:  # Limit to first 10 warehouses to avoid too many
+                # Generate random count and price
+                count = str(round(random.uniform(1.0, 20.0), 2))
+                price = round(random.uniform(10.0, 500.0), 2)
+
+                # Create experience
+                Experience.objects.create(
+                    warehouse=warehouse,
+                    count=count,
+                    price=price
+                )
+
+            print("Experiences created!")
+    except ValidationError as e:
+        print("Validation Error in Experiences Creation:", e)
+        return
+    except Exception as e:
+        print(f"Error in Experiences Creation: {str(e)}")
+        return
+
+    # Verify experience data
+    for experience in Experience.objects.all():
+        print(f"Experience: Warehouse: {experience.warehouse.name} | Product: {experience.warehouse.product.name} | Count: {experience.count} | Price: {experience.price}")
 
 
 if __name__ == "__main__":
