@@ -2,7 +2,7 @@ from rest_framework.response import Response
 
 from apps.base.views import CustomGenericAPIView
 from apps.rooms.models.rooms import Room
-from apps.rooms.serializers.room import RoomSerializer
+from apps.rooms.serializers.room import RoomSerializer, RoomCreateSerializer
 
 
 class RoomListsAPIView(CustomGenericAPIView):
@@ -23,7 +23,7 @@ class RoomListsAPIView(CustomGenericAPIView):
 
 class RoomCreateAPIView(CustomGenericAPIView):
     queryset = Room.objects.all()
-    serializer_class = RoomSerializer
+    serializer_class = RoomCreateSerializer
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data, partial=True)

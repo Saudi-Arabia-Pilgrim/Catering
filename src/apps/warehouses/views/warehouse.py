@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from redis.commands.search.reducers import count
 
 from rest_framework.response import Response
 from rest_framework.filters import SearchFilter
@@ -6,7 +7,7 @@ from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
 
 from apps.base.views import CustomListCreateAPIView, CustomGenericAPIView
-from apps.warehouses.models import Warehouse
+from apps.warehouses.models import Warehouse, Experience
 from apps.warehouses.serializers import WarehouseSerializer, WarehouseExpensesSerializer
 
 
@@ -28,6 +29,8 @@ class WarehouseExpensesRetrieveAPIView(CustomGenericAPIView):
         serializer.save()
         validated_data = serializer.validated_data
         data = f"{validated_data["count"]}{validated_data["measure_abbreviation"]} {validated_data["product_name"]} were successfully removed from the warehouse"
+        net_price = float(warehouse.get_net_price()) * float(validated_data["count"])
+        Experience.objects.create(warehouse=warehouse, count=validated_data["count"], price=net_price)
         return Response(data, status=200)
 
     def get_serializer_class(self):

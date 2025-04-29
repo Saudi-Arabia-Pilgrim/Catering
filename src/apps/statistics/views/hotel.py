@@ -30,3 +30,40 @@ class HotelStatisticListAPIView(CustomGenericAPIView):
 
         data.sort(key=lambda hotel_price: hotel_price["price"], reverse=True)
         return Response(data)
+
+
+class HotelDiagramListAPIView(CustomGenericAPIView):
+    def get(self, *args, **kwargs):
+        hotels = Hotel.objects.all().prefetch_related(
+            Prefetch(
+                "orders",
+                queryset=HotelOrder.objects.select_related("room")
+            )
+        )
+
+        data = []
+        total_count = 0
+        for hotel in hotels:
+            if hotel.orders.exists():
+                hotel_data = {
+                    "name": hotel.name,
+                    "order_count": hotel.orders.count(),
+                    "precent": 0
+                }
+                total_count += hotel.orders.count()
+                data.append(hotel_data)
+
+        for hotel in hotels:
+            if hotel.orders.exists():
+                precent = (hotel.orders.count() / total_count) * 100
+                for obj in data:
+                    if obj["name"] == hotel.name:
+                        data[data.index(obj)]["precent"] = precent
+                        break
+
+        data.sort(key=lambda hotel_price: hotel_price["order_count"], reverse=True)
+        return Response(
+            {
+                "total": total_count,
+                "result": data[:6]
+            })

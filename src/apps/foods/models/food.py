@@ -9,15 +9,34 @@ from apps.foods.utils import CalculatePrices
 from apps.menus.models import Menu
 
 
+class FoodSection(AbstractBaseModel):
+    name = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=200)
+    status = models.BooleanField(default=True)
+
+    def save(self, *args, **kwargs):
+        slug = slugify(self.name)
+        obj = self.__class__.objects.filter(slug=slug).exclude(pk=self.pk).exists()
+        if obj:
+            raise CustomExceptionError(
+                code=400, detail="A food section with this name already exists"
+            )
+        self.slug = slug
+        super().save(*args, **kwargs)
+
+    class Meta:
+        db_table = "food_section"
+        verbose_name = "Food-Section"
+        verbose_name_plural = "Food-Sections"
+
+    def __str__(self):
+        return self.name
+
+
 class Food(AbstractBaseModel):
     """
     Food model representing a food item in the catering application.
     """
-
-    class Section(models.IntegerChoices):
-        LIQUID = 0, "Suyuq"
-        DEEP = 1, "Quyuq"
-
     # translation_fields = ["name"]
 
     # === Name of the food item, with a maximum length of 255 characters. ===
@@ -28,7 +47,8 @@ class Food(AbstractBaseModel):
     # === Foreign key to the RecipeFood model, with a protect delete rule. ===
     recipes = models.ManyToManyField("foods.RecipeFood", related_name="foods")
     # === Section of the food item, chosen from predefined choices (LIQUID or DEEP). ===
-    section = models.PositiveSmallIntegerField(choices=Section.choices)
+    section = models.ForeignKey(FoodSection, on_delete=models.PROTECT, related_name="foods",
+                                limit_choices_to={"status": True})
     # === Status of the food item, default is True. ===
     status = models.BooleanField(default=True)
 
