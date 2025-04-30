@@ -30,9 +30,9 @@ class WarehouseExpensesRetrieveAPIView(CustomGenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         validated_data = serializer.validated_data
-        data = f"{validated_data["count"]}{validated_data["measure_abbreviation"]} {validated_data["product_name"]} were successfully removed from the warehouse"
-        net_price = float(warehouse.get_net_price()) * float(validated_data["count"])
-        Experience.objects.create(warehouse=warehouse, count=validated_data["count"], price=net_price)
+        data = f"{validated_data["amount"]}{validated_data["measure_abbreviation"]} {validated_data["product_name"]} were successfully removed from the warehouse"
+        net_price = float(warehouse.get_net_price()) * float(validated_data["amount"])
+        Experience.objects.create(warehouse=warehouse, count=validated_data["amount"], price=net_price)
         return Response(data, status=200)
 
     def get_serializer_class(self):
@@ -42,7 +42,7 @@ class WarehouseExpensesRetrieveAPIView(CustomGenericAPIView):
 
 
 class WarehouseListCreateAPIView(CustomListCreateAPIView):
-    queryset = Warehouse.objects.all().select_related("product")
+    queryset = Warehouse.objects.all().select_related("product", "product__measure_warehouse")
     serializer_class = WarehouseSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_fields = {"status": ["exact"], "created_at": ["gte", "lte", "range"]}
