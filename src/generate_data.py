@@ -60,6 +60,7 @@ def populate_data():
         Food.objects.all().delete()  # Delete foods before recipe foods and food sections
         RecipeFood.objects.all().delete()  # Delete recipe foods
         FoodSection.objects.all().delete()  # Delete food sections
+        ProductsUsed.objects.all().delete() # Delete products used
         Warehouse.objects.all().delete()  # Delete warehouses before products
         CounterAgent.objects.all().delete()  # Delete counter agents
 
@@ -562,11 +563,11 @@ def populate_data():
             difference_measures = 1.0
 
             Product.objects.create(
+                name=product_info['name'],
                 measure=measure,
                 measure_warehouse=measure_warehouse,
                 difference_measures=difference_measures,
                 section=section,
-                name=product_info["name"],
                 status=random.choice([True, False])
             )
 
@@ -603,7 +604,6 @@ def populate_data():
 
             Warehouse.objects.create(
                 product=product,
-                name=name,
                 status=True,
                 gross_price=gross_price,
                 count=count,
@@ -620,7 +620,7 @@ def populate_data():
 
     # Verify warehouse data
     for warehouse in Warehouse.objects.all()[:5]:  # Show just the first 5 to avoid too much output
-        print(f"Warehouse: {warehouse.name} | Product: {warehouse.product.name} | Count: {warehouse.count}/{warehouse.arrived_count}")
+        print(f"Warehouse: {warehouse.pk} | Product: {warehouse.product.name} | Count: {warehouse.count}/{warehouse.arrived_count}")
 
     # Create RecipeFood
     try:
@@ -1191,7 +1191,7 @@ def populate_data():
 
     # ======== comment: verify ProductsUsed data ========
     for product_used in ProductsUsed.objects.all()[:5]:  # Show just the first 5 to avoid too much output
-        print(f"ProductsUsed: Warehouse: {product_used.warehouse.name} | Product: {product_used.warehouse.product.name} | Count: {product_used.count} | Price: {product_used.price}")
+        print(f"ProductsUsed: Warehouse: {product_used.warehouse.pk} | Product: {product_used.warehouse.product.name} | Count: {product_used.count} | Price: {product_used.price}")
 
     # Create Experiences
     try:
@@ -1224,7 +1224,7 @@ def populate_data():
 
     # Verify experience data
     for experience in Experience.objects.all():
-        print(f"Experience: Warehouse: {experience.warehouse.name} | Product: {experience.warehouse.product.name} | Count: {experience.count} | Price: {experience.price}")
+        print(f"Experience: Warehouse: {experience.warehouse.pk} | Product: {experience.warehouse.product.name} | Count: {experience.count} | Price: {experience.price}")
 
 
 if __name__ == "__main__":
