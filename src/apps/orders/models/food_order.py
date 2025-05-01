@@ -75,7 +75,7 @@ class FoodOrder(AbstractBaseModel):
     )
 
     # === The price of the order. ===
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(max_digits=15, decimal_places=2)
     # ===  The address where the order should be delivered. ===
     address = models.CharField(max_length=1200, blank=True, null=True)
 
