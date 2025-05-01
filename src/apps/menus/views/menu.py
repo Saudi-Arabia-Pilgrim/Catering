@@ -12,6 +12,7 @@ from apps.base.views import (
 )
 from apps.menus.models import Menu
 from apps.menus.serializers import MenuSerializer, MenuCreateUpdateSerializer
+from apps.warehouses.utils import validate_uuid
 
 
 class MenuRetrieveUpdateDestroyAPIView(CustomRetrieveUpdateDestroyAPIView):
@@ -42,6 +43,7 @@ class MenusOnRecipe(CustomGenericAPIView):
     serializer_class = MenuSerializer
 
     def get(self, request, pk):
+        validate_uuid(pk)
         queryset = (
             self.get_queryset()
             .filter(

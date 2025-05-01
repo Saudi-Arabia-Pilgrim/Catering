@@ -46,4 +46,4 @@ class WarehouseListCreateAPIView(CustomListCreateAPIView):
     serializer_class = WarehouseSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_fields = {"status": ["exact"], "created_at": ["gte", "lte", "range"]}
-    search_fields = ["product__name", "name", "warehouse_id"]
+    search_fields = ["product__name"]

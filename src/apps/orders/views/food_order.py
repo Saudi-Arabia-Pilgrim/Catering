@@ -9,6 +9,7 @@ from apps.base.views import CustomRetrieveAPIView, CustomListCreateAPIView
 from apps.base.views.generics import CustomGenericAPIView
 from apps.orders.models import FoodOrder
 from apps.orders.serializers import OnlyFoodOrderSerializer, FoodOrderRetrieveSerializer
+from apps.warehouses.utils import validate_uuid
 
 
 class FoodOrderListCreateAPIView(CustomListCreateAPIView):
@@ -42,6 +43,7 @@ class ReadyFodOrderAPIView(CustomGenericAPIView):
     serializer_class = FoodOrderRetrieveSerializer
 
     def get(self, request, pk):
+        validate_uuid(pk)
         instance = get_object_or_404(FoodOrder, pk=pk)
         instance.order_ready()
         return Response("The order is ready", status=200)
