@@ -34,6 +34,7 @@ from apps.guests.models import Guest
 from apps.orders.models.food_order import FoodOrder
 from apps.orders.models.hotel_order import HotelOrder
 from apps.warehouses.models.experience import Experience
+from apps.warehouses.models.products_used import ProductsUsed
 from django.core.exceptions import ValidationError
 
 
@@ -225,7 +226,7 @@ def populate_data():
 
     # Create additional random users
     try:
-        for _ in range(7):
+        for _ in range(20):
             # Generate random user data
             full_name = f"{random.choice(first_names)} {random.choice(last_names)}"
 
@@ -377,8 +378,8 @@ def populate_data():
         transports = [transport1, transport2, transport3, transport4]
 
         for transport in transports:
-            # Create 3 orders for each transport
-            for _ in range(3):
+            # Create 20 orders for each transport
+            for _ in range(20):
                 # Ensure from_location and to_location are different
                 from_loc = random.choice(pickup_locations)
                 to_loc = random.choice(destination_locations)
@@ -468,7 +469,19 @@ def populate_data():
             "Spices",
             "Grains",
             "Seafood",
-            "Snacks"
+            "Snacks",
+            "Canned Goods",
+            "Frozen Foods",
+            "Condiments",
+            "Breakfast",
+            "Pasta",
+            "Rice",
+            "Oils",
+            "Nuts",
+            "Dried Fruits",
+            "Organic",
+            "Gluten-Free",
+            "International"
         ]
 
         for section_name in sections:
@@ -490,7 +503,11 @@ def populate_data():
     try:
         # Sample food section names
         food_section_names = [
-            "Suyuq", "Quyuq", "Xamirli", "Salatlar", "Ichimliklar"
+            "Suyuq", "Quyuq", "Xamirli", "Salatlar", "Ichimliklar",
+            "Appetizers", "Main Courses", "Side Dishes", "Desserts", "Breakfast Items",
+            "Lunch Specials", "Dinner Entrees", "Soups", "Salads", "Sandwiches",
+            "Pasta Dishes", "Rice Dishes", "Seafood Specialties", "Vegetarian Options", "Vegan Choices",
+            "Gluten-Free Selections", "Kids Menu", "Beverages", "Alcoholic Drinks"
         ]
 
         for section_name in food_section_names:
@@ -641,7 +658,10 @@ def populate_data():
         food_names = [
             "Grilled Chicken", "Beef Stew", "Vegetable Soup", "Caesar Salad", 
             "Pasta Carbonara", "Margherita Pizza", "Chicken Curry", "Beef Burger", 
-            "Fish and Chips", "Vegetable Stir Fry", "Mushroom Risotto", "Lamb Kebab"
+            "Fish and Chips", "Vegetable Stir Fry", "Mushroom Risotto", "Lamb Kebab",
+            "Sushi Platter", "Pad Thai", "Butter Chicken", "Falafel Wrap",
+            "Greek Salad", "Lasagna", "Shrimp Scampi", "Beef Tacos",
+            "Chicken Alfredo", "Eggplant Parmesan", "Lobster Bisque", "Ramen Noodles"
         ]
 
         # Get all recipe foods and food sections
@@ -686,7 +706,11 @@ def populate_data():
         menu_names = [
             "Breakfast Special", "Lunch Combo", "Dinner Deluxe", 
             "Weekend Brunch", "Holiday Feast", "Light Lunch", 
-            "Executive Dinner", "Kids Menu", "Vegetarian Special"
+            "Executive Dinner", "Kids Menu", "Vegetarian Special",
+            "Seafood Platter", "Steakhouse Special", "Italian Feast",
+            "Asian Fusion", "Mediterranean Delight", "Mexican Fiesta",
+            "Indian Thali", "Sushi Combo", "BBQ Platter", "Healthy Choice",
+            "Dessert Sampler", "Tapas Selection", "Vegan Delight", "Gluten-Free Options"
         ]
 
         # Get all foods
@@ -728,7 +752,13 @@ def populate_data():
         # Sample recipe names
         recipe_names = [
             "Daily Special", "Weekly Plan", "Monthly Package", 
-            "Corporate Event", "Wedding Catering", "Birthday Party"
+            "Corporate Event", "Wedding Catering", "Birthday Party",
+            "Anniversary Dinner", "Graduation Celebration", "Holiday Gathering",
+            "Business Lunch", "Family Reunion", "Cocktail Reception",
+            "Charity Gala", "Product Launch", "Team Building Event",
+            "Award Ceremony", "Retirement Party", "Baby Shower",
+            "Engagement Party", "Bridal Shower", "Networking Event",
+            "Conference Catering", "Sports Event", "Festival Food"
         ]
 
         # Get all menus
@@ -814,8 +844,8 @@ def populate_data():
         # Get all users
         users = list(CustomUser.objects.all())
 
-        # Create monthly salaries for the past 6 months for random users
-        for month in range(1, 7):
+        # Create monthly salaries for the past 20 months for random users
+        for month in range(1, 21):
             # Generate a date for the first day of the month
             current_month = timezone.now().replace(day=1) - timedelta(days=30 * month)
 
@@ -848,7 +878,11 @@ def populate_data():
         # Sample counter agent data
         counter_agent_names = [
             "Royal Catering", "Elite Events", "Gourmet Solutions", "Deluxe Dining", 
-            "Premium Provisions", "Luxury Feasts", "Corporate Cuisine", "Executive Eats"
+            "Premium Provisions", "Luxury Feasts", "Corporate Cuisine", "Executive Eats",
+            "Taste Masters", "Culinary Experts", "Fine Dining Co.", "Banquet Kings",
+            "Catering Professionals", "Food Artisans", "Gala Catering", "Event Cuisine",
+            "Flavor Fusion", "Dining Delights", "Celebration Foods", "Gourmet Express",
+            "Feast Makers", "Culinary Creations", "Premier Catering", "Food Elegance"
         ]
 
         counter_agent_addresses = [
@@ -859,7 +893,23 @@ def populate_data():
             "654 Industry Road, Medina, Saudi Arabia",
             "987 Enterprise Lane, Tabuk, Saudi Arabia",
             "147 Market Street, Abha, Saudi Arabia",
-            "258 Trade Center, Taif, Saudi Arabia"
+            "258 Trade Center, Taif, Saudi Arabia",
+            "369 Culinary Blvd, Riyadh, Saudi Arabia",
+            "741 Gourmet Ave, Jeddah, Saudi Arabia",
+            "852 Flavor St, Dammam, Saudi Arabia",
+            "963 Taste Lane, Mecca, Saudi Arabia",
+            "159 Dining Road, Medina, Saudi Arabia",
+            "357 Feast Blvd, Tabuk, Saudi Arabia",
+            "486 Banquet St, Abha, Saudi Arabia",
+            "792 Catering Ave, Taif, Saudi Arabia",
+            "135 Event Lane, Riyadh, Saudi Arabia",
+            "246 Food Court, Jeddah, Saudi Arabia",
+            "579 Cuisine Blvd, Dammam, Saudi Arabia",
+            "813 Delicacy St, Mecca, Saudi Arabia",
+            "924 Culinary Lane, Medina, Saudi Arabia",
+            "375 Gala Road, Tabuk, Saudi Arabia",
+            "681 Premier Blvd, Abha, Saudi Arabia",
+            "429 Elegance Ave, Taif, Saudi Arabia"
         ]
 
         for i in range(len(counter_agent_names)):
@@ -891,7 +941,11 @@ def populate_data():
         # Sample guest data
         guest_names = [
             "Abdullah Al-Saud", "Mohammed Al-Qahtani", "Fatima Al-Ghamdi", "Aisha Al-Harbi", 
-            "Omar Al-Shammari", "Khalid Al-Otaibi", "Layla Al-Zahrani", "Zainab Al-Dossari"
+            "Omar Al-Shammari", "Khalid Al-Otaibi", "Layla Al-Zahrani", "Zainab Al-Dossari",
+            "Yusuf Al-Qurashi", "Ibrahim Al-Harbi", "Noor Al-Mutairi", "Hassan Al-Zahrani",
+            "Mariam Al-Qahtani", "Ali Al-Shammari", "Sara Al-Otaibi", "Ahmed Al-Saud",
+            "Leila Al-Ghamdi", "Karim Al-Dossari", "Huda Al-Harbi", "Tariq Al-Mutairi",
+            "Rania Al-Zahrani", "Jamal Al-Qurashi", "Samira Al-Shammari", "Faisal Al-Otaibi"
         ]
 
         # Get all hotels and rooms
@@ -973,7 +1027,7 @@ def populate_data():
         ]
 
         # ======== comment: only seed orders for foods with sufficient raw-stock ========
-        for _ in range(10):
+        for _ in range(20):
             # ======== comment: pick a random dish ========
             food = random.choice(foods)
 
@@ -1040,7 +1094,7 @@ def populate_data():
         food_orders = list(FoodOrder.objects.filter(status=True))
 
         # Create hotel orders
-        for _ in range(5):  # Create 5 hotel orders
+        for _ in range(20):  # Create 20 hotel orders
             # Skip if no hotels, rooms, or guests available
             if not hotels or not rooms or not guests:
                 continue
@@ -1098,6 +1152,47 @@ def populate_data():
     for hotel_order in HotelOrder.objects.all():
         print(f"Hotel Order: {hotel_order.order_id} | Hotel: {hotel_order.hotel.name} | Room: {hotel_order.room.room_type.name} | Check-in: {hotel_order.check_in} | Check-out: {hotel_order.check_out} | People: {hotel_order.count_of_people} | Food Service: {hotel_order.food_service}")
 
+    # ======== comment: seed ProductsUsed entries ========
+    try:
+        # ======== comment: get all warehouses with available stock ========
+        warehouses = list(Warehouse.objects.filter(status=True, count__gt=0))
+
+        if not warehouses:
+            print("No warehouses with available stock for ProductsUsed")
+        else:
+            # ======== comment: create 20 ProductsUsed entries ========
+            for _ in range(20):
+                # ======== comment: select random warehouse with available stock ========
+                warehouse = random.choice(warehouses)
+
+                # ======== comment: ensure we don't use more than available ========
+                available = warehouse.count
+                if available <= 0:
+                    continue
+
+                # ======== comment: generate random count and price ========
+                used_count = str(round(random.uniform(0.1, min(5.0, available)), 2))
+                price = round(random.uniform(10.0, 100.0) * float(used_count), 2)
+
+                # ======== comment: create ProductsUsed entry ========
+                ProductsUsed.objects.create(
+                    warehouse=warehouse,
+                    count=used_count,
+                    price=price
+                )
+
+            print("ProductsUsed entries created!")
+    except ValidationError as e:
+        print("Validation Error in ProductsUsed Creation:", e)
+        return
+    except Exception as e:
+        print(f"Error in ProductsUsed Creation: {str(e)}")
+        return
+
+    # ======== comment: verify ProductsUsed data ========
+    for product_used in ProductsUsed.objects.all()[:5]:  # Show just the first 5 to avoid too much output
+        print(f"ProductsUsed: Warehouse: {product_used.warehouse.name} | Product: {product_used.warehouse.product.name} | Count: {product_used.count} | Price: {product_used.price}")
+
     # Create Experiences
     try:
         # Get all warehouses
@@ -1107,7 +1202,7 @@ def populate_data():
             print("No warehouses available to create experiences")
         else:
             # Create experiences for each warehouse
-            for warehouse in warehouses[:10]:  # Limit to first 10 warehouses to avoid too many
+            for warehouse in warehouses[:20]:  # Limit to first 20 warehouses to avoid too many
                 # Generate random count and price
                 count = str(round(random.uniform(1.0, 20.0), 2))
                 price = round(random.uniform(10.0, 500.0), 2)
