@@ -8,8 +8,9 @@ from apps.base.views import (
     CustomRetrieveUpdateDestroyAPIView,
     CustomGenericAPIView,
 )
-from apps.foods.models import Food
-from apps.foods.serializers import FoodSerializer, FoodCreateUpdateSerializer
+from apps.foods.models import Food, FoodSection
+from apps.foods.serializers import FoodSerializer, FoodCreateUpdateSerializer, FoodSectionSerializer
+from apps.warehouses.utils import validate_uuid
 
 
 class FoodRetrieveUpdateDestroyAPIView(CustomRetrieveUpdateDestroyAPIView):
@@ -23,7 +24,7 @@ class FoodRetrieveUpdateDestroyAPIView(CustomRetrieveUpdateDestroyAPIView):
 
 
 class FoodListCreateAPIView(CustomListCreateAPIView):
-    queryset = Food.objects.all().prefetch_related("recipes", "recipes__product")
+    queryset = Food.objects.all().prefetch_related("recipes", "recipes__product").select_related("section")
     serializer_class = FoodSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_fields = ["status", "section"]
@@ -40,6 +41,17 @@ class FoodsOnMenu(CustomGenericAPIView):
     serializer_class = FoodSerializer
 
     def get(self, request, pk):
+        validate_uuid(pk)
         queryset = self.get_queryset().filter(menus=pk).prefetch_related("recipes")
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status=200)
+
+
+class FoodSectionListCreateAPIView(CustomListCreateAPIView):
+    queryset = FoodSection.objects.all()
+    serializer_class = FoodSectionSerializer
+
+
+class FoodSectionUpdateDestroyRetrieveAPIView(CustomRetrieveUpdateDestroyAPIView):
+    queryset = FoodSection.objects.all()
+    serializer_class = FoodSectionSerializer

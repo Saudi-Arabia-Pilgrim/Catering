@@ -1,3 +1,4 @@
+from celery.app.trace import send_postrun
 from rest_framework import serializers
 
 from apps.rooms.models.rooms import Room
@@ -19,6 +20,26 @@ class RoomSerializer(CustomModelSerializer):
          price (Decimal): Price per night for the room type.
     """
     room_name = serializers.CharField(source="room_type.name", read_only=True)
+    hotel_name = serializers.CharField(source="hotel.name", read_only=True)
+    class Meta:
+        model = Room
+        fields = [
+            "id",
+            "hotel",
+            "hotel_name",
+            "room_type",
+            "room_name",
+            "count",
+            "occupied_count",
+            "available_count",
+            "remaining_capacity",
+            "gross_price"
+        ]
+        read_only_fields = ["room_name", "hotel_name"]
+
+
+class RoomCreateSerializer(CustomModelSerializer):
+    room_name = serializers.CharField(source="room_type.name", read_only=True)
 
     class Meta:
         model = Room
@@ -30,7 +51,9 @@ class RoomSerializer(CustomModelSerializer):
             "count",
             "occupied_count",
             "available_count",
+            "capacity",
+            "net_price",
+            "profit",
             "remaining_capacity",
-            "gross_price"
         ]
         read_only_fields = ["room_name"]

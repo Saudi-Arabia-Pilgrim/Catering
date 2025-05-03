@@ -10,6 +10,7 @@ from apps.base.views import (
 )
 from apps.foods.models import RecipeFood
 from apps.foods.serializers import RecipeFoodSerializer, RecipeUpdateFoodSerializer
+from apps.warehouses.utils import validate_uuid
 
 
 class RecipeFoodRetrieveUpdateDestroyAPIView(CustomRetrieveUpdateDestroyAPIView):
@@ -35,6 +36,7 @@ class RecipeFoodsOnFood(CustomGenericAPIView):
     serializer_class = RecipeFoodSerializer
 
     def get(self, request, pk):
+        validate_uuid(pk)
         queryset = self.get_queryset().filter(foods=pk)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status=200)

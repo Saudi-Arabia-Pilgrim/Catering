@@ -77,7 +77,7 @@ class Order(AbstractBaseModel):
         _("Taxi service price of profit"),
         max_digits=10,
         decimal_places=2,
-        help_text=_("The service fee of profit the order"),
+        help_text=_("service fee + profit"),
         default=0
     )
 
@@ -123,8 +123,7 @@ class Order(AbstractBaseModel):
             raise ValidationError(_("Perform Date cannot be in the past!"))
 
     def save(self, *args, **kwargs):
-        self.full_clean()
         if not self.order_number:
-            order_number = self.generate_order_number()
-            self.order_number = order_number
+            self.order_number = self.generate_order_number()
+            self.full_clean()
         super().save(*args, **kwargs)

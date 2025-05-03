@@ -11,7 +11,7 @@ from apps.base.exceptions import CustomExceptionError
 from apps.base.models import AbstractBaseModel
 from apps.menus.models import Menu
 from apps.products.models import Product
-from apps.warehouses.models import Warehouse
+from apps.warehouses.models import Warehouse, ProductsUsed
 from apps.foods.models import Food
 from apps.warehouses.utils.update_product_dependencies import update_product_dependencies_in_warehouse
 
@@ -75,7 +75,7 @@ class FoodOrder(AbstractBaseModel):
     )
 
     # === The price of the order. ===
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(max_digits=15, decimal_places=2)
     # ===  The address where the order should be delivered. ===
     address = models.CharField(max_length=1200, blank=True, null=True)
 
@@ -108,6 +108,16 @@ class FoodOrder(AbstractBaseModel):
         }
         product = getattr(self, products[self.product_type])
         return product.profit
+
+    @property
+    def net_price(self):
+        products = {
+            self.ProductType.FOOD: "food",
+            self.ProductType.MENU: "menu",
+            self.ProductType.RECIPE: "recipe",
+        }
+        product = getattr(self, products[self.product_type])
+        return product.net_price
 
     @property
     def total_price(self):
@@ -231,6 +241,8 @@ class FoodOrder(AbstractBaseModel):
 
         update_warehouses = []
 
+        used_products = []
+
         for product_id, required_quantity in products_needed.items():
             product = products_dict[product_id]
             product_warehouses = warehouses.filter(product_id=product_id).order_by(
@@ -243,6 +255,8 @@ class FoodOrder(AbstractBaseModel):
                     if product.difference_measures
                     else 1
                 )
+                net_price = warehouse_item.get_net_price()
+                used_products.append(ProductsUsed(warehouse_id=warehouse_item.id, count=required_quantity, price=net_price * required_quantity))
                 if available_quantity >= required_quantity:
                     warehouse_item.count -= (
                         required_quantity / product.difference_measures
@@ -258,6 +272,7 @@ class FoodOrder(AbstractBaseModel):
                     update_warehouses.append(warehouse_item)
 
         Warehouse.objects.bulk_update(update_warehouses, ["status", "count"])
+        ProductsUsed.objects.bulk_create(used_products)
 
         update_product_dependencies_in_warehouse(product_ids)
 
@@ -297,5 +312,5 @@ class FoodOrder(AbstractBaseModel):
                                 products_needed[recipe.product_id] += (
                                     recipe.count * self.product_count
                                 )
-
+            
             self.process_product_deductions(products_needed)

@@ -6,8 +6,9 @@ from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
 
 from apps.base.views import CustomListCreateAPIView, CustomGenericAPIView
-from apps.warehouses.models import Warehouse
+from apps.warehouses.models import Warehouse, Experience
 from apps.warehouses.serializers import WarehouseSerializer, WarehouseExpensesSerializer
+from apps.warehouses.utils import validate_uuid
 
 
 class WarehouseExpensesRetrieveAPIView(CustomGenericAPIView):
@@ -15,11 +16,13 @@ class WarehouseExpensesRetrieveAPIView(CustomGenericAPIView):
     serializer_class = WarehouseSerializer
 
     def get(self, request, pk):
+        validate_uuid(pk)
         warehouse = get_object_or_404(Warehouse, pk=pk)
         serializer = self.get_serializer(warehouse)
         return Response(serializer.data, status=200)
 
     def post(self, request, pk):
+        validate_uuid(pk)
         warehouse = get_object_or_404(Warehouse, pk=pk)
         serializer = self.get_serializer(
             data=request.data, context={"warehouse": warehouse}
@@ -27,7 +30,9 @@ class WarehouseExpensesRetrieveAPIView(CustomGenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         validated_data = serializer.validated_data
-        data = f"{validated_data["count"]}{validated_data["measure_abbreviation"]} {validated_data["product_name"]} were successfully removed from the warehouse"
+        data = f"{validated_data["amount"]}{validated_data["measure_abbreviation"]} {validated_data["product_name"]} were successfully removed from the warehouse"
+        net_price = float(warehouse.get_net_price()) * float(validated_data["amount"])
+        Experience.objects.create(warehouse=warehouse, count=validated_data["amount"], price=net_price)
         return Response(data, status=200)
 
     def get_serializer_class(self):
@@ -37,8 +42,8 @@ class WarehouseExpensesRetrieveAPIView(CustomGenericAPIView):
 
 
 class WarehouseListCreateAPIView(CustomListCreateAPIView):
-    queryset = Warehouse.objects.all().select_related("product")
+    queryset = Warehouse.objects.all().select_related("product", "product__measure_warehouse")
     serializer_class = WarehouseSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_fields = {"status": ["exact"], "created_at": ["gte", "lte", "range"]}
-    search_fields = ["product__name", "name", "warehouse_id"]
+    search_fields = ["product__name"]
