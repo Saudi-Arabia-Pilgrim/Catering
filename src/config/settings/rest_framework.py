@@ -99,4 +99,5 @@ REST_FRAMEWORK = {
         'retrieve': 'read',
         'destroy': 'delete'
     },
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
