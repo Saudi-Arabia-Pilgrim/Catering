@@ -44,17 +44,3 @@ class HotelSerializer(CustomModelSerializer):
 
     def get_total_guests_price(self, obj):
         return obj.guests.aggregate(total=models.Sum("price"))["total"] or 0
-
-
-# {
-#     "hotel": "ad72419c-4dd1-4021-aa5d-e46de1257ee1",
-#     "order_status": "Active",
-#     "room": "e05b85e7-0131-4eca-b157-7917df9bc08e",
-#     "guest_details": [
-#         {"full_name": "John Maxson", "gender": 1},
-#         {"full_name": "Julian", "gender": 1}
-#     ],
-#     "check_in": "31.03.2025 15:50",
-#     "check_out": "5.04.2025 19:50",
-#     "count_of_people": 2
-# }
