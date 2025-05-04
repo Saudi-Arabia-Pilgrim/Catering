@@ -1,7 +1,7 @@
 import pytest
 from django.utils.timezone import now
 from apps.guests.models import Guest
-from apps.guests.tasks import update_daily_guest_prices
+from apps.guests.tasks.tasks import update_daily_guest_prices
 
 
 @pytest.mark.django_db
