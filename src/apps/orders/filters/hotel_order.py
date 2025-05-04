@@ -9,3 +9,5 @@ class HotelOrderFilter(filters.FilterSet):
     class Meta:
         model = HotelOrder
         fields = ["room_type"]
+
+

@@ -3,12 +3,12 @@ from rest_framework import serializers
 from apps.base.serializers import CustomModelSerializer
 from apps.orders.models import FoodOrder
 from apps.orders.models.hotel_order import HotelOrder
-from apps.guests.serializers import GuestListSerializer
+from apps.guests.serializers import ActiveNoGuestListSerializer
 from apps.orders.serializers import OnlyFoodOrderSerializer
 
 
 class ActiveHotelOrderFoodSerializer(CustomModelSerializer):
-    guests = GuestListSerializer(many=True, read_only=True)
+    guests = ActiveNoGuestListSerializer(many=True, read_only=True)
     food_order = OnlyFoodOrderSerializer(many=True, read_only=True)
     nights = serializers.SerializerMethodField()
     total_guest_cost = serializers.SerializerMethodField()
@@ -67,12 +67,12 @@ class HotelOrderCreateSerializer(serializers.ModelSerializer):
             "check_in",
             "check_out",
             "count_of_people",
-            "food_order",  # input qila oladigan qilib qo‘shildi
+            "food_order",
         ]
 
     def create(self, validated_data):
         food_orders = validated_data.pop('food_order', [])
         hotel_order = HotelOrder.objects.create(**validated_data)
         if food_orders:
-            hotel_order.food_order.set(food_orders)  # yoki .add(*food_orders)
+            hotel_order.food_order.set(food_orders)
         return hotel_order

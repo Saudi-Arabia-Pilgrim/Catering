@@ -4,6 +4,7 @@ from apps.guests.models import Guest
 from apps.base.exceptions import CustomExceptionError
 from apps.base.serializers import CustomModelSerializer
 from apps.guests.utils.calculate_price import calculate_guest_price
+from apps.rooms.serializers import RoomSerializer
 
 
 class GuestBaseSerializer(CustomModelSerializer):
@@ -59,6 +60,21 @@ class GuestListSerializer(GuestBaseSerializer):
             "id", "order_number", "hotel", "room", "status",
             "gender", "full_name", "count", "price",
             "check_in", "check_out", "created_at"
+        ]
+
+
+class ActiveNoGuestListSerializer(GuestBaseSerializer):
+    # room__room_type__name = RoomSerializer(source="room__room_type__name", read_only=True)
+
+    class Meta:
+        model = Guest
+        fields = [
+            "id",
+            "full_name",
+            "hotel",
+            "room",
+            "gender",
+            "price",
         ]
 
 

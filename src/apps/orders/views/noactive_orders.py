@@ -11,6 +11,9 @@ class NoActiveHotelOrderListAPIView(CustomListAPIView):
     serializer_class = NoActiveHotelOrderFoodSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ["hotel__name"]
+    filterset_fields = [
+        "check_in", "check_out", "order_status", "hotel__id", "hotel__name"
+    ]
 
     def get_queryset(self):
         return HotelOrder.objects.completed_orders().prefetch_related("guests", "food_order", "room", "hotel")
