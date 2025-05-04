@@ -2,12 +2,12 @@ from rest_framework import serializers
 
 from apps.orders.models import HotelOrder
 from apps.base.serializers import CustomModelSerializer
-from apps.guests.serializers import GuestListSerializer
+from apps.guests.serializers import ActiveNoGuestListSerializer
 from apps.orders.serializers import OnlyFoodOrderSerializer
 
 
 class NoActiveHotelOrderFoodSerializer(CustomModelSerializer):
-    guests = GuestListSerializer(many=True, read_only=True)
+    guests = ActiveNoGuestListSerializer(many=True, read_only=True)
     food_order = OnlyFoodOrderSerializer(many=True, read_only=True)
     nights = serializers.SerializerMethodField()
     total_guest_cost = serializers.SerializerMethodField()

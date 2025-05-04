@@ -4,7 +4,6 @@ from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 
 from apps.base.views import CustomCreateAPIView
-from apps.orders.filters import HotelOrderFilter
 from apps.orders.models.hotel_order import HotelOrder
 from apps.orders.serializers import ActiveHotelOrderFoodSerializer, HotelOrderCreateSerializer
 
@@ -12,7 +11,7 @@ from apps.orders.serializers import ActiveHotelOrderFoodSerializer, HotelOrderCr
 class ActiveHotelOrderListAPIView(generics.ListAPIView):
     serializer_class = ActiveHotelOrderFoodSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    filterset_class = HotelOrderFilter
+    filterset_fields = ["hotel__id"]
     search_fields = ["hotel__name"]
 
     def get_queryset(self):

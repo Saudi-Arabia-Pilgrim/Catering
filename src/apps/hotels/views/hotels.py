@@ -1,51 +1,61 @@
 from django.db.models import Prefetch
+from django_filters.rest_framework import DjangoFilterBackend
+
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.filters import SearchFilter
 
-from django_filters.rest_framework import DjangoFilterBackend
 
-from apps.base.views import CustomGenericAPIView
-from apps.guests.models import Guest
-from apps.hotels.models import Hotel
 from apps.rooms.models import Room
+from apps.hotels.models import Hotel
+from apps.guests.models import Guest
+from apps.base.views import CustomGenericAPIView
+from apps.hotels.filters import RoomWithGuestFilter
 from apps.hotels.serializers import HotelSerializer
 
 
 class HotelListAPIView(CustomGenericAPIView):
     """
-    API view to retrieve a list of hotels.
-
-    This view fetches all hotels from the database and returns their serialized data.
+    API view to retrieve a list of hotels filtered by room type name.
     """
-    queryset = Hotel.objects.prefetch_related(
-        Prefetch(
-            "rooms",
-            queryset=Room.objects.select_related("room_type")
-            .only(
-                'id', 'room_type__name', 'gross_price', 'occupied_count',
-                'count', 'hotel_id', 'room_type_id', 'capacity', 'net_price'
-            )
-        ),
-        Prefetch(
-            "guests",
-            queryset=Guest.objects.select_related('room', 'room__room_type')
-            .only(
-                'id', 'full_name', 'order_number', 'room_id',
-                'gender', 'check_in', 'check_out', 'hotel_id'
-            )
-        )
-    ).all()
+
     serializer_class = HotelSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_class = RoomWithGuestFilter
     search_fields = ["name__icontains"]
+
+    def get_queryset(self):
+        room_type_name = self.request.query_params.get("room_type_name")
+
+        # Filter Guests
+        guest_qs = Guest.objects.select_related('room', 'room__room_type').only(
+            'id', 'full_name', 'order_number', 'room_id',
+            'gender', 'check_in', 'check_out', 'hotel_id'
+        )
+        if room_type_name:
+            guest_qs = guest_qs.filter(room__room_type__name__icontains=room_type_name)
+
+        # Filter Rooms
+        room_qs = Room.objects.select_related("room_type").only(
+            'id', 'room_type__name', 'gross_price', 'occupied_count',
+            'count', 'hotel_id', 'room_type_id', 'capacity', 'net_price'
+        )
+        if room_type_name:
+            room_qs = room_qs.filter(room_type__name__icontains=room_type_name)
+
+        # Filter Hotels with only matching rooms
+        hotels_qs = Hotel.objects.prefetch_related(
+            Prefetch("rooms", queryset=room_qs),
+            Prefetch("guests", queryset=guest_qs)
+        )
+        if room_type_name:
+            hotels_qs = hotels_qs.filter(rooms__room_type__name__icontains=room_type_name).distinct()
+
+        return hotels_qs
 
     def get(self, *args, **kwargs):
         """
         Handle GET requests to return the list of hotels.
-
-        Returns:
-            Response: A response containing the serialized list of hotels.
         """
         queryset = self.filter_queryset(self.get_queryset())
 
