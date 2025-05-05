@@ -64,13 +64,13 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
 
 
 {
-    "hotel": "2c662c30-89fb-476b-8ef7-84dd2fa60c7a",
+    "hotel": "af73c914-8756-4c31-b800-595c6dc53181",
     "order_status": "Active",
-    "room": "60443045-a16b-4b17-b71e-5c058af9bcc6",
+    "room": "f2e4d0ce-b2fa-457e-a1a9-04ff0a562578",
     "guest_details": [
-    {"full_name": "Miya", "gender": 2}
+    {"full_name": "Leyla", "gender": 2}
 ],
-    "check_in": "27.04.2025 15:50",
-    "check_out": "28.04.2025 15:50",
+    "check_in": "6.05.2025 15:50",
+    "check_out": "9.05.2025 15:50",
     "count_of_people": 1
 }
