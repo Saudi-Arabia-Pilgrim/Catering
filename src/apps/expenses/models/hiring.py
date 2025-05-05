@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.db import models
 from apps.base.models import AbstractBaseModel
 from django.conf import settings
@@ -34,6 +35,14 @@ class HiringExpense(AbstractBaseModel):
         default=False,
         help_text="Indicates whether the expense is paid or not."
     )
+
+    def save(self, *args, **kwargs):
+        user = get_user_model().objects.get(self.user_id)
+        user.total_expenses + self.cost
+        user.save()
+        super.save(*args, **kwargs)
+
+
 
     class Meta:
         verbose_name = "Expense"
