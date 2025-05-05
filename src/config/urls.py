@@ -1,6 +1,11 @@
 from django.contrib import admin
 from django.urls import path, include
 
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularSwaggerView,
+)
+
 from config.yasg import schema_view
 
 urlpatterns = [
@@ -14,9 +19,9 @@ urlpatterns = [
     # ======== Ckeditor-5 =========
     path("ckeditor5/", include('django_ckeditor_5.urls')),
 
-    # ✅ === DRF-YASG Endpoints ===
-    path('', schema_view.with_ui('swagger', cache_timeout=0), name='yasg-swagger'),
-    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='yasg-redoc'),
+    # ✅ === DRF-SPECTACULAAPIViewR Endpoints ===
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
 
     ]
 

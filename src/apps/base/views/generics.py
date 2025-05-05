@@ -1,9 +1,10 @@
 from rest_framework import generics
 
 from apps.base.serializers import EmptySerializer
+from apps.base.views.api_tags import AutoTaggedAPIView
 
 
-class CustomGenericAPIView(generics.GenericAPIView):
+class CustomGenericAPIView(generics.GenericAPIView, AutoTaggedAPIView):
     """
     CustomGenericAPIView: Base class for all other generic views.
     Provides the core functionality such as serialization, pagination, and filtering.
@@ -13,7 +14,7 @@ class CustomGenericAPIView(generics.GenericAPIView):
     queryset = []
 
 
-class CustomListAPIView(generics.ListAPIView):
+class CustomListAPIView(generics.ListAPIView, AutoTaggedAPIView):
     """
     CustomListAPIView: Used to create read-only endpoints to represent a collection of model instances.
     Provides a GET method handler.
@@ -23,7 +24,7 @@ class CustomListAPIView(generics.ListAPIView):
     queryset = []
 
 
-class CustomCreateAPIView(generics.CreateAPIView):
+class CustomCreateAPIView(generics.CreateAPIView, AutoTaggedAPIView):
     """
     CustomCreateAPIView: Used to create an endpoint for creating model instances.
     Provides a POST method handler.
@@ -33,7 +34,7 @@ class CustomCreateAPIView(generics.CreateAPIView):
     queryset = []
 
 
-class CustomRetrieveAPIView(generics.RetrieveAPIView):
+class CustomRetrieveAPIView(generics.RetrieveAPIView, AutoTaggedAPIView):
     """
     CustomRetrieveAPIView: Used for read-only endpoints to represent a single model instance.
     Provides a GET method handler to retrieve details of a specific instance.
@@ -43,7 +44,7 @@ class CustomRetrieveAPIView(generics.RetrieveAPIView):
     queryset = []
 
 
-class CustomUpdateAPIView(generics.UpdateAPIView):
+class CustomUpdateAPIView(generics.UpdateAPIView, AutoTaggedAPIView):
     """
     CustomUpdateAPIView: Used to create an endpoint for updating an existing model instance.
     Provides PUT and PATCH method handlers to update resources.
@@ -53,7 +54,7 @@ class CustomUpdateAPIView(generics.UpdateAPIView):
     queryset = []
 
 
-class CustomDestroyAPIView(generics.DestroyAPIView):
+class CustomDestroyAPIView(generics.DestroyAPIView, AutoTaggedAPIView):
     """
     CustomDestroyAPIView: Used to create an endpoint for deleting a specific model instance.
     Provides a DELETE method handler.
@@ -63,7 +64,7 @@ class CustomDestroyAPIView(generics.DestroyAPIView):
     queryset = []
 
 
-class CustomListCreateAPIView(generics.ListCreateAPIView):
+class CustomListCreateAPIView(generics.ListCreateAPIView, AutoTaggedAPIView):
     """
     CustomListCreateAPIView: Combines list and create functionalities.
     Provides a read-write endpoint to list resources and allow new resources to be created via POST.
@@ -73,7 +74,7 @@ class CustomListCreateAPIView(generics.ListCreateAPIView):
     queryset = []
 
 
-class CustomRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
+class CustomRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView, AutoTaggedAPIView):
     """
     CustomRetrieveUpdateAPIView: Combines retrieve and update functionalities.
     Provides an endpoint to read (GET) or update (PUT/PATCH) a specific instance.
@@ -83,7 +84,7 @@ class CustomRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
     queryset = []
 
 
-class CustomRetrieveDestroyAPIView(generics.RetrieveDestroyAPIView):
+class CustomRetrieveDestroyAPIView(generics.RetrieveDestroyAPIView, AutoTaggedAPIView):
     """
     CustomRetrieveDestroyAPIView: Combines retrieve and destroy functionalities.
     Provides an endpoint to read (GET) or delete (DELETE) a specific instance.
@@ -93,7 +94,7 @@ class CustomRetrieveDestroyAPIView(generics.RetrieveDestroyAPIView):
     queryset = []
 
 
-class CustomRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+class CustomRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView, AutoTaggedAPIView):
     """
     CustomRetrieveUpdateDestroyAPIView: A fully featured endpoint that provides methods to retrieve, update,
     or delete a specific instance.
