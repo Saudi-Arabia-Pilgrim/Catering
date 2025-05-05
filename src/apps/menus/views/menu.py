@@ -52,6 +52,7 @@ class MenusOnRecipe(CustomGenericAPIView):
                 | Q(dinner_recipes__id=pk)
             )
             .prefetch_related("foods")
+            .distinct()
         )
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status=200)
