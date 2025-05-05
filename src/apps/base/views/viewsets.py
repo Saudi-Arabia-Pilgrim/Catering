@@ -1,10 +1,10 @@
 from rest_framework import viewsets
 
 from apps.base.serializers import EmptySerializer
-from apps.base.views.api_tags import AutoTaggedAPIView
+from apps.base.views.api_tags import AutoTaggedAPIViewSets
 
 
-class CustomViewSet(viewsets.ViewSet, AutoTaggedAPIView):
+class CustomViewSet(viewsets.ViewSet, AutoTaggedAPIViewSets):
     """
     Basic ViewSet providing standard CRUD operations.
     Most basic and flexible ViewSet with minimal built-in functionality.
@@ -17,7 +17,7 @@ class CustomViewSet(viewsets.ViewSet, AutoTaggedAPIView):
     queryset = []
 
 
-class CustomGenericViewSet(viewsets.GenericViewSet, AutoTaggedAPIView):
+class CustomGenericViewSet(viewsets.GenericViewSet, AutoTaggedAPIViewSets):
     """
     Generic ViewSet that provides base functionality like
     queryset and serializer handling, but no default actions.
@@ -33,7 +33,7 @@ class CustomGenericViewSet(viewsets.GenericViewSet, AutoTaggedAPIView):
     queryset = []
 
 
-class CustomModelViewSet(viewsets.ModelViewSet, AutoTaggedAPIView):
+class CustomModelViewSet(viewsets.ModelViewSet, AutoTaggedAPIViewSets):
     """
     Full-featured ViewSet providing complete CRUD operations.
     Includes list, create, retrieve, update, partial_update, and destroy actions.
@@ -47,7 +47,7 @@ class CustomModelViewSet(viewsets.ModelViewSet, AutoTaggedAPIView):
     queryset = []
 
 
-class CustomReadOnlyModelViewSet(viewsets.ReadOnlyModelViewSet, AutoTaggedAPIView):
+class CustomReadOnlyModelViewSet(viewsets.ReadOnlyModelViewSet, AutoTaggedAPIViewSets):
     """
     Read-only ViewSet providing only list and retrieve actions.
     Prevents modification of resources, useful for public/restricted access endpoints.

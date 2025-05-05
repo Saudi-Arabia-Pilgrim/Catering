@@ -1,6 +1,5 @@
-from rest_framework.routers import DefaultRouter
 from django.urls import path, include
-from .views import UserViewSet, UserProfileAPIView
+from rest_framework.routers import DefaultRouter
 
 from apps.users.views import (
     UserLogoutView,
@@ -9,6 +8,7 @@ from apps.users.views import (
     ForgotPasswordThroughEmailChangePasswordAPIView,
     ResetPasswordAPIView
 )
+from .views import UserViewSet, UserProfileAPIView
 
 router = DefaultRouter()
 router.register(r'', UserViewSet)
@@ -18,7 +18,7 @@ urlpatterns = [
     path('reset-password/', ResetPasswordAPIView.as_view(), name='reset_password'),
     path('profile/', UserProfileAPIView.as_view(), name='profile'),
 
-    path('', include(router.urls)),
+    path('hello-worlds/', include(router.urls)),
 
 
     # User authentication endpoints
