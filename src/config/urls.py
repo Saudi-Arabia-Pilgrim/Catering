@@ -1,12 +1,11 @@
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
-
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularSwaggerView,
 )
-
-from config.yasg import schema_view
 
 urlpatterns = [
     # ======== Django ========
@@ -55,3 +54,11 @@ urlpatterns += [
     path("api/v1/counter_agents/", include("apps.counter_agents.urls")),
     path("api/v1/sections/", include("apps.sections.urls")),
 ]
+
+
+# ======== Static & Media Files (Development) ========
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL,
+                          document_root=settings.MEDIA_ROOT)  # ======== Serve media files during development ========
+    urlpatterns += static(settings.STATIC_URL,
+                          document_root=settings.STATIC_ROOT)  # ======== Serve static files during development ========

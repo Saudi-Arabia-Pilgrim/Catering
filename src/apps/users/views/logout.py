@@ -1,10 +1,12 @@
 from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
 
-class UserLogoutView(APIView):
+from apps.base.views import BaseAPIView
+
+
+class UserLogoutView(BaseAPIView):
     """
     View for user logout.
     """
