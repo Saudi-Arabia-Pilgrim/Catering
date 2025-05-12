@@ -18,7 +18,7 @@ urlpatterns = [
     path('reset-password/', ResetPasswordAPIView.as_view(), name='reset_password'),
     path('profile/', UserProfileAPIView.as_view(), name='profile'),
 
-    path('hello-worlds/', include(router.urls)),
+    path('', include(router.urls)),
 
 
     # User authentication endpoints
