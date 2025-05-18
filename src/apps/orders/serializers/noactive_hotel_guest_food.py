@@ -1,13 +1,17 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
+from apps.guests.models import Guest
+from apps.guests.serializers import ActiveNoGuestListSerializer
 from apps.orders.models import HotelOrder
 from apps.base.serializers import CustomModelSerializer
-from apps.guests.serializers import ActiveNoGuestListSerializer
 from apps.orders.serializers import OnlyFoodOrderSerializer
+from apps.rooms.models import Room, RoomType
+from apps.warehouses.utils import validate_uuid
 
 
 class NoActiveHotelOrderFoodSerializer(CustomModelSerializer):
-    guests = ActiveNoGuestListSerializer(many=True, read_only=True)
+    guests = serializers.SerializerMethodField(read_only=True)
     food_order = OnlyFoodOrderSerializer(many=True, read_only=True)
     nights = serializers.SerializerMethodField()
     total_guest_cost = serializers.SerializerMethodField()
@@ -33,6 +37,19 @@ class NoActiveHotelOrderFoodSerializer(CustomModelSerializer):
             "created_at",
         ]
         read_only_fields = ["created_at", "total_cost"]
+
+    def get_guests(self, obj):
+        request = self.context.get("request")
+        if not request:
+            return ActiveNoGuestListSerializer(obj.hotel.guests.all(), many=True).data
+        room_type_id = request.GET.get("room_type")
+        if not room_type_id:
+            return ActiveNoGuestListSerializer(obj.hotel.guests.all(), many=True).data
+        validate_uuid(room_type_id)
+        room_type = get_object_or_404(RoomType, pk=room_type_id)
+        rooms = Room.objects.filter(room_type=room_type)
+        guests = Guest.objects.filter(room__in=rooms)
+        return ActiveNoGuestListSerializer(guests, many=True).data
 
     def get_nights(self, obj):
         return (obj.check_out - obj.check_in).days

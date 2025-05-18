@@ -13,7 +13,8 @@ class HotelOrderListAPIView(CustomGenericAPIView):
                                                        ).prefetch_related("guests", "guests__room", "guests__room__room_type")
     serializer_class = HotelOrderGuestSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_class = HotelFilterInCreated
+    # filterset_class = HotelFilterInCreated
+    filterset_fields = {"created_at": ["range"], "check_in": ["range"], "check_out": ["range"]}
 
 
     def get(self, *args, **kwargs):
