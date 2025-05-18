@@ -1,22 +1,26 @@
 from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import status
-from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.filters import SearchFilter
 
-from apps.guests.models import Guest
 from apps.hotels.models import Hotel
 from apps.base.views import CustomGenericAPIView
-from apps.hotels.filters import RoomWithGuestFilter
 from apps.hotels.serializers import HotelSerializer, HotelListSerializer, HotelRetrieveSerializer
-from apps.rooms.admin import RoomType
-from apps.rooms.models import Room
 
 
 class HotelListAPIView(CustomGenericAPIView):
     """
-    API view to retrieve a list of hotels filtered by room type name.
+    API View to list hotel orders with hotel name search and date range filtering.
+
+    This endpoint returns a list of all hotel orders with detailed related data_including:
+    - Hotel info
+    - Room info
+    - Guests and their room/room type
+
+    🔍 Search:
+    - You can search by hotel name:
+        • Example: `?search=Hilton`
     """
     queryset = Hotel.objects.prefetch_related("guests", "rooms").all()
 

@@ -11,6 +11,28 @@ from apps.rooms.models import Room, RoomType
 
 
 class ActiveHotelOrderListAPIView(CustomListAPIView):
+    """
+       API View to retrieve a list of currently active hotel orders.
+
+       This endpoint returns data for all hotel orders that are currently active. It allows
+       searching by hotel name and returns rich nested data, including guests, their rooms,
+       room types, and related food orders.
+
+         **Example Request**:
+            GET /api/v1/hotels/14690dfa-f331-405a-aeea-61cfd429ee64/
+
+         **Example Request with Filtering by Room Type**:
+            GET /api/v1/hotels/14690dfa-f331-405a-aeea-61cfd429ee64/?room_type=134a7b13-924f-4e16-825c-86eb07a1a2ee
+
+       🏨 Related Prefetched Data:
+       - Guests and their linked rooms and room types
+       - Food orders
+       - Hotel-level guests and their rooms
+       Example Queries:
+            - `/api/v1/orders/active/?search=Hilton`
+            - `/api/v1/orders/active/?created_at_after=2025-01-01&created_at_before=2025-01-31`
+            - `/api/v1/orders/active/?check_in__gte=2025-02-01&check_out__lte=2025-02-10`
+       """
     serializer_class = ActiveHotelOrderFoodSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ["hotel__name"]
