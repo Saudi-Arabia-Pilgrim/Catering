@@ -21,7 +21,6 @@ def update_room_occupancy(sender, instance, **kwargs):
         instance.room.save(update_fields=[
             "occupied_count",
             "available_count",
-            "is_fully_occupied",
             "remaining_capacity"
         ])
 
