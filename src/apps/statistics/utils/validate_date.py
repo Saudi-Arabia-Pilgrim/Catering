@@ -1,3 +1,5 @@
+from django.utils.timezone import now
+
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 
@@ -37,13 +39,13 @@ def validate_from_and_date_to_date(request):
     from_date_str = request.query_params.get("from_date")
     to_date_str = request.query_params.get("to_date")
 
-    if not from_date_str or not to_date_str:
-        raise CustomExceptionError(
-            code=400, detail="Both 'from_date' and 'to_date' query parameters are required."
-        )
+    current_date = date(now().year, now().month, 1)
+    from_date = current_date - relativedelta(months=11)
+    to_date = current_date
 
-    from_date = str_to_date(str_date=from_date_str)
-    to_date = str_to_date(str_date=to_date_str)
+    if from_date_str and to_date_str:
+        from_date = str_to_date(str_date=from_date_str)
+        to_date = str_to_date(str_date=to_date_str)
 
     if from_date >= to_date:
         raise CustomExceptionError(
