@@ -20,7 +20,6 @@ class RoomAdmin(admin.ModelAdmin):
         "hotel",
         "room_type",
         "capacity",
-        "count",
         "occupied_count",
         "net_price",
         "profit",
