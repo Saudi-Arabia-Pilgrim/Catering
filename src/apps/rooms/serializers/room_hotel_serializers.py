@@ -18,25 +18,17 @@ class RoomHotelSerializer(CustomModelSerializer):
         available_count (int): Computed field representing the number of available rooms.
          price (Decimal): Price per night for the room type.
     """
-    available_count = serializers.SerializerMethodField()
-
+    room_name = serializers.CharField(source="room_type.name")
 
     class Meta:
         model = Room
         fields = [
             "room_type",
+            "room_name",
+            "hotel",
+            "count",
+            "occupied_count",
             "available_count",
-            "gross_price"
+            "gross_price",
         ]
-
-    def get_available_count(self, obj):
-        """
-        Calculates the number of available rooms.
-
-        Args:
-            obj (Room): The Room instance.
-
-        Returns:
-            int: The number of available rooms.
-        """
-        return obj.available_count
+        read_only_fields = ["room_name", "hotel_name"]

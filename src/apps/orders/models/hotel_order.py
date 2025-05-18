@@ -82,7 +82,7 @@ class HotelOrder(AbstractBaseModel):
         self.general_cost = self.room.gross_price * days
 
     def save(self, *args, **kwargs):
-        is_new = self.pk is None
+        is_new = self._state.adding
         if is_new:
             room = self.room
 
