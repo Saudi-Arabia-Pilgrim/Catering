@@ -20,7 +20,7 @@ class ProductListCreateAPIView(CustomListCreateAPIView):
     )
     serializer_class = ProductSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    filterset_fields = ["status"]
+    filterset_fields = ["status", "section"]
     search_fields = [
         "measure__name",
         "measure_warehouse__name",
