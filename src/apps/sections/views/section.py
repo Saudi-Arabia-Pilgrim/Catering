@@ -16,4 +16,5 @@ class SectionListCreateAPIView(CustomListCreateAPIView):
     queryset = Section.objects.all()
     serializer_class = SectionSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_fields = ["status"]
     search_fields = ["name"]
