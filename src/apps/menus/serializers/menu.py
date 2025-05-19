@@ -7,15 +7,21 @@ from apps.menus.models import Menu
 
 
 class MenuSerializer(CustomModelSerializer):
-    foods_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Menu
         exclude = ["slug", "created_at", "created_by", "updated_at", "updated_by"]
         read_only_fields = ["net_price", "gross_price", "status"]
 
-    def get_foods_name(self, obj):
-        return [food.name for food in obj.foods.all()]
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["food_count"] = instance.foods.count()
+        data["foods"] = []
+        for food in instance.foods.all():
+            data["foods"].append(
+                {"id": food.id, "name": food.name, "price": food.gross_price}
+            )
+        return data
 
 
 class MenuCreateUpdateSerializer(CustomSerializer):
