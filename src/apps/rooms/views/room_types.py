@@ -9,6 +9,20 @@ from apps.rooms.serializers.room_type import RoomTypeSerializer
 
 
 class RoomTypeListsAPIView(CustomGenericAPIView):
+    """
+      API View to list all room types with optional search by name.
+
+      This endpoint provides a list of all available room types.
+      You can search by room type name using the `search` query parameter.
+
+      🔍 Search:
+      - Search by room type name (case-insensitive):
+          • Example: `?search=deluxe`
+
+      ⚠️ Dear Frontend Developers:
+      These docstrings are written with love 💙
+      Please read them carefully so we don't have to repeat ourselves in meetings 😄
+    """
     queryset = RoomType.objects.all()
     serializer_class = RoomTypeSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]

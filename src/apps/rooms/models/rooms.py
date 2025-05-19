@@ -1,11 +1,10 @@
+from django.db import models
 from django.db.models import Sum
 from django.utils import timezone
 
-from django.db import models
-
-from apps.base.exceptions import CustomExceptionError
-from apps.base.models import AbstractBaseModel
 from apps.guests.models import Guest
+from apps.base.models import AbstractBaseModel
+from apps.base.exceptions import CustomExceptionError
 
 
 class Room(AbstractBaseModel):
@@ -33,21 +32,18 @@ class Room(AbstractBaseModel):
         related_name="rooms"
     )
 
+    count = models.PositiveSmallIntegerField()
+
     capacity = models.PositiveSmallIntegerField(
         help_text="The maximum number of guests that can stay in a room of this type."
     )
 
+    remaining_capacity = models.PositiveSmallIntegerField(default=0)
+
     # =============   end room_type   =================
 
     available_count = models.PositiveSmallIntegerField(default=0)
-    remaining_capacity = models.PositiveSmallIntegerField(default=0)
 
-    is_fully_occupied = models.BooleanField(default=False,
-                                            help_text="True if all available guest capacity has been filled.")
-
-    count = models.PositiveSmallIntegerField(
-        help_text="Total number of rooms available of this type in the hotel."
-    )
     occupied_count = models.PositiveSmallIntegerField(
         default=0,
         help_text="Number of currently occupied rooms. Defaults to 0."
@@ -75,6 +71,7 @@ class Room(AbstractBaseModel):
         return Guest.objects.filter(room=self, status=Guest.Status.COMPLETED).count()
 
     def refresh_occupancy(self, save=True):
+        pass
         today = timezone.now().date()
 
         active_guests = Guest.objects.filter(
@@ -87,39 +84,36 @@ class Room(AbstractBaseModel):
         total_people = active_guests["total"] or 0
 
         if self.capacity is None or self.capacity == 0:
-            raise ValueError("Capacity cannot be None or zero.")
+            raise CustomExceptionError(code=400, detail="Capacity cannot be None or zero.")
 
         occupied_rooms = total_people // self.capacity
         if total_people % self.capacity:
             occupied_rooms += 1
 
-        self.occupied_count = min(occupied_rooms, self.count)
-        self.available_count = max(self.count - self.occupied_count, 0)
-        self.remaining_capacity = max((self.count * self.capacity) - total_people, 0)
-        self.is_fully_occupied = self.occupied_count >= self.count
-
         if save:
             self.save(update_fields=[
                 "occupied_count",
                 "available_count",
-                "remaining_capacity",
-                "is_fully_occupied"
+                "is_busy"
             ])
-
-    def clean(self):
-        if self.count < self.occupied_count:
-            raise CustomExceptionError(code=400, detail="Occupied count cannot be greater than total room count.")
-        if self.count < 0:
-            raise CustomExceptionError(code=400, detail="Room count must be non-negative.")
 
     def save(self, *args, **kwargs):
         self.refresh_occupancy(save=False)
 
-        self.net_price = self.net_price or 0
-        self.profit = self.profit or 0
-        self.gross_price = self.net_price + self.profit
+        if self.guests.count() > self.capacity:
+            raise CustomExceptionError(code=400, detail="Guests count should lower than rooms of capacity.")
+        if self.guests.count() == self.capacity:
+            self.is_busy = True
+        else:
+            self.is_busy = False
 
-        self.full_clean()
+        if not self.is_busy:
+            self.available_count = 1
+            self.occupied_count = 0
+        else:
+            self.available_count = 0
+            self.occupied_count = 1
+
         super().save(*args, **kwargs)
 
     def __str__(self):

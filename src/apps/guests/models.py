@@ -70,7 +70,6 @@ class Guest(AbstractBaseModel):
         editable=False,
         help_text="Price associated with the guest's stay."
     )
-    last_price_updated = models.DateField(null=True, blank=True)
     check_in = models.DateField(
         help_text="Date of check-in."
     )
@@ -107,10 +106,10 @@ class Guest(AbstractBaseModel):
         if total_people % self.room.capacity:
             occupied_rooms += 1
 
-        available_rooms = self.room.count - occupied_rooms
+        # available_rooms = self.room.count - occupied_rooms
 
-        if needed_rooms > available_rooms:
-            raise CustomExceptionError(code=400, detail=f"{available_rooms} ta xona qolgan xolos. {needed_rooms} ta kerak.")
+        # if needed_rooms > available_rooms:
+        #     raise CustomExceptionError(code=400, detail=f"{available_rooms} ta xona qolgan xolos. {needed_rooms} ta kerak.")
 
 
     def save(self, *args, **kwargs):

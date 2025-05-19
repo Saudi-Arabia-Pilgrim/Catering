@@ -2,8 +2,7 @@ from datetime import timedelta
 
 from django.conf import settings
 
-
-ACCESS_TOKEN_LIFETIME = timedelta(days=1) if settings.ENV == 'development' else timedelta(minutes=10)
+ACCESS_TOKEN_LIFETIME = timedelta(days=1) if settings.ENV == 'development' else timedelta(days=1)
 REFRESH_TOKEN_LIFETIME = timedelta(days=2) if settings.ENV == 'development' else timedelta(days=1)
 
 SIMPLE_JWT = {

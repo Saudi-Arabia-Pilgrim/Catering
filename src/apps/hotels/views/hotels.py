@@ -1,57 +1,32 @@
-from django.db.models import Prefetch
 from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.filters import SearchFilter
 
-
-from apps.rooms.models import Room
 from apps.hotels.models import Hotel
-from apps.guests.models import Guest
 from apps.base.views import CustomGenericAPIView
-from apps.hotels.filters import RoomWithGuestFilter
-from apps.hotels.serializers import HotelSerializer
+from apps.hotels.serializers import HotelSerializer, HotelListSerializer, HotelRetrieveSerializer
 
 
 class HotelListAPIView(CustomGenericAPIView):
     """
-    API view to retrieve a list of hotels filtered by room type name.
+    API View to list hotel orders with hotel name search and date range filtering.
+
+    This endpoint returns a list of all hotel orders with detailed related data_including:
+    - Hotel info
+    - Room info
+    - Guests and their room/room type
+
+    🔍 Search:
+    - You can search by hotel name:
+        • Example: `?search=Hilton`
     """
+    queryset = Hotel.objects.prefetch_related("guests", "rooms").all()
 
-    serializer_class = HotelSerializer
+    serializer_class = HotelListSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    filterset_class = RoomWithGuestFilter
     search_fields = ["name__icontains"]
-
-    def get_queryset(self):
-        room_type_name = self.request.query_params.get("room_type_name")
-
-        # Filter Guests
-        guest_qs = Guest.objects.select_related('room', 'room__room_type').only(
-            'id', 'full_name', 'order_number', 'room_id',
-            'gender', 'check_in', 'check_out', 'hotel_id'
-        )
-        if room_type_name:
-            guest_qs = guest_qs.filter(room__room_type__name__icontains=room_type_name)
-
-        # Filter Rooms
-        room_qs = Room.objects.select_related("room_type").only(
-            'id', 'room_type__name', 'gross_price', 'occupied_count',
-            'count', 'hotel_id', 'room_type_id', 'capacity', 'net_price'
-        )
-        if room_type_name:
-            room_qs = room_qs.filter(room_type__name__icontains=room_type_name)
-
-        # Filter Hotels with only matching rooms
-        hotels_qs = Hotel.objects.prefetch_related(
-            Prefetch("rooms", queryset=room_qs),
-            Prefetch("guests", queryset=guest_qs)
-        )
-        if room_type_name:
-            hotels_qs = hotels_qs.filter(rooms__room_type__name__icontains=room_type_name).distinct()
-
-        return hotels_qs
 
     def get(self, *args, **kwargs):
         """
@@ -95,27 +70,26 @@ class HotelCreateAPIView(CustomGenericAPIView):
 class HotelRetrieveAPIView(CustomGenericAPIView):
     """
     API view to retrieve a specific hotel.
+
+     **Endpoint**:
+    `GET /api/v1/hotels/<uuid:id>/`
+
+    **Query Parameters**:
+        - `room_type` (optional, UUID): If provided, only guests staying in rooms
+          of the specified room type will be included in the response.
+
+     **Example Request**:
+        GET /api/v1/hotels/14690dfa-f331-405a-aeea-61cfd429ee64/
+
+    **Example Request with Filtering by Room Type**:
+        GET /api/v1/hotels/14690dfa-f331-405a-aeea-61cfd429ee64/?room_type=134a7b13-924f-4e16-825c-86eb07a1a2ee
     """
-    queryset = Hotel.objects.prefetch_related(
-        Prefetch(
-            'rooms',
-            queryset=Room.objects.select_related('room_type').only(
-                'id', 'room_type_id', 'hotel_id', 'gross_price', 'occupied_count', 'count'
-            )
-        ),
-        Prefetch(
-            'guests',
-            queryset=Guest.objects.select_related('room', 'room__room_type').only(
-                'id', 'full_name', 'order_number', 'room_id', 'gender',
-                'check_in', 'check_out', 'hotel_id'
-            )
-        )
-    ).only("id", "name", "email", "address", "phone_number", "rating")
-    serializer_class = HotelSerializer
+    queryset = Hotel.objects.prefetch_related("rooms", "guests")
+    serializer_class = HotelRetrieveSerializer
 
     def get(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = self.get_serializer(instance)
+        serializer = self.get_serializer(instance, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

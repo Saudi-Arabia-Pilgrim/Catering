@@ -19,26 +19,33 @@ class RoomSerializer(CustomModelSerializer):
         available_count (int): Computed field representing the number of available rooms.
          price (Decimal): Price per night for the room type.
     """
-    room_name = serializers.CharField(source="room_type.name", read_only=True)
-    hotel_name = serializers.CharField(source="hotel.name", read_only=True)
+    room_name = serializers.CharField()
+    hotel_name = serializers.CharField()
+    room_type = serializers.UUIDField()
+    hotel = serializers.UUIDField()
+    gross_price = serializers.DecimalField(max_digits=15, decimal_places=2)
+    count = serializers.IntegerField()
+    occupied_count = serializers.IntegerField()
+    available_count = serializers.IntegerField()
+
+
     class Meta:
         model = Room
         fields = [
-            "id",
-            "hotel",
-            "hotel_name",
             "room_type",
             "room_name",
+            "hotel",
+            "hotel_name",
             "count",
             "occupied_count",
             "available_count",
-            "remaining_capacity",
-            "gross_price"
+            "gross_price",
         ]
         read_only_fields = ["room_name", "hotel_name"]
 
 
 class RoomCreateSerializer(CustomModelSerializer):
+    count = serializers.IntegerField(min_value=1, write_only=True)
     room_name = serializers.CharField(source="room_type.name", read_only=True)
 
     class Meta:
@@ -49,11 +56,46 @@ class RoomCreateSerializer(CustomModelSerializer):
             "room_type",
             "room_name",
             "count",
-            "occupied_count",
-            "available_count",
             "capacity",
             "net_price",
             "profit",
-            "remaining_capacity",
         ]
         read_only_fields = ["room_name"]
+
+    def validate(self, attrs):
+        attrs["net_price"] = attrs.get("net_price") or 0
+        attrs["profit"] = attrs.get("profit") or 0
+        attrs["gross_price"] = attrs["net_price"] + attrs["profit"]
+
+        return attrs
+
+    def create(self, validated_data):
+        counts = validated_data.pop("count")
+        room_list = []
+
+        for count in range(counts):
+            room_list.append(Room(
+                hotel=validated_data["hotel"],
+                room_type=validated_data["room_type"],
+                capacity=validated_data["capacity"],
+                count=1,
+                available_count=1,
+                occupied_count=0,
+                net_price=validated_data["net_price"],
+                profit=validated_data["profit"],
+                gross_price=validated_data["gross_price"]
+            ))
+        Room.objects.bulk_create(room_list)
+        return room_list
+
+{
+    "hotel": "49a60c22-b54d-4b33-be9c-d792d5895adf",
+    "order_status": "Active",
+    "room": "614cff9e-4123-48db-b17f-73e4f0f72697",
+    "guest_details": [
+    {"full_name": "Nana", "gender": 2}
+],
+    "check_in": "18.05.2025 15:50",
+    "check_out": "20.05.2025 15:50",
+    "count_of_people": 1
+}
