@@ -11,7 +11,7 @@ from apps.menus.models import Menu
 
 class FoodSection(AbstractBaseModel):
     name = models.CharField(max_length=200)
-    slug = models.SlugField(max_length=200)
+    slug = models.SlugField(max_length=200, unique=True)
     status = models.BooleanField(default=True)
 
     def save(self, *args, **kwargs):

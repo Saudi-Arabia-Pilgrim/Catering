@@ -50,6 +50,9 @@ class FoodsOnMenu(CustomGenericAPIView):
 class FoodSectionListCreateAPIView(CustomListCreateAPIView):
     queryset = FoodSection.objects.all()
     serializer_class = FoodSectionSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_fields = ["status"]
+    search_fields = ["name"]
 
 
 class FoodSectionUpdateDestroyRetrieveAPIView(CustomRetrieveUpdateDestroyAPIView):
