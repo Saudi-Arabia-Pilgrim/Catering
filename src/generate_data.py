@@ -112,11 +112,11 @@ def populate_data():
     # Create Rooms
     try:
         Room.objects.create(hotel=hotel1, room_type=single_room, capacity=1, count=10, occupied_count=0, net_price=150,
-                            profit=50)
+                            profit=50, gross_price=200)
         Room.objects.create(hotel=hotel1, room_type=double_room, capacity=2, count=15, occupied_count=0, net_price=250,
-                            profit=75)
+                            profit=75, gross_price=325)
         Room.objects.create(hotel=hotel2, room_type=suite_room, capacity=4, count=5, occupied_count=0, net_price=500,
-                            profit=150)
+                            profit=150, gross_price=650)
 
         print("Rooms created!")
     except ValidationError as e:
@@ -1219,7 +1219,7 @@ def populate_data():
         print("Validation Error in Experiences Creation:", e)
         return
     except Exception as e:
-        print(f"Error in Experiences Creation: {str(e)}")
+        print(f"Erro    r in Experiences Creation: {str(e)}")
         return
 
     # Verify experience data

@@ -32,32 +32,29 @@ class HotelStatisticListAPIView(AbstractStatisticsAPIView):
 
 
 class HotelDiagramListAPIView(AbstractStatisticsAPIView):
-    queryset = Hotel.objects.all().prefetch_related(
-        Prefetch("orders", queryset=HotelOrder.objects.select_related("room"))
-    )
+    queryset = HotelOrder.objects.all().select_related("hotel").prefetch_related("hotel__orders")
 
     def get(self, *args, **kwargs):
-        hotels = self.get_queryset()
+        default_diagram_colors = ["#F7B500", "#EB5757", "#2F80ED", "#27AE60"]
+        
+        orders = self.get_queryset()
 
         data = []
         total_count = 0
-        for hotel in hotels:
-            if hotel.orders.exists():
-                hotel_data = {
-                    "name": hotel.name,
-                    "order_count": hotel.orders.count(),
-                    "precent": 0,
-                }
-                total_count += hotel.orders.count()
-                data.append(hotel_data)
+        for order in orders:
+            hotel_data = {
+                "name": order.hotel.name,
+                "value": order.hotel.orders.count(),
+            }
+            total_count += order.hotel.orders.count()
+            data.append(hotel_data)
 
-        for hotel in hotels:
-            if hotel.orders.exists():
-                precent = (hotel.orders.count() / total_count) * 100
-                for obj in data:
-                    if obj["name"] == hotel.name:
-                        data[data.index(obj)]["precent"] = precent
-                        break
-
-        data.sort(key=lambda hotel_price: hotel_price["order_count"], reverse=True)
-        return Response({"total": total_count, "result": data[:6]})
+        data.sort(key=lambda hotel_price: hotel_price["value"], reverse=True)
+        first_four = data[:4]
+        for_loop = 1
+        for i in first_four:
+            if for_loop == 4:
+                break
+            i["fill"] = default_diagram_colors[for_loop - 1]
+            for_loop += 1
+        return Response({"total": total_count, "result": data})

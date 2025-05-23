@@ -10,8 +10,9 @@ class WarehouseSerializer(CustomModelSerializer):
     amount = serializers.FloatField(source='count', read_only=True)
     arrived_amount = serializers.FloatField(source="arrived_count")
 
-    measure = serializers.SerializerMethodField(read_only=True)
+    measure = serializers.CharField(source="product.measure_warehouse.abbreviation", read_only=True)
     image = serializers.SerializerMethodField(read_only=True)
+    section = serializers.CharField(source="product.section.name", read_only=True)
 
     class Meta:
         model = Warehouse
@@ -24,9 +25,6 @@ class WarehouseSerializer(CustomModelSerializer):
         if image and request:
             return request.build_absolute_uri(image.url)
         return None
-    
-    def get_measure(self, obj):
-        return obj.product.measure_warehouse.abbreviation
 
 
 class WarehouseExpensesSerializer(CustomSerializer):

@@ -1,6 +1,6 @@
 from django.utils.timezone import now
 
-from datetime import datetime, date
+from datetime import datetime, date, time
 from dateutil.relativedelta import relativedelta
 
 from apps.base.exceptions.exception_error import CustomExceptionError
@@ -39,9 +39,9 @@ def validate_from_and_date_to_date(request):
     from_date_str = request.query_params.get("from_date")
     to_date_str = request.query_params.get("to_date")
 
-    current_date = date(now().year, now().month, 1)
-    from_date = current_date - relativedelta(months=11)
-    to_date = current_date
+    current_date = date(now().year, now().month, now().day)
+    from_date = datetime.combine(current_date - relativedelta(months=1), time.min)
+    to_date = datetime.combine(current_date, time.max)
 
     if from_date_str and to_date_str:
         from_date = str_to_date(str_date=from_date_str)
