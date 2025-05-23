@@ -14,6 +14,7 @@ from apps.warehouses.utils import validate_uuid
 
 
 class HotelListSerializer(CustomModelSerializer):
+    rooms = serializers.SerializerMethodField(help_text="List of rooms associated with the hotel.", read_only=True)
 
     class Meta:
         model = Hotel
@@ -24,10 +25,15 @@ class HotelListSerializer(CustomModelSerializer):
             "email",
             "phone_number",
             "rating",
+            "rooms",
         ]
 
     def get_rooms(self, obj):
         return get_grouped_room_data(hotel=obj)
+
+    def get_total_guests_price(self, obj):
+        return obj.guests.aggregate(total=models.Sum("price"))["total"] or 0
+
 
 class HotelRetrieveSerializer(CustomModelSerializer):
     """
