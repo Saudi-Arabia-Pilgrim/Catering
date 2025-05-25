@@ -14,7 +14,7 @@ def get_grouped_room_data(hotel=None):
     queryset = (
         queryset
         .values(
-            "id", "room_type", "room_type__name",
+            "room_type", "room_type__name",
             "hotel", "hotel__name", "gross_price"
         )
         .annotate(
@@ -28,7 +28,6 @@ def get_grouped_room_data(hotel=None):
         count = item["count"] or 0
         occupied = item["occupied_count"] or 0
         result.append({
-            "id": item["id"],
             "hotel": item["hotel"],
             "hotel_name": item["hotel__name"],
             "room_type": item["room_type"],
