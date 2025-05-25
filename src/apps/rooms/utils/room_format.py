@@ -27,6 +27,14 @@ def get_grouped_room_data(hotel=None):
     for item in queryset:
         count = item["count"] or 0
         occupied = item["occupied_count"] or 0
+
+        rooms = Room.objects.filter(
+            hotel_id=item["hotel"],
+            room_type_id=item["room_type"]
+        )
+
+        remaining_capacity = Room.remaining_capacity_calculated(rooms)
+
         result.append({
             "hotel": item["hotel"],
             "hotel_name": item["hotel__name"],
@@ -35,46 +43,8 @@ def get_grouped_room_data(hotel=None):
             "count": count,
             "occupied_count": occupied,
             "available_count": count - occupied,
+            "remaining_capacity": remaining_capacity,
             "gross_price": item["gross_price"],
         })
 
     return result
-
-
-
-# def get_grouped_room_data(hotel=None):
-#     room_filter = Q()
-#     if hotel:
-#         room_filter &= Q(hotel=hotel)
-#
-#     # Prefetch only relevant rooms (optionally filtered by hotel)
-#     rooms_qs = Room.objects.filter(room_filter).select_related("hotel")
-#     room_types = RoomType.objects.prefetch_related(
-#         Prefetch("rooms", queryset=rooms_qs, to_attr="prefetched_rooms")
-#     )
-#
-#     data = []
-#
-#     for item in room_types:
-#         rooms = item.prefetched_rooms
-#
-#         if not rooms:
-#             continue  # Skip empty room sets
-#
-#         occupied_count = sum(1 for r in rooms if r.is_busy)
-#         available_count = len(rooms) - occupied_count
-#         first_room = rooms[0]
-#
-#         data.append({
-#             "room_type": item.id,
-#             "room_name": item.name,
-#             "hotel": first_room.hotel_id,
-#             "hotel_name": first_room.hotel.name,
-#             "gross_price": first_room.gross_price,
-#             "occupied_count": occupied_count,
-#             "available_count": available_count,
-#             "count": len(rooms)
-#         })
-#
-#     return data
-

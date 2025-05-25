@@ -12,6 +12,7 @@ from apps.warehouses.utils import validate_uuid
 
 
 class ActiveHotelOrderFoodSerializer(CustomModelSerializer):
+    hotel_name = serializers.CharField(source="hotel.name")
     guests = serializers.SerializerMethodField(read_only=True)
     food_order = OnlyFoodOrderSerializer(many=True, read_only=True)
     nights = serializers.SerializerMethodField()
@@ -24,6 +25,7 @@ class ActiveHotelOrderFoodSerializer(CustomModelSerializer):
         fields = [
             "order_id",
             "hotel",
+            "hotel_name",
             "room",
             "food_service",
             "order_status",

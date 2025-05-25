@@ -27,6 +27,7 @@ class RoomSerializer(CustomModelSerializer):
     count = serializers.IntegerField()
     occupied_count = serializers.IntegerField()
     available_count = serializers.IntegerField()
+    remaining_capacity = serializers.IntegerField()
 
 
     class Meta:
@@ -39,6 +40,7 @@ class RoomSerializer(CustomModelSerializer):
             "count",
             "occupied_count",
             "available_count",
+            "remaining_capacity",
             "gross_price",
         ]
         read_only_fields = ["room_name", "hotel_name"]
@@ -89,13 +91,14 @@ class RoomCreateSerializer(CustomModelSerializer):
         return room_list
 
 {
-    "hotel": "49a60c22-b54d-4b33-be9c-d792d5895adf",
+    "hotel": "5387b602-0025-4cec-9efa-76f6288bfb74",
     "order_status": "Active",
-    "room": "614cff9e-4123-48db-b17f-73e4f0f72697",
+    "room": "2f07bae8-2693-4ee5-9237-f5013c65e025",
     "guest_details": [
-    {"full_name": "Nana", "gender": 2}
+    {"full_name": "Leyla", "gender": 2},
+    {"full_name": "Gossen", "gender": 1},
 ],
-    "check_in": "18.05.2025 15:50",
-    "check_out": "20.05.2025 15:50",
-    "count_of_people": 1
+    "check_in": "25.05.2025 15:50",
+    "check_out": "29.05.2025 15:50",
+    "count_of_people": 2
 }

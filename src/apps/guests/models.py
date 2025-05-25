@@ -106,12 +106,6 @@ class Guest(AbstractBaseModel):
         if total_people % self.room.capacity:
             occupied_rooms += 1
 
-        # available_rooms = self.room.count - occupied_rooms
-
-        # if needed_rooms > available_rooms:
-        #     raise CustomExceptionError(code=400, detail=f"{available_rooms} ta xona qolgan xolos. {needed_rooms} ta kerak.")
-
-
     def save(self, *args, **kwargs):
         if self.pk:
             existing = Guest.objects.filter(pk=self.pk).first()

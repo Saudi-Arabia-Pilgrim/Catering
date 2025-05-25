@@ -7,18 +7,16 @@ from apps.rooms.serializers.room import RoomSerializer, RoomCreateSerializer
 
 
 class RoomListsAPIView(CustomGenericAPIView):
-    queryset = Room.objects.all().select_related("room_type", "hotel")
     serializer_class = RoomSerializer
 
     def get(self, *args, **kwargs):
         data = get_grouped_room_data()
 
         page = self.paginate_queryset(data)
+        serializer = self.get_serializer(page, many=True)
         if page is not None:
-            serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(data, many=True)
         return Response(serializer.data, status=200)
 
 
