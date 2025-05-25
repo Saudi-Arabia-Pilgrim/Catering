@@ -1,7 +1,6 @@
 import random
 import time
 
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -120,7 +119,7 @@ class Order(AbstractBaseModel):
         if self.gross_fee < self.service_fee:
             raise CustomExceptionError(detail="Gross fee cannot be less than the service fee.", code=400)
         if self.perform_date and self.perform_date < timezone.now():
-            raise ValidationError(_("Perform Date cannot be in the past!"))
+            raise CustomExceptionError(detail=_("Perform Date cannot be in the past!"), code=400)
 
     def save(self, *args, **kwargs):
         if not self.order_number:
