@@ -64,6 +64,7 @@ class GuestListSerializer(GuestBaseSerializer):
 
 class ActiveNoGuestListSerializer(GuestBaseSerializer):
     room_name = serializers.CharField(source="room.room_type.name")
+    gender = serializers.SerializerMethodField()
 
     class Meta:
         model = Guest
@@ -77,9 +78,13 @@ class ActiveNoGuestListSerializer(GuestBaseSerializer):
             "price",
         ]
 
+    def get_gender(self, obj):
+        return obj.get_gender_display()
+
 
 class OrderGuestSerializer(CustomModelSerializer):
     duration = serializers.SerializerMethodField()
+    gender = serializers.SerializerMethodField()
 
     class Meta:
         model = Guest
@@ -100,79 +105,12 @@ class OrderGuestSerializer(CustomModelSerializer):
             "created_at",
         ]
 
+    def get_gender(self, obj):
+        return obj.get_gender_display()
+
     def get_duration(self, obj):
         days = (obj.check_out - obj.check_in).days
         return f"{days} day"
 
     def get_total_price(self, obj):
         return obj.total_price
-
-# class GuestForHotelOrderSerializer(CustomModelSerializer):
-#     """
-#     Serializer for the Guest model.
-#
-#     This serializer handles guest-related data, including retrieving guest details
-#     and creating new guest entries with an associated hotel.
-#     """
-#     room_type = serializers.SerializerMethodField()
-#     total_price = serializers.SerializerMethodField()
-#
-#     class Meta:
-#         model = Guest
-#         fields = [
-#             "id",
-#             "full_name",
-#             "order_number",
-#             "room",
-#             "room_type",
-#             "gender",
-#             "check_in",
-#             "check_out",
-#             "total_price"
-#         ]
-#         read_only_fields = ["order_number", "price", "room_type"]
-#
-#     def get_room_type(self, obj):
-#         if hasattr(obj, 'room') and hasattr(obj.room, 'room_type'):
-#             return obj.room.room_type.name
-#         return obj.room.room_type.name if obj.room_id else None
-#
-#     def get_total_price(self, obj):
-#         if obj.check_in and obj.check_out and obj.room:
-#             days_stayed = (obj.check_out - obj.check_in).days
-#             if days_stayed < 1:
-#                 days_stayed = 1
-#             return obj.room.gross_price * days_stayed
-#         return 0
-#
-#
-# class GuestHotelSerializer(CustomModelSerializer):
-#     room_type = serializers.SerializerMethodField()
-#     total_price = serializers.SerializerMethodField()
-#
-#     class Meta:
-#         model = Guest
-#         fields = [
-#             "id",
-#             "full_name",
-#             "order_number",
-#             "room_type",
-#             "gender",
-#             "check_in",
-#             "check_out",
-#             "total_price"
-#         ]
-#         read_only_fields = ["order_number", "price", "room_type"]
-#
-#     def get_room_type(self, obj):
-#         if hasattr(obj, 'room') and hasattr(obj.room, 'room_type'):
-#             return obj.room.room_type.name
-#         return obj.room.room_type.name if obj.room_id else None
-#
-#     def get_total_price(self, obj):
-#         if obj.check_in and obj.check_out and obj.room:
-#             days_stayed = (obj.check_out - obj.check_in).days
-#             if days_stayed < 1:
-#                 days_stayed = 1
-#             return obj.room.gross_price * days_stayed
-#         return 0

@@ -7,7 +7,7 @@ from apps.guests.models import Guest
 from apps.orders.models import HotelOrder
 from apps.rooms.models import Room, RoomType
 from apps.base.views import CustomListAPIView
-from apps.orders.serializers.noactive_hotel_guest_food import NoActiveHotelOrderFoodSerializer
+from apps.orders.serializers.noactive_hotel_guest_food import NoActiveHotelOrderSerializer
 
 
 class NoActiveHotelOrderListAPIView(CustomListAPIView):
@@ -29,7 +29,7 @@ class NoActiveHotelOrderListAPIView(CustomListAPIView):
             - `/api/v1/orders/no-active/?check_in__gte=2025-02-01&check_out__lte=2025-02-10`
 
         """
-    serializer_class = NoActiveHotelOrderFoodSerializer
+    serializer_class = NoActiveHotelOrderSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ["hotel__name"]
     filterset_fields = {"created_at": ["range"], "check_in": ["gte"], "check_out": ["lte"]}

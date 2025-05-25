@@ -1,5 +1,6 @@
+from celery.utils.time import remaining
 from django.db import models
-from django.db.models import Sum
+from django.db.models import Sum, F, ExpressionWrapper, IntegerField
 from django.utils import timezone
 
 from apps.guests.models import Guest
@@ -69,6 +70,22 @@ class Room(AbstractBaseModel):
     @property
     def current_occupied_count(self):
         return Guest.objects.filter(room=self, status=Guest.Status.COMPLETED).count()
+
+    @classmethod
+    def remaining_capacity_calculated(cls, rooms):
+        today = timezone.now().date()
+
+        active_guests_count = Guest.objects.filter(
+            room__in=rooms,
+            status=Guest.Status.NEW,
+            check_in__lte=today,
+            check_out__gte=today
+        ).aggregate(total=Sum("count"))["total"] or 0
+
+        total_capacity = rooms.aggregate(capacity=Sum("capacity"))["capacity"] or 0
+
+        remaining_capacity = total_capacity - active_guests_count
+        return remaining_capacity
 
     def refresh_occupancy(self, save=True):
         pass

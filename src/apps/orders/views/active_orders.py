@@ -38,7 +38,7 @@ class ActiveHotelOrderListAPIView(CustomListAPIView):
     search_fields = ["hotel__name"]
 
     def get_queryset(self):
-        return HotelOrder.objects.active_orders().select_related("hotel").prefetch_related("guests",
+        return HotelOrder.objects.active_orders().select_related("hotel", "room").prefetch_related("guests",
                                                                                            "guests__room",
                                                                                            "guests__room__room_type",
                                                                                            "food_order",
