@@ -16,4 +16,5 @@ class MeasureListCreateAPIView(CustomListCreateAPIView):
     queryset = Measure.objects.all()
     serializer_class = MeasureSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_fields = ["status"]
     search_fields = ["name", "abbreviation"]

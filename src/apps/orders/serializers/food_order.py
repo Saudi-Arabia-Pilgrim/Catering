@@ -12,6 +12,7 @@ class OnlyFoodOrderSerializer(CustomModelSerializer):
     product_type = serializers.SerializerMethodField(read_only=True)
     order_type = serializers.SerializerMethodField(read_only=True)
     experience_date = serializers.SerializerMethodField(read_only=True)
+    counter_agent_name = serializers.CharField(source="counter_agent.name", read_only=True)
 
     class Meta:
         model = FoodOrder
@@ -27,6 +28,7 @@ class OnlyFoodOrderSerializer(CustomModelSerializer):
             "order_time",
             "experience_date",
             "counter_agent",
+            "counter_agent_name",
             "address",
             "price",
             "status",

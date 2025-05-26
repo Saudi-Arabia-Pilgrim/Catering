@@ -28,7 +28,13 @@ schema_view = get_schema_view(
     openapi.Info(
         title="Catering API",
         default_version="v1",
-        description="API documentation for Catering Project 🚀",
+        description="API documentation for Catering Project 🚀"
+                    "👋 Dear Frontend Team, Please, we *beg you*,"
+                    " take a moment to read the **docstrings** we’ve written just for you."
+                    " We’ve spent time documenting every field, every serializer, and every view — *not for the backend gods*,"
+                    " but so you won’t get stuck with `500 errors` and blame us 😎 📌 Why should you read the docstrings - ❓ What parameters are required - "
+                    "🔍 How can you filter data - 🧾 Which fields are optional? Which are mandatory - 📅 What date format is expected? 🎁 It’s all here. Nicely written."
+                    " Kindly documented. Just scroll a little. We promise it won’t bite. It might even save you a few hours of debugging. Cheers 🍻 — Your friendly neighborhood Backend Team",
         contact=openapi.Contact(email="https://t.me/mukhsin_mukhtariy"),
         license=openapi.License(name="BSD License"),
     ),

@@ -11,7 +11,7 @@ from apps.rooms.views.room_types import (RoomTypeListsAPIView,
                                          RoomTypeRetrieveAPIView,
                                          RoomTypeUpdateAPIView,
                                          RoomTypeDeleteAPIView)
-
+from apps.rooms.views.rooms_on_hotel import RoomsOfHotelAPIView
 
 urlpatterns = [
     # ================== Room Types ===========================
@@ -27,4 +27,6 @@ urlpatterns = [
     path("<str:pk>/", RoomRetrieveAPIView.as_view(), name="room_retrieve"),
     path("update/<str:pk>/", RoomUpdateAPIView.as_view(), name="room_update"),
     path("delete/<str:pk>/", RoomDeleteAPIView.as_view(), name="room_delete"),
+
+    path("rooms_of_hotel/<str:pk>/", RoomsOfHotelAPIView.as_view(), name="room_list_of_hotel"),
 ]
