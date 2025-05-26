@@ -17,7 +17,7 @@ class UserSerializer(CustomModelSerializer):
     class Meta:
         model = get_user_model()
         fields = [
-            'id', 'email', 'full_name', 'phone_number', 'birthdate', 'gender', 'date_come', 'from_come'
+            'id', 'email', 'full_name', 'phone_number', 'birthdate', 'gender', 'date_come', 'from_come',
             'role', 'is_active', 'is_staff', 'is_superuser', 'total_expenses', 'hiring_expense', 'monthly_salary'
         ]
         read_only_fields = ["id"]
