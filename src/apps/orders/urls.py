@@ -25,7 +25,6 @@ urlpatterns = [
 
     # ========================== ACTIVE Orders =======================
     path('hotel_orders/active/', ActiveHotelOrderListAPIView.as_view(), name='active-orders-list'),
-    path('hotel_orders/active/create', HotelFoodOrderCreateAPIView.as_view(), name='active-orders-list'),
 
     # ========================== NO ACTIVE ORDERS ==========================
     path("hotel_orders/no-active/", NoActiveHotelOrderListAPIView.as_view(), name="no-active-orders-list")

@@ -56,8 +56,3 @@ class ActiveHotelOrderListAPIView(CustomListAPIView):
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
-
-
-class HotelFoodOrderCreateAPIView(CustomCreateAPIView):
-    queryset = HotelOrder.objects.all()
-    serializer_class = HotelOrderCreateSerializer
