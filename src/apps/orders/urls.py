@@ -4,8 +4,7 @@ from apps.orders.views import (HotelOrderCreateAPIView,
                                HotelOrderListAPIView,
                                HotelOrderRetrieveAPIView,
                                HotelOrderDeleteAPIView)
-from apps.orders.views.active_orders import (ActiveHotelOrderListAPIView,
-                                             HotelFoodOrderCreateAPIView)
+from apps.orders.views.active_orders import ActiveHotelOrderListAPIView
 from apps.orders.views.food_order import (FoodOrderListCreateAPIView,
                                           FoodOrderRetrieveAPIView,
                                           ReadyFodOrderAPIView)
