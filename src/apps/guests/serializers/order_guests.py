@@ -53,17 +53,26 @@ class GuestUpdateSerializer(GuestBaseSerializer):
 
 
 class GuestListSerializer(GuestBaseSerializer):
+    gender = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Guest
         fields = [
-            "id", "order_number", "hotel", "room", "status",
-            "gender", "full_name", "count", "price",
+            "id", "order_number", "room", "room_name", "status",
+            "gender", "full_name", "price",
             "check_in", "check_out", "created_at"
         ]
 
+    def get_gender(self, obj):
+        return obj.get_gender_display()
+
+    # def to_representation(self, instance):
+    #     data = super().to_representation(instance)
+    #     if data["room"] == None:
+    #         data["room"] = "This room expired for this Guest"
+    #     return data
 
 class ActiveNoGuestListSerializer(GuestBaseSerializer):
-    room_name = serializers.CharField(source="room.room_type.name")
     gender = serializers.SerializerMethodField()
 
     class Meta:

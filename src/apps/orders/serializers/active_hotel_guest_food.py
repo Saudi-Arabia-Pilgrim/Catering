@@ -23,6 +23,7 @@ class ActiveHotelOrderFoodSerializer(CustomModelSerializer):
     class Meta:
         model = HotelOrder
         fields = [
+            "id",
             "order_id",
             "hotel",
             "hotel_name",
@@ -45,10 +46,10 @@ class ActiveHotelOrderFoodSerializer(CustomModelSerializer):
     def get_guests(self, obj):
         request = self.context.get("request")
         if not request:
-            return ActiveNoGuestListSerializer(obj.hotel.guests.all(), many=True).data
+            return ActiveNoGuestListSerializer(obj.guests.all(), many=True).data
         room_type_id = request.GET.get("room_type")
         if not room_type_id:
-            return ActiveNoGuestListSerializer(obj.hotel.guests.all(), many=True).data
+            return ActiveNoGuestListSerializer(obj.guests.all(), many=True).data
         validate_uuid(room_type_id)
         room_type = get_object_or_404(RoomType, pk=room_type_id)
         rooms = Room.objects.filter(room_type=room_type)

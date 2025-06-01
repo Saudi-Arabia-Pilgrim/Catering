@@ -23,7 +23,7 @@ def update_daily_guest_prices():
     for guest in finished_guests:
         guest.status = Guest.Status.COMPLETED
         guest.room = None
-        guest.save(update_fields=["status", "room"])
+        guest.save(update_fields=["status", "room", "room_name"])
 
         hotel_orders = guest.hotel_orders.all()
         completed_order_count += hotel_orders.update(order_status=HotelOrder.OrderStatus.COMPLETED)
@@ -34,10 +34,11 @@ def update_daily_guest_prices():
             order.order_status = HotelOrder.OrderStatus.COMPLETED
         HotelOrder.objects.bulk_update(orders, ["order_status"])
 
-        room = guest.room
-        if room.capacity > room.guests.count():
-            room.is_busy = False
-            room.save()
+        room = getattr(guest, "room", None)
+        if room:
+            if room.capacity > room.guests.count():
+                room.is_busy = False
+                room.save()
 
     # 2. Hali yashab turgan mehmonlarga narx qo‘shamiz (shu kunda yashayotganlarga)
     guests_today = Guest.objects.filter(

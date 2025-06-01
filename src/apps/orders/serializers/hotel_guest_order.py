@@ -13,12 +13,14 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
     guests = GuestListSerializer(many=True, read_only=True)
     guest_details = serializers.ListField(write_only=True, child=serializers.DictField())
     order_status = serializers.ChoiceField(choices=HotelOrder.OrderStatus.choices, required=False)
+    hotel_name = serializers.CharField(source="hotel.name", read_only=True)
 
     class Meta:
         model = HotelOrder
         fields = [
             "id",
             "hotel",
+            "hotel_name",
             "order_status",
             "room",
             "guests",
@@ -64,13 +66,13 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
 
 
 {
-    "hotel": "2dd39aec-23c4-43b2-961c-d06be0c20dd1",
+    "hotel": "cae10738-d67d-4b79-bd1a-c2f94f0fd2dc",
     "order_status": "Active",
-    "room": "f88df7a1-c5b9-4045-83f4-e660f0895944",
+    "room": "faf28841-29df-4a3e-b2de-bb9667562f10",
     "guest_details": [
     {"full_name": "Julian", "gender": 1}
 ],
-    "check_in": "18.05.2025 15:50",
-    "check_out": "20.05.2025 15:50",
+    "check_in": "1.06.2025 03:00",
+    "check_out": "7.06.2025 03:00",
     "count_of_people": 1
 }
