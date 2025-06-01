@@ -7,6 +7,7 @@ from apps.guests.models import Guest
 from apps.orders.models.hotel_order import HotelOrder
 from apps.base.serializers import CustomModelSerializer
 from apps.guests.serializers.order_guests import GuestListSerializer
+from apps.orders.serializers import OnlyFoodOrderSerializer
 
 
 class HotelOrderGuestSerializer(CustomModelSerializer):
@@ -14,6 +15,7 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
     guest_details = serializers.ListField(write_only=True, child=serializers.DictField())
     order_status = serializers.ChoiceField(choices=HotelOrder.OrderStatus.choices, required=False)
     hotel_name = serializers.CharField(source="hotel.name", read_only=True)
+    order_food = OnlyFoodOrderSerializer(source="food_order", read_only=True, many=True)
 
     class Meta:
         model = HotelOrder
@@ -25,6 +27,8 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
             "room",
             "guests",
             "guest_details",
+            "order_food",
+            "food_order",
             "check_in",
             "check_out",
             "count_of_people",
@@ -33,6 +37,18 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
             "general_cost"
         ]
         read_only_fields = ["order_id", "general_cost"]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data.pop("food_order")
+        data["total_food_price"] = 0
+        data["hotel_total_price"] = data.pop("general_cost")
+        data["general_cost"] = 0
+        for order in data["order_food"]:
+            data["total_food_price"] += order["total_price"]
+            data["general_cost"] += order["total_price"]
+        data["general_cost"] += data["hotel_total_price"]
+        return data
 
     def validate(self, data):
         count_of_people = data.get("count_of_people", 0)
@@ -46,9 +62,11 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
     def create(self, validated_data):
         """HotelOrder yaratish va mehmonlarni qo‘shish"""
         guests_data = validated_data.pop("guest_details")
+        food_orders = validated_data.pop("food_order")
 
         with transaction.atomic():
             hotel_order = HotelOrder.objects.create(**validated_data)
+            hotel_order.food_order.set(food_orders)
             guests = []
             for guest_data in guests_data:
                 guest = Guest.objects.create(
@@ -66,13 +84,14 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
 
 
 {
-    "hotel": "cae10738-d67d-4b79-bd1a-c2f94f0fd2dc",
+    "hotel": "83f17927-513e-485f-b2b2-5bfd38dd7a7d",
     "order_status": "Active",
-    "room": "faf28841-29df-4a3e-b2de-bb9667562f10",
+    "room": "4a89b391-f23c-4e55-a521-35aadd8c31b4",
     "guest_details": [
-    {"full_name": "Julian", "gender": 1}
+    {"full_name": "Victus", "gender": 1}
 ],
-    "check_in": "1.06.2025 03:00",
-    "check_out": "7.06.2025 03:00",
+    "food_order": ["4d72f09e-acf8-40ca-b719-e89d3886d1a6"],
+    "check_in": "1.06.2025 14:50",
+    "check_out": "8.06.2025 14:50",
     "count_of_people": 1
 }
