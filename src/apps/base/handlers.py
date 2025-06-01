@@ -7,9 +7,10 @@ def custom_exception_handler(exc, context):
     """Return response if error is Protected"""
     if isinstance(exc, ProtectedError):
         return Response(
-            {
+        {
                 'code':423,
                 "detail": "This object cannot be deleted because it is referenced by other objects."
             },
+            status=423
         )
     return exception_handler(exc, context)
