@@ -958,29 +958,31 @@ def populate_data():
         for i in range(len(guest_names)):
             # Select random hotel and room
             hotel = random.choice(hotels)
-            room = random.choice([r for r in rooms if r.hotel == hotel])
+            rooms = [r for r in rooms if r.hotel == hotel if not r.is_busy]
 
-            # Generate random check-in and check-out dates
-            check_in = today + timedelta(days=random.randint(1, 30))
-            check_out = check_in + timedelta(days=random.randint(1, 14))
+            if rooms:
+                room = random.choice(rooms)
+                # Generate random check-in and check-out dates
+                check_in = today + timedelta(days=random.randint(1, 30))
+                check_out = check_in + timedelta(days=random.randint(1, 14))
 
-            # Ensure count doesn't exceed room capacity
-            count = random.randint(1, room.capacity)
+                # Ensure count doesn't exceed room capacity
+                count = random.randint(1, room.capacity)
 
-            # Create guest
-            guest = Guest(
-                hotel=hotel,
-                room=room,
-                status=random.choice([Guest.Status.NEW, Guest.Status.COMPLETED, Guest.Status.CANCELED]),
-                gender=random.choice([Guest.Gender.MALE, Guest.Gender.FEMALE]),
-                full_name=guest_names[i],
-                count=count,
-                check_in=check_in,
-                check_out=check_out
-            )
+                # Create guest
+                guest = Guest(
+                    hotel=hotel,
+                    room=room,
+                    status=random.choice([Guest.Status.NEW, Guest.Status.COMPLETED, Guest.Status.CANCELED]),
+                    gender=random.choice([Guest.Gender.MALE, Guest.Gender.FEMALE]),
+                    full_name=guest_names[i],
+                    count=count,
+                    check_in=check_in,
+                    check_out=check_out
+                )
 
-            # The order_number is generated in the save method
-            guest.save()
+                # The order_number is generated in the save method
+                guest.save()
 
         print("Guests created!")
     except ValidationError as e:
@@ -1085,6 +1087,7 @@ def populate_data():
             f"Count: {food_order.product_count}"
         )
 
+    # =============== #
     # Create HotelOrders
     try:
         # Get all hotels, rooms, guests, and food orders
@@ -1151,6 +1154,7 @@ def populate_data():
     # Verify hotel order data
     for hotel_order in HotelOrder.objects.all():
         print(f"Hotel Order: {hotel_order.order_id} | Hotel: {hotel_order.hotel.name} | Room: {hotel_order.room.room_type.name} | Check-in: {hotel_order.check_in} | Check-out: {hotel_order.check_out} | People: {hotel_order.count_of_people} | Food Service: {hotel_order.food_service}")
+    # =============== # 
 
     # ======== comment: seed ProductsUsed entries ========
     try:
