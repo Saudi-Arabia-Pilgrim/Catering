@@ -9,6 +9,7 @@ class HiringExpenseSerializer(CustomModelSerializer):
     class Meta:
         model = HiringExpense
         fields = [
+            "id",
             "user",
             "title",
             "date",

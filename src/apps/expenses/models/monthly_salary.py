@@ -1,5 +1,6 @@
+from decimal import Decimal
+
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.db import models
 
 from apps.base.models import AbstractBaseModel
@@ -33,10 +34,10 @@ class MonthlySalary(AbstractBaseModel):
     def save(self, *args, **kwargs):
         obj =  MonthlySalary.objects.last()
         if not obj:
-            self.user.total_expenses += self.salary
+            self.user.total_expenses += Decimal(self.salary)
             return super().save(*args, **kwargs)
         new_total_expenses = self.user.total_expenses - obj.salary
-        new_total_expenses + self.salary
+        new_total_expenses + Decimal(self.salary)
         self.user.total_expenses = new_total_expenses
         self.user.save()
         return super().save(*args, **kwargs)
