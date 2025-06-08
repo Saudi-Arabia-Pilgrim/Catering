@@ -7,7 +7,7 @@ from apps.statistics.views.abstract import AbstractStatisticsAPIView
 
 
 class CounterAgentListAPIView(AbstractStatisticsAPIView):
-    queryset = CounterAgent.objects.prefetch_related(
+    queryset = CounterAgent.objects.all().prefetch_related(
         Prefetch(
             "orders",
             queryset=FoodOrder.objects.select_related("food", "menu", "recipe"),
