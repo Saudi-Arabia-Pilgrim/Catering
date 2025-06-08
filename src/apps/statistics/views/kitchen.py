@@ -168,9 +168,10 @@ class HotelAndKitchenDiagramAPIView(CustomGenericAPIView):
 
             diagram = {
                 "name": month_name,
-                "mehmonxona": {len(month_hotel_orders),},
+                "mehmonxona": len(month_hotel_orders),
                 "ovqat": len(month_food_orders),
                 }
+
             data.append(diagram)
 
         return Response(data)
