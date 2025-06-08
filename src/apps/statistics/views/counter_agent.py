@@ -19,15 +19,15 @@ class CounterAgentListAPIView(AbstractStatisticsAPIView):
 
         data = []
 
-        for counter_agent in counter_agents:
+        for counter_agent in list(counter_agents):
             if counter_agent.orders.exists():
-                counter_datas = {
+                counter_data = {
                     "name": counter_agent.name,
                     "order_count": counter_agent.orders.count(),
                     "price": 0,
                 }
                 for order in counter_agent.orders.all():
-                    counter_datas["price"] += order.profit
-                data.append(counter_datas)
+                    counter_data["price"] += order.profit
+                data.append(counter_data)
         data.sort(key=lambda x: x["price"], reverse=True)
         return Response(data)
