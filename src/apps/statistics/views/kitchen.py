@@ -168,22 +168,9 @@ class HotelAndKitchenDiagramAPIView(CustomGenericAPIView):
 
             diagram = {
                 "name": month_name,
-                "hotel": {
-                    "order_count": len(month_hotel_orders),
-                    "profit": 0,
-                },
-                "kitchen": {
-                    "order_count": len(month_food_orders),
-                    "profit": 0,
-                },
-            }
-
-            for hotel_order in month_hotel_orders:
-                diagram["hotel"]["profit"] += float(hotel_order.profit)
-
-            for food_order in month_food_orders:
-                diagram["kitchen"]["profit"] += float(food_order.profit)
-
+                "mehmonxona": {len(month_hotel_orders),},
+                "ovqat": len(month_food_orders),
+                }
             data.append(diagram)
 
         return Response(data)
