@@ -21,6 +21,8 @@ class CounterAgentListAPIView(CustomGenericAPIView):
         from_date, to_date = validate_from_and_date_to_date(request)
         data = []
 
+        data.append({"from_fate": from_date, "to_date": to_date})
+
         for counter_agent in list(counter_agents):
             orders = counter_agent.orders.filter(
                 status=True, created_at__lte=to_date, created_at__gte=from_date
@@ -34,5 +36,5 @@ class CounterAgentListAPIView(CustomGenericAPIView):
                 for order in orders:
                     counter_data["price"] += order.profit
                 data.append(counter_data)
-        data.sort(key=lambda x: x["price"], reverse=True)
+        # data.sort(key=lambda x: x["price"], reverse=True)
         return Response(data)
