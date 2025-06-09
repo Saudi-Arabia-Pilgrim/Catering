@@ -15,7 +15,12 @@ class CounterAgentListAPIView(AbstractStatisticsAPIView):
     )
 
     def get(self, *args, **kwargs):
-        counter_agents = self.get_queryset()
+        counter_agents = CounterAgent.objects.all().prefetch_related(
+            Prefetch(
+                "orders",
+                queryset=FoodOrder.objects.select_related("food", "menu", "recipe"),
+                )
+            )
 
         data = []
 
@@ -32,5 +37,5 @@ class CounterAgentListAPIView(AbstractStatisticsAPIView):
                     data.append(order.id)
                     counter_data["price"] += order.profit
                 data.append(counter_data)
-        data.sort(key=lambda x: x["price"], reverse=True)
+        # data.sort(key=lambda x: x["price"], reverse=True)
         return Response(data)
