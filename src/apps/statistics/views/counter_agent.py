@@ -1,18 +1,14 @@
-from datetime import datetime, date, time
-from dateutil.relativedelta import relativedelta
-
 from django.db.models import Prefetch
-from django.utils.timezone import now
-
 
 from rest_framework.response import Response
 
+from apps.base.views import CustomGenericAPIView
 from apps.counter_agents.models import CounterAgent
 from apps.orders.models import FoodOrder
-from apps.statistics.views.abstract import AbstractStatisticsAPIView
+from apps.statistics.utils.validate_date import validate_from_and_date_to_date
 
 
-class CounterAgentListAPIView(AbstractStatisticsAPIView):
+class CounterAgentListAPIView(CustomGenericAPIView):
     queryset = CounterAgent.objects.all().prefetch_related(
         Prefetch(
             "orders",
@@ -20,24 +16,15 @@ class CounterAgentListAPIView(AbstractStatisticsAPIView):
         )
     )
 
-    def get(self, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         counter_agents = self.get_queryset()
-
+        from_date, to_date = validate_from_and_date_to_date(request)
         data = []
 
-        current_date = date(now().year, now().month, now().day)
-        from_date = datetime.combine(current_date - relativedelta(months=1), time.min)
-        to_date = datetime.combine(current_date, time.max)
-
-        dates = {
-            "from_date": from_date,
-            "to_date": to_date
-        }
-
-        data.append(dates)
-
         for counter_agent in list(counter_agents):
-            orders = counter_agent.orders.filter(status=True)
+            orders = counter_agent.orders.filter(
+                status=True, created_at__lte=to_date, created_at__gte=from_date
+            )
             if orders.exists():
                 counter_data = {
                     "name": counter_agent.name,
