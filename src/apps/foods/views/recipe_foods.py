@@ -30,6 +30,22 @@ class RecipeFoodListCreateAPIView(CustomListCreateAPIView):
     filterset_fields = ["status"]
     search_fields = ["product__name", "count", "price"]
 
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        count = serializer.validated_data.get("count")
+        product = serializer.validated_data.get("product")
+
+        instance, created = RecipeFood.objects.get_or_create(
+            count=count,
+            product=product,
+            defaults=serializer.validated_data
+        )
+
+        output_serializer = self.get_serializer(instance)
+        return Response(output_serializer.data, status=201 if created else 200)
+
 
 class RecipeFoodsOnFood(CustomGenericAPIView):
     queryset = RecipeFood.objects.all().select_related("product")
