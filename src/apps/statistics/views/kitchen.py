@@ -9,7 +9,7 @@ from apps.menus.models import Menu, Recipe
 from apps.orders.models import FoodOrder
 from apps.statistics.utils import validate_from_and_date_to_date, iterate_months
 from apps.statistics.views.abstract import AbstractStatisticsAPIView
-from apps.warehouses.models import Warehouse
+from apps.warehouses.models import Warehouse, Experience
 
 
 class SectionStatisticListAPIView(AbstractStatisticsAPIView):
@@ -128,7 +128,7 @@ class StatisticKitchenAPIView(CustomGenericAPIView):
         for warehouse in warehouses:
             data["check_in"] += warehouse.gross_price
 
-        data["general_trade"] = data["checkout"] - data["check_in"]
+        data["general_trade"] = data["checkout"] + data["check_in"]
 
         return Response(data)
 
