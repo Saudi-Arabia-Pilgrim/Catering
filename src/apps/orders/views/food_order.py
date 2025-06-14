@@ -16,8 +16,8 @@ class FoodOrderListCreateAPIView(CustomListCreateAPIView):
     queryset = FoodOrder.objects.all().order_by("-created_at")
     serializer_class = OnlyFoodOrderSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    filterset_fields = ["product_type", "order_type"]
-    search_fields = ["food_order_id", "counter_agent__name"]
+    filterset_fields = ["product_type", "order_type", "counter_agent", "order_type", "order_time", "status"]
+    search_fields = ["food_order_id", "counter_agent__name", "created_at"]
 
 
 class FoodOrderRetrieveAPIView(CustomRetrieveAPIView):
@@ -40,7 +40,6 @@ class FoodOrderRetrieveAPIView(CustomRetrieveAPIView):
 
 class ReadyFodOrderAPIView(CustomGenericAPIView):
     queryset = FoodOrder.objects.all().order_by("-created_at")
-    serializer_class = FoodOrderRetrieveSerializer
 
     def get(self, request, pk):
         validate_uuid(pk)

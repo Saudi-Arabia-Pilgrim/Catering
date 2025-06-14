@@ -58,6 +58,16 @@ class OnlyFoodOrderSerializer(CustomModelSerializer):
     def get_experience_date(self, obj):
         return obj.experience_date_str
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        products = ["food", "menu", "recipe"]
+        for product in products:
+            obj = getattr(instance, product, None)
+            if obj:
+                data[f"{product}_name"] = obj.name
+                break
+        return data
+
 
 class FoodOrderRetrieveSerializer(OnlyFoodOrderSerializer):
     food = FoodSerializerForFoodOrder(read_only=True)

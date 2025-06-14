@@ -73,12 +73,15 @@ class NoActiveHotelOrderSerializer(CustomModelSerializer):
     total_guest_cost = serializers.SerializerMethodField()
     total_food_cost = serializers.SerializerMethodField()
     total_cost = serializers.SerializerMethodField()
+    hotel_name = serializers.CharField(source="hotel.name")
 
     class Meta:
         model = HotelOrder
         fields = [
+            "id",
             "order_id",
             "hotel",
+            "hotel_name",
             "room",
             "order_status",
             "check_in",

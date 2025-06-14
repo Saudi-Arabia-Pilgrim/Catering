@@ -38,10 +38,13 @@ class Guest(AbstractBaseModel):
     )
     room = models.ForeignKey(
         "rooms.Room",
+        blank=True,
+        null=True,
         on_delete=models.PROTECT,
         related_name="guests",
         help_text="The type of room the guest is staying in."
     )
+    room_name = models.CharField(max_length=255, blank=True, null=True)
 
     status = models.CharField(choices=Status.choices, max_length=30, default=Status.NEW)
 
@@ -79,34 +82,40 @@ class Guest(AbstractBaseModel):
 
     def clean(self):
         today = now().date()
+        room = getattr(self, "room", None)
 
-        if self.check_out <= self.check_in:
-            raise CustomExceptionError(code=400, detail="Check-out check-in dan keyin bo‘lishi kerak.")
+        if room:
+            if self.check_out <= self.check_in:
+                raise CustomExceptionError(code=400, detail="Check-out check-in dan keyin bo‘lishi kerak.")
 
-        if self.count > self.room.capacity:
-            raise CustomExceptionError(code=400, detail=f"Bu xonaga {self.room.capacity} tadan ko‘p odam joylasholmaydi.")
+            if self.count > room.capacity:
+                raise CustomExceptionError(code=400, detail=f"Bu xonaga {room.capacity} tadan ko‘p odam joylasholmaydi.")
 
-        needed_rooms = self.count // self.room.capacity
-        if self.count % self.room.capacity:
-            needed_rooms += 1
+            needed_rooms = self.count // room.capacity
+            if self.count % room.capacity:
+                needed_rooms += 1
+            active_guests = Guest.objects.filter(
+                room=room,
+                status=Guest.Status.NEW,
+                check_in__lte=today,
+                check_out__gte=today
+            )
 
-        active_guests = Guest.objects.filter(
-            room=self.room,
-            status=Guest.Status.NEW,
-            check_in__lte=today,
-            check_out__gte=today
-        )
+            if self.pk:
+                active_guests = active_guests.exclude(pk=self.pk)
 
-        if self.pk:
-            active_guests = active_guests.exclude(pk=self.pk)
+            total_people = active_guests.aggregate(total=Sum("count"))["total"] or 0
 
-        total_people = active_guests.aggregate(total=Sum("count"))["total"] or 0
-
-        occupied_rooms = total_people // self.room.capacity
-        if total_people % self.room.capacity:
-            occupied_rooms += 1
+            occupied_rooms = total_people // self.room.capacity
+            if total_people % self.room.capacity:
+                occupied_rooms += 1
 
     def save(self, *args, **kwargs):
+        room = getattr(self, "room", None)
+
+        if room:
+            self.room_name = room.room_type.name
+
         if self.pk:
             existing = Guest.objects.filter(pk=self.pk).first()
             if existing and existing.status == Guest.Status.COMPLETED:
@@ -115,14 +124,14 @@ class Guest(AbstractBaseModel):
         if not self.order_number:
             self.order_number = f"№{random.randint(1000000, 9999999)}"
 
-        room = self.room
-
         self.full_clean()
         super().save(*args, **kwargs)
-        room.refresh_occupancy()
 
-        if self.status == Guest.Status.COMPLETED:
+        if room:
             room.refresh_occupancy()
+
+            if self.status == Guest.Status.COMPLETED:
+                room.refresh_occupancy()
 
     def delete(self, *args, **kwargs):
         room = self.room
