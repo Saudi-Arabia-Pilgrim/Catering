@@ -18,6 +18,7 @@ class UserSerializer(CustomModelSerializer):
         model = get_user_model()
         fields = [
             'id', 'email', 'full_name', 'phone_number', 'birthdate', 'gender', 'date_come', 'from_come',
+            'passport_number', 'given_by', 'validity_period',
             'role', 'is_active', 'is_staff', 'is_superuser', 'total_expenses', 'hiring_expense', 'monthly_salary'
         ]
         read_only_fields = ["id"]
