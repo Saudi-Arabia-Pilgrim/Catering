@@ -1,5 +1,5 @@
 from django import apps
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Max
 
 Room = apps.apps.get_model("rooms.Room")
 
@@ -15,9 +15,10 @@ def get_grouped_room_data(hotel=None):
         queryset
         .values(
             "room_type", "room_type__name",
-            "hotel", "hotel__name", "gross_price"
+            "hotel", "hotel__name"
         )
         .annotate(
+            gross_price=Max("gross_price"),
             count=Count("id"),
             occupied_count=Sum("occupied_count"),
         )
@@ -33,9 +34,11 @@ def get_grouped_room_data(hotel=None):
             room_type_id=item["room_type"]
         )
 
+        representative_room = rooms.first()
         remaining_capacity = Room.remaining_capacity_calculated(rooms)
 
         result.append({
+            "id": representative_room.id if representative_room else None,
             "hotel": item["hotel"],
             "hotel_name": item["hotel__name"],
             "room_type": item["room_type"],
