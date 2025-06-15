@@ -2,6 +2,7 @@ from rest_framework.response import Response
 
 from apps.rooms.models.rooms import Room
 from apps.base.views import CustomGenericAPIView
+from apps.rooms.serializers import RoomUpdateSerializer
 from apps.rooms.utils.room_format import get_grouped_room_data
 from apps.rooms.serializers.room import RoomSerializer, RoomCreateSerializer
 
@@ -45,8 +46,8 @@ class RoomRetrieveAPIView(CustomGenericAPIView):
 
 
 class RoomUpdateAPIView(CustomGenericAPIView):
-    queryset = Room.objects.all()
-    serializer_class = RoomSerializer
+    queryset = Room.objects.select_related("room_type", "hotel")
+    serializer_class = RoomUpdateSerializer
 
     def get(self, *args, **kwargs):
         instance = self.get_object()
@@ -57,8 +58,29 @@ class RoomUpdateAPIView(CustomGenericAPIView):
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=200)
+        validated_data = serializer.validated_data
+
+        rooms = Room.objects.filter(
+            room_type=instance.room_type,
+            hotel=instance.hotel
+        ).select_related("room_type", "hotel")
+
+        for room in rooms:
+            for field in ["net_price", "profit"]:
+                if field in validated_data:
+                    setattr(room, field, validated_data[field])
+            room.apply_save_logic()
+
+        Room.objects.bulk_update(
+            rooms,
+            ["net_price", "profit", "gross_price", "available_count", "occupied_count", "is_busy"]
+        )
+
+        return Response({
+            "detail": f"{rooms.count()} count room, updated",
+            "room_type": instance.room_type.name,
+            "hotel": instance.hotel.name
+        }, status=200)
 
 
 class RoomDeleteAPIView(CustomGenericAPIView):
