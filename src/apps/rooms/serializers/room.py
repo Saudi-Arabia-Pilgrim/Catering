@@ -1,11 +1,13 @@
 from celery.app.trace import send_postrun
 from rest_framework import serializers
 
+from apps.hotels.models import Hotel
+from apps.rooms.models import RoomType
 from apps.rooms.models.rooms import Room
 from apps.base.serializers import CustomModelSerializer
 
 
-class RoomSerializer(CustomModelSerializer):
+class RoomSerializer(serializers.ModelSerializer):
     """
     Serializer for the Room model.
 
@@ -19,8 +21,8 @@ class RoomSerializer(CustomModelSerializer):
         available_count (int): Computed field representing the number of available rooms.
          price (Decimal): Price per night for the room type.
     """
-    room_name = serializers.CharField()
-    hotel_name = serializers.CharField()
+    room_name = serializers.SerializerMethodField(read_only=True)
+    hotel_name = serializers.SerializerMethodField(read_only=True)
     room_type = serializers.UUIDField()
     hotel = serializers.UUIDField()
     gross_price = serializers.DecimalField(max_digits=15, decimal_places=2)
@@ -33,6 +35,7 @@ class RoomSerializer(CustomModelSerializer):
     class Meta:
         model = Room
         fields = [
+            "id",
             "room_type",
             "room_name",
             "hotel",
@@ -44,6 +47,16 @@ class RoomSerializer(CustomModelSerializer):
             "gross_price",
         ]
         read_only_fields = ["room_name", "hotel_name"]
+
+    def get_room_name(self, obj):
+        if isinstance(obj, dict):
+            return obj.get("room_name")
+        return obj.room_type.name
+
+    def get_hotel_name(self, obj):
+        if isinstance(obj, dict):
+            return obj.get("hotel_name")
+        return obj.hotel.name
 
 
 class RoomCreateSerializer(CustomModelSerializer):
@@ -89,6 +102,31 @@ class RoomCreateSerializer(CustomModelSerializer):
             ))
         Room.objects.bulk_create(room_list)
         return room_list
+
+
+class RoomUpdateSerializer(serializers.ModelSerializer):
+    room_type = serializers.PrimaryKeyRelatedField(queryset=RoomType.objects.all())
+    hotel = serializers.PrimaryKeyRelatedField(queryset=Hotel.objects.all())
+    gross_price = serializers.DecimalField(
+        max_digits=10, decimal_places=2, read_only=True
+    )
+
+    class Meta:
+        model = Room
+        fields = [
+            "id", "room_type", "hotel",
+            "net_price", "profit", "gross_price",
+        ]
+
+    def validate(self, attrs):
+        net_price = attrs.get("net_price", getattr(self.instance, "net_price", None))
+        profit = attrs.get("profit", getattr(self.instance, "profit", None))
+
+        if net_price is not None and profit is not None:
+            attrs["gross_price"] = attrs["net_price"] + attrs["profit"]
+
+        return attrs
+
 
 {
     "hotel": "5387b602-0025-4cec-9efa-76f6288bfb74",

@@ -1,6 +1,5 @@
-from celery.utils.time import remaining
 from django.db import models
-from django.db.models import Sum, F, ExpressionWrapper, IntegerField
+from django.db.models import Sum
 from django.utils import timezone
 
 from apps.guests.models import Guest
@@ -114,23 +113,24 @@ class Room(AbstractBaseModel):
                 "is_busy"
             ])
 
-    def save(self, *args, **kwargs):
+    def apply_save_logic(self):
         self.refresh_occupancy(save=False)
+
+        if self.net_price is not None and self.profit is not None:
+            self.gross_price = self.net_price + self.profit
 
         if self.guests.count() > self.capacity:
             raise CustomExceptionError(code=400, detail="Guests count should lower than rooms of capacity.")
-        if self.guests.count() == self.capacity:
-            self.is_busy = True
-        else:
-            self.is_busy = False
 
-        if not self.is_busy:
-            self.available_count = 1
-            self.occupied_count = 0
-        else:
-            self.available_count = 0
-            self.occupied_count = 1
+        self.is_busy = self.guests.count() == self.capacity
 
+        self.available_count = 0 if self.is_busy else 1
+        self.occupied_count = 1 if self.is_busy else 0
+
+
+
+    def save(self, *args, **kwargs):
+        self.apply_save_logic()
         super().save(*args, **kwargs)
 
     def __str__(self):
