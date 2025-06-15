@@ -52,9 +52,11 @@ class HotelDiagramListAPIView(AbstractStatisticsAPIView):
         data.sort(key=lambda hotel_price: hotel_price["value"], reverse=True)
         first_four = data[:4]
         for_loop = 1
+        total_data = []
         for i in first_four:
             if for_loop == 4:
                 break
             i["fill"] = default_diagram_colors[for_loop - 1]
             for_loop += 1
-        return Response({"total": total_count, "result": data})
+            total_data.append(i)
+        return Response({"total": total_count, "result": total_data})

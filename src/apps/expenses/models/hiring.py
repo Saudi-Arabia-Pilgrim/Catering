@@ -1,7 +1,11 @@
-from django.contrib.auth import get_user_model
-from django.db import models
-from apps.base.models import AbstractBaseModel
+from decimal import Decimal
+
 from django.conf import settings
+from django.db import models
+from django.contrib.auth import get_user_model
+
+from apps.base.models import AbstractBaseModel
+
 
 class HiringExpense(AbstractBaseModel):
     """
@@ -37,12 +41,10 @@ class HiringExpense(AbstractBaseModel):
     )
 
     def save(self, *args, **kwargs):
-        user = get_user_model().objects.get(self.user_id)
-        user.total_expenses + self.cost
+        user = get_user_model().objects.get(id=self.user_id)
+        user.total_expenses + Decimal(self.cost)
         user.save()
-        super.save(*args, **kwargs)
-
-
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = "Expense"
@@ -51,7 +53,3 @@ class HiringExpense(AbstractBaseModel):
 
     def __str__(self):
         return f"{self.title}"
-
-
-
-
