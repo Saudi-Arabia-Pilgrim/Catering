@@ -4,7 +4,7 @@ from rest_framework.response import Response
 
 from apps.base.views import CustomGenericAPIView
 from apps.orders.models import FoodOrder
-from apps.statistics.utils import iterate_months, validate_from_and_date_to_date
+from apps.statistics.utils import iterate_months, validate_from_and_date_to_date, round_up_to_nice_number
 from apps.statistics.views.abstract import AbstractStatisticsAPIView
 from apps.warehouses.models import Warehouse, ProductsUsed, Experience
 
@@ -152,10 +152,16 @@ class CheckInCheckoutDiagramAPIView(CustomGenericAPIView):
             }
 
             for warehouse in month_warehouses:
-                diagram["check_in"] += float(warehouse.gross_price)
+                diagram["check_in"] = int(diagram["check_in"] + warehouse.gross_price)
 
             for order in month_orders:
-                diagram["checkout"] += float(order.profit)
+                diagram["checkout"] = int(diagram["checkout"] + order.profit)
             data.append(diagram)
 
-        return Response(data)
+        max_raw = max(
+            max(d["check_in"], d["checkout"]) for d in data
+        )
+
+        max_y = round_up_to_nice_number(max_raw)
+
+        return Response({"data": data, "max_y": max_y})
