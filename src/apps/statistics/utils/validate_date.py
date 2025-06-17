@@ -40,7 +40,7 @@ def validate_from_and_date_to_date(request):
     to_date_str = request.query_params.get("to_date")
 
     current_date = date(now().year, now().month, now().day)
-    from_date = datetime.combine(current_date - relativedelta(months=1), time.min)
+    from_date = datetime.combine(current_date - relativedelta(months=11), time.min)
     to_date = datetime.combine(current_date, time.max)
 
     if from_date_str and to_date_str:
