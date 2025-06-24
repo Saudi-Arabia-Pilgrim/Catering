@@ -34,6 +34,18 @@ class HiringExpenseListAPIView(CustomListAPIView):
     filterset_class = HiringExpenseFilter
     search_fields = ['title', 'user__email', 'user__full_name']
 
+    def get_queryset(self):
+        """
+        Override get_queryset to filter by employee_id query parameter.
+        """
+        queryset = super().get_queryset()
+        employee_id = self.request.query_params.get('employee_id')
+        
+        if employee_id:
+            queryset = queryset.filter(user_id=employee_id)
+        
+        return queryset
+
 
 class HiringExpenseCreateAPIView(CustomCreateAPIView):
     """

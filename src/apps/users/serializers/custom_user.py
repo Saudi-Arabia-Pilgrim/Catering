@@ -60,3 +60,51 @@ class UserSerializer(CustomModelSerializer):
             save_user = user.save
             save_user()
         return user
+
+
+class UserProfileSerializer(CustomModelSerializer):
+    """
+    Serializer for custom user model
+    """
+    hiring_expense = serializers.SerializerMethodField(read_only=True)
+    monthly_salary = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = get_user_model()
+        fields = [
+            'id', 'email', 'full_name', 'phone_number', 'birthdate', 'gender', 'date_come', 'from_come',
+            'passport_number', 'given_by', 'validity_period',
+            'role', 'is_active', 'total_expenses', 'hiring_expense', 'monthly_salary'
+        ]
+        read_only_fields = [
+            'id', 'email', 'phone_number', 'date_come', 'from_come',
+            'passport_number', 'given_by', 'validity_period',
+            'role', 'is_active', 'total_expenses', 'hiring_expense', 'monthly_salary'
+        ]
+        extra_kwargs = {
+            'password': {'write_only': True},
+            'email': {'required': True},
+        }
+
+    def get_hiring_expense(self, obj):
+        """
+        Calculates the total hiring expense for a given user object. The method fetches
+        hiring expenses associated with the provided user asynchronously, processes the
+        costs, and returns the total.
+        """
+        hiring_expenses = HiringExpense.objects.filter(user=obj)
+        hiring_expenses_total = []
+        for expense in hiring_expenses:
+            hiring_expenses_total.append(expense.cost)
+        return sum(hiring_expenses_total) if hiring_expenses_total else 0.00
+
+    def get_monthly_salary(self, obj):
+        """
+        Add monthly salary to serializer from MonthlySalary model
+        """
+        monthly_salary = MonthlySalary.objects.filter(user=obj).first()
+        return monthly_salary.salary if monthly_salary else None
+
+    def create(self, validated_data):
+        create_user = get_user_model().objects.create_user
+        return create_user(**validated_data)
