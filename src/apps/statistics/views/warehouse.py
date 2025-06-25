@@ -2,6 +2,7 @@ import calendar
 
 from rest_framework.response import Response
 
+from apps.base.pagination import CustomPageNumberPagination
 from apps.base.views import CustomGenericAPIView
 from apps.orders.models import FoodOrder
 from apps.statistics.utils import iterate_months, validate_from_and_date_to_date, round_up_to_nice_number
@@ -50,8 +51,9 @@ class CheckoutListAPIView(AbstractStatisticsAPIView):
                     else 1
                 )
                 data[product.name]["price"] += experience.price
-
-        return Response(data)
+        paginator = CustomPageNumberPagination()
+        paginated_data = paginator.paginate_queryset(data, request)
+        return paginator.get_paginated_response(paginated_data)
 
 
 class CheckInListAPIView(AbstractStatisticsAPIView):
@@ -80,7 +82,9 @@ class CheckInListAPIView(AbstractStatisticsAPIView):
             else:
                 data[warehouse.product.name]["count"] = +warehouse.arrived_count
                 data[warehouse.product.name]["price"] = +warehouse.gross_price
-        return Response(data)
+        paginator = CustomPageNumberPagination()
+        paginated_data = paginator.paginate_queryset(data, request)
+        return paginator.get_paginated_response(paginated_data)
 
 
 class MostUsedProductsListAPIView(AbstractStatisticsAPIView):
@@ -112,7 +116,9 @@ class MostUsedProductsListAPIView(AbstractStatisticsAPIView):
             else:
                 data[product.name]["count"] = +float(used_product.count)
                 data[product.name]["price"] = +float(used_product.price)
-        return Response(data)
+        paginator = CustomPageNumberPagination()
+        paginated_data = paginator.paginate_queryset(data, request)
+        return paginator.paginate_queryset(paginated_data)
 
 
 class CheckInCheckoutDiagramAPIView(CustomGenericAPIView):

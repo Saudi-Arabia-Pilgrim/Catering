@@ -1,6 +1,7 @@
 from django.db.models import Prefetch
 from rest_framework.response import Response
 
+from apps.base.pagination import CustomPageNumberPagination
 from apps.hotels.models import Hotel
 from apps.orders.models import HotelOrder
 from apps.statistics.views.abstract import AbstractStatisticsAPIView
@@ -11,7 +12,7 @@ class HotelStatisticListAPIView(AbstractStatisticsAPIView):
         Prefetch("orders", queryset=HotelOrder.objects.select_related("room"))
     )
 
-    def get(self, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         hotels = self.get_queryset()
 
         data = []
@@ -28,7 +29,9 @@ class HotelStatisticListAPIView(AbstractStatisticsAPIView):
                 data.append(hotel_data)
 
         data.sort(key=lambda hotel_price: hotel_price["price"], reverse=True)
-        return Response(data)
+        paginator = CustomPageNumberPagination()
+        paginated_data = paginator.paginate_queryset(data, request)
+        return paginator.get_paginated_response(paginated_data)
 
 
 class HotelDiagramListAPIView(AbstractStatisticsAPIView):
