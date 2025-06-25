@@ -7,9 +7,9 @@ from apps.foods.models import FoodSection, Food
 from apps.orders.models import HotelOrder
 from apps.menus.models import Menu, Recipe
 from apps.orders.models import FoodOrder
-from apps.statistics.utils import validate_from_and_date_to_date, iterate_months
+from apps.statistics.utils import validate_from_and_date_to_date, iterate_months, round_up_to_nice_number
 from apps.statistics.views.abstract import AbstractStatisticsAPIView
-from apps.warehouses.models import Warehouse, Experience
+from apps.warehouses.models import Warehouse
 
 
 class SectionStatisticListAPIView(AbstractStatisticsAPIView):
@@ -174,4 +174,10 @@ class HotelAndKitchenDiagramAPIView(CustomGenericAPIView):
 
             data.append(diagram)
 
-        return Response(data)
+        max_raw = max(
+            max(d["mehmonxona"], d["ovqat"]) for d in data
+        )
+
+        max_y = round_up_to_nice_number(max_raw)
+
+        return Response({"data": data, "max_y": max_y})
