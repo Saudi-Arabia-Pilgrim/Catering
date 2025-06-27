@@ -64,26 +64,31 @@ class CheckInListAPIView(AbstractStatisticsAPIView):
     def get(self, request, *args, **kwargs):
         warehouses = self.get_queryset()
         data = {}
+
         for warehouse in warehouses:
-            if warehouse.product.name not in data:
-                data = {
-                    warehouse.product.name: {
-                        "measure": warehouse.product.measure_warehouse.abbreviation,
-                        "count": warehouse.arrived_count,
-                        "section": warehouse.product.section.name,
-                        "price": warehouse.gross_price,
-                        "image": (
-                            request.build_absolute_uri(warehouse.product.image.url)
-                            if warehouse.product.image
-                            else None
-                        ),
-                    }
+            name = warehouse.product.name
+            if name not in data:
+                data[name] = {
+                    "measure": warehouse.product.measure_warehouse.abbreviation,
+                    "count": warehouse.arrived_count,
+                    "section": warehouse.product.section.name,
+                    "price": warehouse.gross_price,
+                    "image": (
+                        request.build_absolute_uri(warehouse.product.image.url)
+                        if warehouse.product.image
+                        else None
+                    ),
                 }
             else:
-                data[warehouse.product.name]["count"] = +warehouse.arrived_count
-                data[warehouse.product.name]["price"] = +warehouse.gross_price
+                data[name]["count"] += warehouse.arrived_count
+                data[name]["price"] += warehouse.gross_price
+
+        data_list = [
+            {"name": name, **details} for name, details in data.items()
+        ]
+
         paginator = CustomPageNumberPagination()
-        paginated_data = paginator.paginate_queryset(data, request)
+        paginated_data = paginator.paginate_queryset(data_list, request)
         return paginator.get_paginated_response(paginated_data)
 
 
