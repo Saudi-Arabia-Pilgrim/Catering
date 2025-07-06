@@ -1,6 +1,19 @@
 from .models import Room
 
 
+class RoomService:
+    @staticmethod
+    def delete_unoccupied_rooms(hotel, room_type):
+        rooms = Room.objects.filter(
+            hotel=hotel,
+            room_type=room_type,
+            is_busy=False
+        )
+        count = rooms.count()
+        rooms.delete()
+        return count
+
+
 def update_rooms_price(rooms, validated_data):
     for room in rooms:
         for field in ["net_price", "profit"]:
@@ -43,3 +56,5 @@ def delete_excess_rooms(rooms, new_count, existing_count):
     to_delete = rooms.reverse()[:diff]
     for room in to_delete:
         room.delete()
+
+
