@@ -95,5 +95,7 @@ class RoomDeleteAPIView(CustomGenericAPIView):
 
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
+        if instance.is_busy:
+            return Response({"detail": "This room was busy."})
         instance.delete()
         return Response(status=204)
