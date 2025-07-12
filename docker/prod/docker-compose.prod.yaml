@@ -4,6 +4,7 @@ services:
     build:
         context: ../../
         dockerfile: docker/prod/Dockerfile
+    image: catering-app:latest
     container_name: app
     command:
       sh -c "
@@ -46,6 +47,7 @@ services:
     build:
         context: ../../
         dockerfile: docker/prod/Dockerfile
+    image: catering-worker:latest
     command: celery -A config worker --loglevel=info
     environment:
       - ENV=production
@@ -61,6 +63,7 @@ services:
     build:
         context: ../../
         dockerfile: docker/prod/Dockerfile
+    images: catering-beat:latest
     command: celery -A config beat --loglevel=info
     environment:
       - ENV=production
