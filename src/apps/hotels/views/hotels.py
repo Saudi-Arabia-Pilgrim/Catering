@@ -1,4 +1,6 @@
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 from rest_framework import status
 from rest_framework.response import Response
@@ -28,6 +30,23 @@ class HotelListAPIView(CustomGenericAPIView):
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ["name__icontains"]
 
+    @extend_schema(
+        summary="List of hotels",
+        parameters=[
+            OpenApiParameter(
+                name='search',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Search by hotel name'
+            ),
+            OpenApiParameter(
+                name='page',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description='Page number (for pagination)'
+            ),
+        ]
+    )
     def get(self, *args, **kwargs):
         """
         Handle GET requests to return the list of hotels.
