@@ -43,7 +43,8 @@ class HotelOrder(AbstractBaseModel):
     food_order = models.ManyToManyField(
         "orders.FoodOrder",
         related_name="hotel_orders",
-        blank=True
+        blank=True,
+        null=True
     )
 
     order_status = models.CharField(

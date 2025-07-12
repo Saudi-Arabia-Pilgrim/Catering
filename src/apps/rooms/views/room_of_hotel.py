@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from apps.rooms.models.rooms import Room
 from apps.base.views import CustomGenericAPIView
 from apps.rooms.serializers import RoomUpdateSerializer
+from apps.rooms.services import update_rooms_price, create_additional_rooms, delete_excess_rooms
 from apps.rooms.utils.room_format import get_grouped_room_data
 from apps.rooms.serializers.room import RoomSerializer, RoomCreateSerializer
 
@@ -52,7 +53,7 @@ class RoomUpdateAPIView(CustomGenericAPIView):
     def get(self, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
-        return Response(serializer.data, status=200)
+        return Response(serializer.data)
 
     def patch(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -63,23 +64,23 @@ class RoomUpdateAPIView(CustomGenericAPIView):
         rooms = Room.objects.filter(
             room_type=instance.room_type,
             hotel=instance.hotel
-        ).select_related("room_type", "hotel")
+        ).order_by("created_at")
 
-        for room in rooms:
-            for field in ["net_price", "profit"]:
-                if field in validated_data:
-                    setattr(room, field, validated_data[field])
-            room.apply_save_logic()
+        existing_count = rooms.count()
+        new_count = validated_data.get("count", existing_count)
 
-        Room.objects.bulk_update(
-            rooms,
-            ["net_price", "profit", "gross_price", "available_count", "occupied_count", "is_busy"]
-        )
+        update_rooms_price(rooms, validated_data)
+
+        if new_count > existing_count:
+            create_additional_rooms(instance, validated_data, new_count, existing_count)
+        elif new_count < existing_count:
+            delete_excess_rooms(rooms, new_count, existing_count)
 
         return Response({
-            "detail": f"{rooms.count()} count room, updated",
+            "detail": "Rooms updated successfully",
             "room_type": instance.room_type.name,
-            "hotel": instance.hotel.name
+            "hotel": instance.hotel.name,
+            "new_count": new_count
         }, status=200)
 
 
@@ -94,5 +95,7 @@ class RoomDeleteAPIView(CustomGenericAPIView):
 
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
+        if instance.is_busy:
+            return Response({"detail": "This room was busy."})
         instance.delete()
         return Response(status=204)

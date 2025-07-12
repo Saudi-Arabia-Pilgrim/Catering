@@ -1,7 +1,6 @@
 from django.db.models import Prefetch
 
-from rest_framework.response import Response
-
+from apps.base.pagination import CustomPageNumberPagination
 from apps.base.views import CustomGenericAPIView
 from apps.counter_agents.models import CounterAgent
 from apps.orders.models import FoodOrder
@@ -35,4 +34,7 @@ class CounterAgentListAPIView(CustomGenericAPIView):
                     counter_data["price"] += order.profit
                 data.append(counter_data)
         data.sort(key=lambda x: x["price"], reverse=True)
-        return Response(data)
+        paginator = CustomPageNumberPagination()
+        paginated_data = paginator.paginate_queryset(data, request)
+
+        return paginator.get_paginated_response(paginated_data)
