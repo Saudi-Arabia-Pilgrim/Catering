@@ -11,7 +11,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from apps.users.models import CustomUser
 from apps.expenses.models import MonthlySalary
 from apps.expenses.filters import MonthlySalaryFilter
-from apps.expenses.serializers import MonthlySalarySerializer
+from apps.expenses.serializers import MonthlySalarySerializer, MonthlySalaryCreateSerializer, MonthlySalaryUpdateSerializer
 from apps.base.views import CustomGenericAPIView, CustomListAPIView
 
 
@@ -113,3 +113,28 @@ class MonthlySalaryGenericAPIView(CustomGenericAPIView):
             records.append(record)
         serializer = MonthlySalarySerializer(records, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request, *args, **kwargs):
+        """
+        Add monthly salary for an employee.
+        Only HR, CEO, and ADMIN users can add salaries for employees.
+        """
+        # Check if the user has permission to add salaries
+        if not (request.user.role in [CustomUser.UserRole.HR, CustomUser.UserRole.CEO, CustomUser.UserRole.ADMIN] or request.user.is_superuser):
+            return Response(
+                {"detail": "You do not have permission to add monthly salaries."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = MonthlySalaryCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            try:
+                salary = serializer.save()
+                response_serializer = MonthlySalarySerializer(salary)
+                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                return Response(
+                    {"detail": str(e)},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

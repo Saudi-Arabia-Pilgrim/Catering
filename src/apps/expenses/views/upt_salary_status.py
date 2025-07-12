@@ -5,7 +5,7 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.http import Http404
 
-from apps.expenses.serializers import MonthlySalarySerializer
+from apps.expenses.serializers import MonthlySalaryUpdateSerializer
 from apps.expenses.models import MonthlySalary
 from apps.users.models import CustomUser
 
@@ -17,7 +17,7 @@ class MonthlySalaryUpdateAPIView(CustomUpdateAPIView):
     HR, CEO, and admin users can specify an employee_id query parameter to update salaries for a specific employee.
     """
     permission_classes = [IsAuthenticated]
-    serializer_class = MonthlySalarySerializer
+    serializer_class = MonthlySalaryUpdateSerializer
     queryset = MonthlySalary.objects.all()
     lookup_field = "id"
 
