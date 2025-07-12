@@ -21,6 +21,12 @@ class CounterAgent(AbstractBaseModel):
     # === The status of the counter agent, indicating if they are active. ===
     status = models.BooleanField(default=True)
 
+    def __str__(self):
+        """
+        Returns the string representation of the counter agent, which is the name.
+        """
+        return self.name
+
     class Meta:
         # === The name of the database table. ===
         db_table = "counter_agents"
@@ -28,9 +34,5 @@ class CounterAgent(AbstractBaseModel):
         verbose_name = "Counter agent"
         # === The human-readable plural name of the model. ===
         verbose_name_plural = "Counter agents"
-
-    def __str__(self):
-        """
-        Returns the string representation of the counter agent, which is the name.
-        """
-        return self.name
+        # === Ordering field for sorting a set of queries ===
+        ordering = ["-created_at"]

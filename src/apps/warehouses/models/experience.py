@@ -15,3 +15,5 @@ class Experience(AbstractBaseModel):
         db_table = "experience"
         verbose_name = "Experience"
         verbose_name_plural = "Experiences"
+        # === Ordering field for sorting a set of queries ===
+        ordering = ["-created_at"]

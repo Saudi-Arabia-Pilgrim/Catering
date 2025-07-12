@@ -28,6 +28,8 @@ class FoodSection(AbstractBaseModel):
         db_table = "food_section"
         verbose_name = "Food-Section"
         verbose_name_plural = "Food-Sections"
+        # === Ordering field for sorting a set of queries ===
+        ordering = ["-created_at"]
 
     def __str__(self):
         return self.name
@@ -71,6 +73,8 @@ class Food(AbstractBaseModel):
         verbose_name = "Food"
         # === Human-readable plural name of the model. ===
         verbose_name_plural = "Foods"
+        # === Ordering field for sorting a set of queries ===
+        ordering = ["-created_at"]
 
     def __str__(self):
         """
