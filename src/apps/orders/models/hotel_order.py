@@ -44,7 +44,6 @@ class HotelOrder(AbstractBaseModel):
         "orders.FoodOrder",
         related_name="hotel_orders",
         blank=True,
-        null=True
     )
 
     order_status = models.CharField(
