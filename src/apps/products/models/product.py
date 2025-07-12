@@ -43,6 +43,8 @@ class Product(AbstractBaseModel):
         verbose_name = "Product"
         # === The human-readable plural name of the model. ===
         verbose_name_plural = "Products"
+        # === Ordering field for sorting a set of queries ===
+        ordering = ["-created_at"]
 
     def __str__(self):
         """

@@ -33,6 +33,8 @@ class Warehouse(AbstractBaseModel):
         verbose_name = "Warehouse"
         # === The plural name for the warehouse. ===
         verbose_name_plural = "Warehouses"
+        # === Ordering field for sorting a set of queries ===
+        ordering = ["-created_at"]
 
     def __str__(self):
         """

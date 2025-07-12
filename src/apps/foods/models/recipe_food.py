@@ -33,6 +33,8 @@ class RecipeFood(AbstractBaseModel):
         verbose_name = "Recipe Food"
         # === The human-readable plural name of the model. ===
         verbose_name_plural = "Recipe Foods"
+        # === Ordering field for sorting a set of queries ===
+        ordering = ["-created_at"]
 
     def __str__(self):
         """

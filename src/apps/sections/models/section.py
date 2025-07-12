@@ -26,6 +26,8 @@ class Section(AbstractBaseModel):
         verbose_name = "Section"
         # === The human-readable plural name of the model. ===
         verbose_name_plural = "Sections"
+        # === Ordering field for sorting a set of queries ===
+        ordering = ["-created_at"]
 
     def __str__(self):
         """
