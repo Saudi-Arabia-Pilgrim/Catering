@@ -21,7 +21,7 @@ class Room(AbstractBaseModel):
 
     hotel = models.ForeignKey(
         "hotels.Hotel",
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name="rooms",
         help_text="Reference to the hotel the room belongs to."
     )
