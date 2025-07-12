@@ -18,7 +18,7 @@ class ActiveHotelOrderFoodSerializer(CustomModelSerializer):
     nights = serializers.SerializerMethodField()
     total_guest_cost = serializers.SerializerMethodField()
     total_food_cost = serializers.SerializerMethodField()
-    total_cost = serializers.SerializerMethodField()
+    general_cost = serializers.SerializerMethodField()
 
     class Meta:
         model = HotelOrder
@@ -38,7 +38,7 @@ class ActiveHotelOrderFoodSerializer(CustomModelSerializer):
             "food_order",
             "total_guest_cost",
             "total_food_cost",
-            "total_cost",
+            "general_cost",
             "created_at",
         ]
         read_only_fields = ["created_at", "total_cost"]
@@ -67,7 +67,7 @@ class ActiveHotelOrderFoodSerializer(CustomModelSerializer):
         total = sum([f.total_price for f in obj.food_order.all()])
         return total
 
-    def get_total_cost(self, obj):
+    def get_general_cost(self, obj):
         return self.get_total_guest_cost(obj) + self.get_total_food_cost(obj)
 
 

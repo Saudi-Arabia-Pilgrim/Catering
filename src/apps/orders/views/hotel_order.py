@@ -1,8 +1,11 @@
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 from rest_framework.response import Response
 
 from apps.base.views import CustomGenericAPIView
+from apps.orders.filters import HotelFilterForGuests
 from apps.orders.models import HotelOrder
 from apps.orders.serializers import HotelOrderGuestSerializer
 
@@ -25,13 +28,39 @@ class HotelOrderListAPIView(CustomGenericAPIView):
     Returns:
     - Paginated list of hotel orders with detailed guest and room info.
     """
-    queryset = HotelOrder.objects.all().select_related("hotel", "room",
-                                                       ).prefetch_related("guests", "guests__room", "guests__room__room_type")
+    queryset = HotelOrder.objects.select_related(
+        "hotel", "room", "room__room_type"
+    ).prefetch_related(
+        "guests", "guests__room", "guests__room__room_type",
+        "food_order", "food_order__counter_agent"
+    )
+
     serializer_class = HotelOrderGuestSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = {"created_at": ["range"], "check_in": ["range"], "check_out": ["range"]}
+    filterset_class = HotelFilterForGuests
 
-
+    @extend_schema(
+        summary="List hotel orders with date and hotel filters",
+        parameters=[
+            OpenApiParameter("room_type", OpenApiTypes.INT, OpenApiParameter.QUERY,
+                             description="Filter orders by Room Type"),
+            OpenApiParameter("created_at_after", OpenApiTypes.DATE, OpenApiParameter.QUERY,
+                             description="Start date for created_at"),
+            OpenApiParameter("created_at_before", OpenApiTypes.DATE, OpenApiParameter.QUERY,
+                             description="End date for created_at"),
+            OpenApiParameter("check_in_after", OpenApiTypes.DATE, OpenApiParameter.QUERY,
+                             description="Start date for check-in"),
+            OpenApiParameter("check_in_before", OpenApiTypes.DATE, OpenApiParameter.QUERY,
+                             description="End date for check-in"),
+            OpenApiParameter("check_out_after", OpenApiTypes.DATE, OpenApiParameter.QUERY,
+                             description="Start date for check-out"),
+            OpenApiParameter("check_out_before", OpenApiTypes.DATE, OpenApiParameter.QUERY,
+                             description="End date for check-out"),
+            OpenApiParameter("hotel", OpenApiTypes.INT, OpenApiParameter.QUERY,
+                             description="Hotel ID to filter orders by"),
+            OpenApiParameter("page", OpenApiTypes.INT, OpenApiParameter.QUERY, description="Pagination page number"),
+        ]
+    )
     def get(self, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
@@ -46,7 +75,9 @@ class HotelOrderListAPIView(CustomGenericAPIView):
 
 
 class HotelOrderCreateAPIView(CustomGenericAPIView):
-    queryset = HotelOrder.objects.all().prefetch_related("guests", "guests__room", "guests__room__room_type", "room__room_type")
+    queryset = HotelOrder.objects.select_related("room", "room__room_type").prefetch_related(
+        "guests", "guests__room", "guests__room__room_type", "food_order", "food_order__counter_agent"
+    )
     serializer_class = HotelOrderGuestSerializer
 
     def post(self, request, *args, **kwargs):
