@@ -15,3 +15,5 @@ class ProductsUsed(AbstractBaseModel):
         db_table = "used_products"
         verbose_name = "Used"
         verbose_name_plural = "UsedProducts"
+        # === Ordering field for sorting a set of queries ===
+        ordering = ["-created_at"]

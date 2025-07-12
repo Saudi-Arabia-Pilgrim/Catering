@@ -43,6 +43,8 @@ class Menu(AbstractBaseModel):
         verbose_name = "Menu"
         # === The plural name for the model in the admin interface. ===
         verbose_name_plural = "Menus"
+        # === Ordering field for sorting a set of queries ===
+        ordering = ["-created_at"]
 
     def __str__(self):
         """
