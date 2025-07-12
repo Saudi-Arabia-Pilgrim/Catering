@@ -10,5 +10,8 @@ class RoomType(AbstractBaseModel):
         help_text="Indicates whether the room type is active or not."
     )
 
+    class Meta:
+        ordering = ["-created_at"]
+
     def __str__(self):
         return self.name

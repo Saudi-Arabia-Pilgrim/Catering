@@ -65,6 +65,9 @@ class Room(AbstractBaseModel):
         help_text="Price per night for the room type."
     )
     is_busy = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ["-created_at"]
 
     @property
     def current_occupied_count(self):
