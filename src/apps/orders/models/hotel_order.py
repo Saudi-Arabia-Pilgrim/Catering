@@ -26,12 +26,12 @@ class HotelOrder(AbstractBaseModel):
 
     hotel = models.ForeignKey(
         'hotels.Hotel',
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL, null=True,
         related_name='orders'
     )
     room = models.ForeignKey(
         "rooms.Room",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL, null=True,
         related_name="orders"
     )
     guests = models.ManyToManyField(
