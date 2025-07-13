@@ -90,8 +90,7 @@ class FoodOrder(AbstractBaseModel):
     product_count = models.PositiveSmallIntegerField(default=1)
 
     # === Status of the order item, default Pending ===
-    # status = models.SmallIntegerField(choices=Status.choices, default=Status.PENDING)
-    old_status = models.BooleanField(default=False)
+    status = models.SmallIntegerField(choices=Status.choices, default=Status.PENDING)
 
     class Meta:
         # === The name of the database table. ===
