@@ -1,3 +1,4 @@
+from django.db.models import ProtectedError
 from rest_framework.response import Response
 
 from apps.rooms.models.rooms import Room
@@ -95,7 +96,15 @@ class RoomDeleteAPIView(CustomGenericAPIView):
 
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
+
         if instance.is_busy:
-            return Response({"detail": "This room was busy."})
-        instance.delete()
+            return Response({"detail": "Bu xona hozir band holatda."}, status=400)
+
+        try:
+            instance.delete()
+            print("DELETED")
+        except ProtectedError:
+            return Response({"detail": "Bu xona boshqa ma'lumotlar bilan bog‘langanligi sababli o‘chirib bo‘lmaydi."},
+                            status=400)
+
         return Response(status=204)
