@@ -48,6 +48,9 @@ def get_grouped_room_data(hotel=None):
             "available_count": count - occupied,
             "remaining_capacity": remaining_capacity,
             "gross_price": item["gross_price"],
+            "net_price": representative_room.net_price if representative_room else None,
+            "profit": representative_room.profit if representative_room else None,
+            "capacity": representative_room.capacity if representative_room else None,
         })
 
     return result
