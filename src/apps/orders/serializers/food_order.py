@@ -147,4 +147,7 @@ class FoodOrderRetrieveSerializer(CustomModelSerializer):
             raise CustomExceptionError(detail="Status is already pending. Place select other statuses.", code="400")
         if instance.status != FoodOrder.Status.PENDING:
             raise CustomExceptionError(detail="Status is already updated", code="400")
+        if instance.status == FoodOrder.Status.ACCEPTED:
+            instance.order_ready()
+            return instance
         return super().update(instance, validated_data)
