@@ -13,13 +13,19 @@ from apps.menus.models import Menu
 from apps.products.models import Product
 from apps.warehouses.models import Warehouse, ProductsUsed
 from apps.foods.models import Food
-from apps.warehouses.utils.update_product_dependencies import update_product_dependencies_in_warehouse
+from apps.warehouses.utils.update_product_dependencies import (
+    update_product_dependencies_in_warehouse,
+)
 
 
 class FoodOrder(AbstractBaseModel):
     """
     Model representing a food order.
     """
+    class Status(models.IntegerChoices):
+        CANCELED = -1, "Bekor qilindi"
+        PENDING = 0, "Kutilmoqda"
+        ACCEPTED = 1, "Tugagan"
 
     class OrderType(models.IntegerChoices):
         CONTINUOUS = 0, "Davomiy"
@@ -35,7 +41,7 @@ class FoodOrder(AbstractBaseModel):
     # === Reference to the food item being ordered. ===
     food = models.ForeignKey(
         "foods.Food",
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
         related_name="orders",
         blank=True,
         null=True,
@@ -43,7 +49,7 @@ class FoodOrder(AbstractBaseModel):
     # === Reference to the menu being ordered. ===
     menu = models.ForeignKey(
         "menus.Menu",
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
         related_name="orders",
         blank=True,
         null=True,
@@ -51,7 +57,7 @@ class FoodOrder(AbstractBaseModel):
     # === Reference to the recipe being ordered. ===
     recipe = models.ForeignKey(
         "menus.Recipe",
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
         related_name="orders",
         blank=True,
         null=True,
@@ -59,9 +65,10 @@ class FoodOrder(AbstractBaseModel):
     # === Reference to the counter agent being ordered. ===
     counter_agent = models.ForeignKey(
         "counter_agents.CounterAgent",
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
         related_name="orders",
-        limit_choices_to={"status": True}
+        limit_choices_to={"status": True},
+        null=True,
     )
 
     # === The time when the order was placed. ===
@@ -82,8 +89,8 @@ class FoodOrder(AbstractBaseModel):
     # === The number of products in the order. ===
     product_count = models.PositiveSmallIntegerField(default=1)
 
-    # === Status of the order item, default is False. ===
-    status = models.BooleanField(default=False)
+    # === Status of the order item, default Pending ===
+    status = models.SmallIntegerField(choices=Status.choices, default=Status.PENDING)
 
     class Meta:
         # === The name of the database table. ===
@@ -124,8 +131,8 @@ class FoodOrder(AbstractBaseModel):
     @property
     def total_price(self):
         return Decimal(self.price * self.product_count).quantize(
-                Decimal("0.001"), rounding=ROUND_UP
-            )
+            Decimal("0.001"), rounding=ROUND_UP
+        )
 
     @property
     def experience_date_str(self):
@@ -133,17 +140,19 @@ class FoodOrder(AbstractBaseModel):
             return None
         experience_date = self.order_time + timedelta(days=7)
         return f"{experience_date.day}.{experience_date.month}.{experience_date.year}"
-    
+
     @property
     def experience_date(self):
         if not self.order_time:
             return None
         return self.order_time + timedelta(days=7)
-    
+
     def order_ready(self):
         if self.order_time and self.experience_date > now().date():
-            raise CustomExceptionError(code=400, detail="The order cannot be marked as ready yet.")
-        self.__class__.objects.filter(id=self.id).update(status=True)
+            raise CustomExceptionError(
+                code=400, detail="The order cannot be marked as ready yet."
+            )
+        self.__class__.objects.filter(id=self.id).update(status=self.Status.ACCEPTED)
 
     def save(self, *args, **kwargs):
         self.validate_products()
@@ -153,6 +162,7 @@ class FoodOrder(AbstractBaseModel):
         self.validate_order_time()
         self.set_price()
         self.deduction_of_goods_from_the_warehouse()
+        self.rollback_order()
         super().save(*args, **kwargs)
 
     def selected_product_type(self):
@@ -258,7 +268,14 @@ class FoodOrder(AbstractBaseModel):
                     else 1
                 )
                 net_price = warehouse_item.get_net_price()
-                used_products.append(ProductsUsed(warehouse_id=warehouse_item.id, count=required_quantity, price=net_price * required_quantity))
+                used_products.append(
+                    ProductsUsed(
+                        warehouse_id=warehouse_item.id,
+                        count=required_quantity,
+                        price=net_price * required_quantity,
+                        order_id=self.food_order_id,
+                    )
+                )
                 if available_quantity >= required_quantity:
                     warehouse_item.count -= (
                         required_quantity / product.difference_measures
@@ -279,6 +296,8 @@ class FoodOrder(AbstractBaseModel):
         update_product_dependencies_in_warehouse(product_ids)
 
     def deduction_of_goods_from_the_warehouse(self):
+        if not self._state.adding:
+            return
         with transaction.atomic():
             products_needed = defaultdict(int)
             match self.product_type:
@@ -314,5 +333,32 @@ class FoodOrder(AbstractBaseModel):
                                 products_needed[recipe.product_id] += (
                                     recipe.count * self.product_count
                                 )
-            
+
             self.process_product_deductions(products_needed)
+
+    def rollback_order(self):
+        if self.status != self.Status.CANCELED:
+            return
+        with transaction.atomic():
+            used_products = ProductsUsed.objects.filter(order_id=self.food_order_id).select_related("warehouse", "warehouse__product")
+
+            warehouse_restore_map = defaultdict(lambda: {"count": 0, "product_id": None})
+
+            product_ids = set()
+
+            for used in used_products:
+                warehouse_restore_map[used.warehouse_id]["count"] += float(used.count) / used.warehouse.product.difference_measures
+                warehouse_restore_map[used.warehouse_id]["product_id"] = used.warehouse.product_id
+                product_ids.add(used.warehouse.product_id)
+
+            warehouses = Warehouse.objects.select_for_update().filter(id__in=warehouse_restore_map.keys())
+
+            for warehouse in warehouses:
+                restore_info = warehouse_restore_map[warehouse.id]
+                warehouse.count += restore_info["count"]
+                warehouse.status = True
+            Warehouse.objects.bulk_update(warehouses, ["count", "status"])
+
+            used_products.delete()
+
+            update_product_dependencies_in_warehouse(product_ids)

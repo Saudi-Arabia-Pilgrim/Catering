@@ -4,6 +4,7 @@ from apps.base.models.base import AbstractBaseModel
 
 
 class ProductsUsed(AbstractBaseModel):
+    order_id = models.CharField(max_length=24, db_index=True, default="0")
     warehouse = models.ForeignKey("warehouses.Warehouse", on_delete=models.PROTECT, related_name="used")
     count = models.CharField(max_length=50)
     price = models.FloatField()

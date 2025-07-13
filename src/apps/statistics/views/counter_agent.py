@@ -22,7 +22,7 @@ class CounterAgentListAPIView(CustomGenericAPIView):
 
         for counter_agent in list(counter_agents):
             orders = counter_agent.orders.filter(
-                status=True, created_at__lte=to_date, created_at__gte=from_date
+                status=FoodOrder.Status.ACCEPTED, created_at__lte=to_date, created_at__gte=from_date
             )
             if orders.exists():
                 counter_data = {
