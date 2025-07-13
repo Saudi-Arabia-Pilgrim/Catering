@@ -152,7 +152,7 @@ class FoodOrder(AbstractBaseModel):
             raise CustomExceptionError(
                 code=400, detail="The order cannot be marked as ready yet."
             )
-        self.__class__.objects.filter(id=self.id).update(status=True)
+        self.__class__.objects.filter(id=self.id).update(status=self.Status.ACCEPTED)
 
     def save(self, *args, **kwargs):
         self.validate_products()
