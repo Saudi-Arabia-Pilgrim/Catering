@@ -36,11 +36,6 @@ class Warehouse(AbstractBaseModel):
         # === Ordering field for sorting a set of queries ===
         ordering = ["-created_at"]
 
-    def __str__(self):
-        """
-        Returns the name of the warehouse.
-        """
-        return self.name
 
     def save(self, *args, **kwargs):
         """

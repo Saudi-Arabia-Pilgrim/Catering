@@ -1,15 +1,10 @@
-from django.shortcuts import get_object_or_404
-
-from rest_framework.response import Response
 from rest_framework.filters import SearchFilter
 
 from django_filters.rest_framework import DjangoFilterBackend
 
-from apps.base.views import CustomRetrieveAPIView, CustomListCreateAPIView
-from apps.base.views.generics import CustomGenericAPIView
+from apps.base.views import CustomRetrieveUpdateAPIView, CustomListCreateAPIView
 from apps.orders.models import FoodOrder
 from apps.orders.serializers import OnlyFoodOrderSerializer, FoodOrderRetrieveSerializer
-from apps.warehouses.utils import validate_uuid
 
 
 class FoodOrderListCreateAPIView(CustomListCreateAPIView):
@@ -20,7 +15,7 @@ class FoodOrderListCreateAPIView(CustomListCreateAPIView):
     search_fields = ["food_order_id", "counter_agent__name", "created_at"]
 
 
-class FoodOrderRetrieveAPIView(CustomRetrieveAPIView):
+class FoodOrderRetrieveUpdateAPIView(CustomRetrieveUpdateAPIView):
     queryset = (
         FoodOrder.objects.all()
         .order_by("-created_at")
@@ -36,13 +31,3 @@ class FoodOrderRetrieveAPIView(CustomRetrieveAPIView):
         .prefetch_related("menu__foods")
     )
     serializer_class = FoodOrderRetrieveSerializer
-
-
-class ReadyFodOrderAPIView(CustomGenericAPIView):
-    queryset = FoodOrder.objects.all().order_by("-created_at")
-
-    def get(self, request, pk):
-        validate_uuid(pk)
-        instance = get_object_or_404(FoodOrder, pk=pk)
-        instance.order_ready()
-        return Response("The order is ready", status=200)

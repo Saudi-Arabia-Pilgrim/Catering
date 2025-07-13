@@ -147,7 +147,7 @@ class CheckInCheckoutDiagramAPIView(CustomGenericAPIView):
         )
         orders = list(
             FoodOrder.objects.filter(
-                created_at__lte=to_date, created_at__gte=from_date, status=True
+                created_at__lte=to_date, created_at__gte=from_date, status=FoodOrder.Status.ACCEPTED
             )
         )
 

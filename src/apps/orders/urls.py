@@ -7,15 +7,13 @@ from apps.orders.views import (HotelOrderCreateAPIView,
                                HotelOrderDeleteAPIView)
 from apps.orders.views.active_orders import ActiveHotelOrderListAPIView
 from apps.orders.views.food_order import (FoodOrderListCreateAPIView,
-                                          FoodOrderRetrieveAPIView,
-                                          ReadyFodOrderAPIView)
+                                          FoodOrderRetrieveUpdateAPIView,)
 from apps.orders.views.noactive_orders import NoActiveHotelOrderListAPIView
 
 urlpatterns = [
     # ===================  Food Orders ===================
     path("food_orders/", FoodOrderListCreateAPIView.as_view(), name="food_orders_create_list"),
-    path("food_orders/<str:pk>/", FoodOrderRetrieveAPIView.as_view(), name="food_order_retrieve"),
-    path("food_orders/ready/<str:pk>/", ReadyFodOrderAPIView.as_view(), name="food_order_ready"),
+    path("food_orders/<str:pk>/", FoodOrderRetrieveUpdateAPIView.as_view(), name="food_order_retrieve"),
 
     # ===================  Hotel Orders ===================
     path("hotel_orders/", HotelOrderListAPIView.as_view(), name="hotel_orders"),
