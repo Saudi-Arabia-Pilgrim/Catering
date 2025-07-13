@@ -19,6 +19,10 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = os.getenv('CELERY_BROKER_CONNECTION_
 CELERY_BEAT_SCHEDULE = {
     'update-daily-guest-prices-every-midnight': {
         'task': 'apps.guests.tasks.update_daily_guest_prices',
-        'schedule': crontab(minute=00, hour=00),  # Run every 1 minute
+        'schedule': crontab(minute=00, hour=00),  # Run every 00:00 hour
+    },
+    'update-hotel-order-statuses-every-midnight': {
+        'task': 'apps.orders.tasks.update_order_status.update_order_status_daily',
+        'schedule': crontab(minute=0, hour=0),  # Run every 00:00 hour
     },
 }

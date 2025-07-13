@@ -24,6 +24,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no ubuntu@ec2-54-86-124-254.compute-1.amazonaws.com '
             cd /home/ubuntu/Catering
             git pull origin main
+            docker system prune -f
             docker-compose -f docker/prod/docker-compose.prod.yaml down
             docker-compose -f docker/prod/docker-compose.prod.yaml up -d --build
             exit

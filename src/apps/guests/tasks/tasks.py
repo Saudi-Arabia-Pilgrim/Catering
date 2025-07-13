@@ -1,7 +1,7 @@
 from datetime import timedelta
-
 from django.utils.timezone import now
 from celery import shared_task
+
 from apps.guests.models import Guest
 from apps.orders.models import HotelOrder
 from apps.rooms.models import Room
@@ -11,10 +11,18 @@ from apps.rooms.models import Room
 def update_daily_guest_prices():
     today = now().date()
 
-    print("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO WORKED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    # 1. Bugungi kundan oldin chiqib ketgan mehmonlarni yakunlaymiz
+    HotelOrder.objects.filter(check_out__lt=today).update(
+        order_status=HotelOrder.OrderStatus.COMPLETED
+    )
+    HotelOrder.objects.filter(check_in__lte=today, check_out__gte=today).update(
+        order_status=HotelOrder.OrderStatus.ACTIVE
+    )
+    HotelOrder.objects.filter(check_in__gt=today).update(
+        order_status=HotelOrder.OrderStatus.PLANNED
+    )
+
     finished_guests = Guest.objects.filter(
-        check_out__lte=today + timedelta(days=1),  # check_out <= today (ya'ni chiqib ketgan)
+        check_out__lte=today + timedelta(days=1),
         status=Guest.Status.NEW
     ).prefetch_related('hotel_orders')
 
@@ -26,32 +34,23 @@ def update_daily_guest_prices():
         guest.room = None
         guest.save(update_fields=["status", "room", "room_name"])
 
-        hotel_orders = guest.hotel_orders.all()
-        completed_order_count += hotel_orders.update(order_status=HotelOrder.OrderStatus.COMPLETED)
-        completed_guest_count += 1
-
         orders = guest.hotel_orders.all()
         for order in orders:
             order.order_status = HotelOrder.OrderStatus.COMPLETED
         HotelOrder.objects.bulk_update(orders, ["order_status"])
+        completed_order_count += len(orders)
 
-        room = getattr(guest, "room", None)
-        if room:
-            if room.capacity > room.guests.count():
-                room.is_busy = False
-                room.save()
+        completed_guest_count += 1
 
-    # 2. Hali yashab turgan mehmonlarga narx qo‘shamiz (shu kunda yashayotganlarga)
     guests_today = Guest.objects.filter(
         status=Guest.Status.NEW,
         check_in__lte=today,
-        check_out__gte=today  # >= today, ya'ni bugun ham shu yerda
+        check_out__gte=today
     ).select_related('room')
 
     updated_guest_count = 0
 
     for guest in guests_today:
-
         room = guest.room
 
         if room.capacity == 1:
@@ -71,10 +70,7 @@ def update_daily_guest_prices():
 
         updated_guest_count += 1
 
-    # 3. Har bir xonaning bandligini yangilaymiz
-    rooms = Room.objects.all()
-
-    for room in rooms:
+    for room in Room.objects.all():
         guest_exists = Guest.objects.filter(
             room=room,
             status=Guest.Status.NEW,
@@ -86,4 +82,7 @@ def update_daily_guest_prices():
             room.is_busy = guest_exists
             room.save(update_fields=['is_busy'])
 
-    return f"{updated_guest_count} guests updated with prices, {completed_guest_count} guests and {completed_order_count} hotel orders marked as completed."
+    return (
+        f"{updated_guest_count} guests updated with prices, "
+        f"{completed_guest_count} guests and {completed_order_count} hotel orders marked as completed."
+    )

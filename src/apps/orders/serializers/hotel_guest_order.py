@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 from apps.base.exceptions import CustomExceptionError
 from apps.guests.models import Guest
+from apps.guests.utils.prepare_guests import prepare_bulk_guests
 from apps.orders.models.hotel_order import HotelOrder
 from apps.base.serializers import CustomModelSerializer
 from apps.guests.serializers.order_guests import GuestListSerializer
@@ -13,7 +14,7 @@ from apps.orders.serializers import OnlyFoodOrderSerializer
 class HotelOrderGuestSerializer(CustomModelSerializer):
     guests = GuestListSerializer(many=True, read_only=True)
     guest_details = serializers.ListField(write_only=True, child=serializers.DictField())
-    order_status = serializers.ChoiceField(choices=HotelOrder.OrderStatus.choices, required=False)
+    order_status = serializers.CharField(read_only=True)
     hotel_name = serializers.CharField(source="hotel.name", read_only=True)
     order_food = OnlyFoodOrderSerializer(source="food_order", read_only=True, many=True)
 
@@ -60,38 +61,37 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
         return data
 
     def create(self, validated_data):
-        """HotelOrder yaratish va mehmonlarni qo‘shish"""
         guests_data = validated_data.pop("guest_details")
-        food_orders = validated_data.pop("food_order")
+        # food_orders = validated_data.pop("food_order")
 
         with transaction.atomic():
             hotel_order = HotelOrder.objects.create(**validated_data)
-            hotel_order.food_order.set(food_orders)
-            guests = []
-            for guest_data in guests_data:
-                guest = Guest.objects.create(
-                    hotel=hotel_order.hotel,
-                    room=hotel_order.room,
-                    full_name=guest_data["full_name"],
-                    gender=guest_data["gender"],
-                    check_in=hotel_order.check_in,
-                    check_out=hotel_order.check_out
-                )
-                guests.append(guest)
+            # hotel_order.food_order.set(food_orders)
+
+            guests = prepare_bulk_guests(
+                hotel=hotel_order.hotel,
+                room=hotel_order.room,
+                guests_data=guests_data,
+                check_in=hotel_order.check_in,
+                check_out=hotel_order.check_out
+            )
+
+            Guest.objects.bulk_create(guests)
             hotel_order.guests.set(guests)
+
+            hotel_order.room.refresh_occupancy()
 
         return hotel_order
 
-
 {
-    "hotel": "2372428f-c367-4920-a958-3d8a077dd350",
-    "order_status": "Active",
-    "room": "a53faadc-8fc5-469d-b3a0-cba5d5c67a67",
+    "hotel": "37e482df-9319-435f-afc8-d2f5adb4d19e",
+    "order_status": "Planned",
+    "room": "fcd4bfa7-fbac-47d6-a93f-8fce844f3238",
     "guest_details": [
-    {"full_name": "Gossen", "gender": 1},
-    {"full_name": "Gossen", "gender": 1}
+    {"full_name": "Franko", "gender": 1},
+    {"full_name": "Victus", "gender": 1}
 ],
-    "check_in": "12.07.2025 15:50",
-    "check_out": "15.07.2025 15:50",
+    "check_in": "22.07.2025 15:50",
+    "check_out": "25.07.2025 15:50",
     "count_of_people": 2
 }
