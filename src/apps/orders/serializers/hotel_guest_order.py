@@ -62,11 +62,11 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
 
     def create(self, validated_data):
         guests_data = validated_data.pop("guest_details")
-        # food_orders = validated_data.pop("food_order")
+        food_orders = validated_data.pop("food_order")
 
         with transaction.atomic():
             hotel_order = HotelOrder.objects.create(**validated_data)
-            # hotel_order.food_order.set(food_orders)
+            hotel_order.food_order.set(food_orders)
 
             guests = prepare_bulk_guests(
                 hotel=hotel_order.hotel,
