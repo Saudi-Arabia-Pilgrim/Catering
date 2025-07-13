@@ -111,27 +111,11 @@ class Guest(AbstractBaseModel):
                 occupied_rooms += 1
 
     def save(self, *args, **kwargs):
-        room = getattr(self, "room", None)
-
-        if room:
-            self.room_name = room.room_type.name
-
-        if self.pk:
-            existing = Guest.objects.filter(pk=self.pk).first()
-            if existing and existing.status == Guest.Status.COMPLETED:
-                raise CustomExceptionError(code=400, detail="Tugatildigan mehmonni o‘zgartirib bo‘lmaydi.")
-
         if not self.order_number:
             self.order_number = f"№{random.randint(1000000, 9999999)}"
 
         self.full_clean()
         super().save(*args, **kwargs)
-
-        if room:
-            room.refresh_occupancy()
-
-            if self.status == Guest.Status.COMPLETED:
-                room.refresh_occupancy()
 
     def delete(self, *args, **kwargs):
         room = self.room
