@@ -1,5 +1,6 @@
 from django.urls import path
 
+from apps.orders.serializers.planned_hotel_order import PlannedHotelOrdersAPIView
 from apps.orders.views import (HotelOrderCreateAPIView,
                                HotelOrderListAPIView,
                                HotelOrderRetrieveAPIView,
@@ -26,5 +27,8 @@ urlpatterns = [
     path('hotel_orders/active/', ActiveHotelOrderListAPIView.as_view(), name='active-orders-list'),
 
     # ========================== NO ACTIVE ORDERS ==========================
-    path("hotel_orders/no-active/", NoActiveHotelOrderListAPIView.as_view(), name="no-active-orders-list")
+    path("hotel_orders/no-active/", NoActiveHotelOrderListAPIView.as_view(), name="no-active-orders-list"),
+
+    # ========================== PLANNED ORDERS ==========================
+    path("hotel_orders/planned/", PlannedHotelOrdersAPIView.as_view(), name="planned-orders-list")
 ]

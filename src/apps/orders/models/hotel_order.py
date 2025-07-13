@@ -1,7 +1,7 @@
-import random
 from math import ceil
 
 from django.core.exceptions import ValidationError
+from django.utils.timezone import now
 from django.db import models, transaction
 
 from apps.base.exceptions import CustomExceptionError
@@ -19,6 +19,7 @@ class HotelOrderManager(models.Manager):
 
 class HotelOrder(AbstractBaseModel):
     class OrderStatus(models.TextChoices):
+        PLANNED = "Planned", "Planned"
         ACTIVE = 'Active', 'Active'
         COMPLETED = 'Completed', 'Completed'
 
@@ -81,7 +82,16 @@ class HotelOrder(AbstractBaseModel):
             raise ValidationError(f"Bu xonada faqat {self.room.capacity} kishi yashashi mumkin.")
         self.general_cost = self.room.gross_price * days
 
+    def define_order_status(self):
+        today = now().date()
+        if self.check_in.date() > today:
+            return self.OrderStatus.PLANNED
+        elif self.check_out.date() < today:
+            return self.OrderStatus.COMPLETED
+        return self.OrderStatus.ACTIVE
+
     def save(self, *args, **kwargs):
+        self.order_status = self.define_order_status()
         is_new = self._state.adding
         if is_new:
             room = self.room
@@ -109,6 +119,9 @@ class HotelOrder(AbstractBaseModel):
         needed_rooms = ceil(self.count_of_people / room.capacity)
 
         with transaction.atomic():
+            for guest in self.guests.all():
+                guest.delete()
+
             room.occupied_count = max(room.occupied_count - needed_rooms, 0)
             room.save(update_fields=["occupied_count"])
             super().delete(*args, **kwargs)
