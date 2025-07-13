@@ -4,6 +4,7 @@ services:
     build:
         context: ../../
         dockerfile: docker/prod/Dockerfile
+    image: examify-app:latest
     container_name: app
     command:
       sh -c "
@@ -46,6 +47,7 @@ services:
     build:
         context: ../../
         dockerfile: docker/prod/Dockerfile
+    image: examify-worker:latest
     command: celery -A config worker --loglevel=info
     environment:
       - ENV=production
@@ -61,6 +63,7 @@ services:
     build:
         context: ../../
         dockerfile: docker/prod/Dockerfile
+    image: examify-beat:latest
     command: celery -A config beat --loglevel=info
     environment:
       - ENV=production
@@ -72,7 +75,6 @@ services:
       - app
       - redis_db
       - celery_worker
-
 
 volumes:
   postgres_data:
