@@ -21,7 +21,7 @@ class Room(AbstractBaseModel):
 
     hotel = models.ForeignKey(
         "hotels.Hotel",
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name="rooms",
         help_text="Reference to the hotel the room belongs to."
     )
@@ -65,6 +65,9 @@ class Room(AbstractBaseModel):
         help_text="Price per night for the room type."
     )
     is_busy = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["-created_at"]
 
     @property
     def current_occupied_count(self):

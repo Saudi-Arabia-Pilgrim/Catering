@@ -26,6 +26,8 @@ class Measure(AbstractBaseModel):
         verbose_name = "Measure"
         # === The plural form of the human-readable name of the model. ===
         verbose_name_plural = "Measures"
+        # === Ordering field for sorting a set of queries ===
+        ordering = ["-created_at"]
 
     def __str__(self):
         """

@@ -107,26 +107,35 @@ class RoomCreateSerializer(CustomModelSerializer):
 class RoomUpdateSerializer(serializers.ModelSerializer):
     room_type = serializers.PrimaryKeyRelatedField(queryset=RoomType.objects.all())
     hotel = serializers.PrimaryKeyRelatedField(queryset=Hotel.objects.all())
+
+    net_price = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
+    profit = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
     gross_price = serializers.DecimalField(
         max_digits=10, decimal_places=2, read_only=True
     )
+
+    count = serializers.IntegerField(write_only=True, required=False)
+    count_view = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Room
         fields = [
             "id", "room_type", "hotel",
             "net_price", "profit", "gross_price",
+            "count", "count_view"
         ]
+
+    def get_count_view(self, obj):
+        return Room.objects.filter(room_type=obj.room_type, hotel=obj.hotel).count()
 
     def validate(self, attrs):
         net_price = attrs.get("net_price", getattr(self.instance, "net_price", None))
         profit = attrs.get("profit", getattr(self.instance, "profit", None))
 
         if net_price is not None and profit is not None:
-            attrs["gross_price"] = attrs["net_price"] + attrs["profit"]
+            attrs["gross_price"] = net_price + profit
 
         return attrs
-
 
 {
     "hotel": "5387b602-0025-4cec-9efa-76f6288bfb74",

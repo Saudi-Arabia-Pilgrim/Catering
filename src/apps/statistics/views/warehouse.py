@@ -2,6 +2,7 @@ import calendar
 
 from rest_framework.response import Response
 
+from apps.base.pagination import CustomPageNumberPagination
 from apps.base.views import CustomGenericAPIView
 from apps.orders.models import FoodOrder
 from apps.statistics.utils import iterate_months, validate_from_and_date_to_date, round_up_to_nice_number
@@ -24,34 +25,37 @@ class CheckoutListAPIView(AbstractStatisticsAPIView):
         for experience in experiences:
             product = experience.warehouse.product
             measure_warehouse = product.measure_warehouse
+            name = product.name
 
-            if experience.warehouse.product.name not in data:
-                data = {
-                    product.name: {
-                        "measure": measure_warehouse.abbreviation,
-                        "count": (
-                            int(experience.count) / product.difference_measures
-                            if product.difference_measures > 0
-                            else 1
-                        ),
-                        "section": product.section.name,
-                        "price": experience.price,
-                        "image": (
-                            request.build_absolute_uri(product.image.url)
-                            if product.image
-                            else None
-                        ),
-                    }
+            count_value = (
+                int(experience.count) / product.difference_measures
+                if product.difference_measures > 0
+                else 1
+            )
+
+            if name not in data:
+                data[name] = {
+                    "measure": measure_warehouse.abbreviation,
+                    "count": count_value,
+                    "section": product.section.name,
+                    "price": experience.price,
+                    "image": (
+                        request.build_absolute_uri(product.image.url)
+                        if product.image
+                        else None
+                    ),
                 }
             else:
-                data[product.name]["count"] += (
-                    int(experience.count) / product.difference_measures
-                    if product.difference_measures > 0
-                    else 1
-                )
-                data[product.name]["price"] += experience.price
+                data[name]["count"] += count_value
+                data[name]["price"] += experience.price
 
-        return Response(data)
+        data_list = [
+            {"name": name, **details} for name, details in data.items()
+        ]
+
+        paginator = CustomPageNumberPagination()
+        paginated_data = paginator.paginate_queryset(data_list, request)
+        return paginator.get_paginated_response(paginated_data)
 
 
 class CheckInListAPIView(AbstractStatisticsAPIView):
@@ -62,30 +66,37 @@ class CheckInListAPIView(AbstractStatisticsAPIView):
     def get(self, request, *args, **kwargs):
         warehouses = self.get_queryset()
         data = {}
+
         for warehouse in warehouses:
-            if warehouse.product.name not in data:
-                data = {
-                    warehouse.product.name: {
-                        "measure": warehouse.product.measure_warehouse.abbreviation,
-                        "count": warehouse.arrived_count,
-                        "section": warehouse.product.section.name,
-                        "price": warehouse.gross_price,
-                        "image": (
-                            request.build_absolute_uri(warehouse.product.image.url)
-                            if warehouse.product.image
-                            else None
-                        ),
-                    }
+            name = warehouse.product.name
+            if name not in data:
+                data[name] = {
+                    "measure": warehouse.product.measure_warehouse.abbreviation,
+                    "count": warehouse.arrived_count,
+                    "section": warehouse.product.section.name,
+                    "price": warehouse.gross_price,
+                    "image": (
+                        request.build_absolute_uri(warehouse.product.image.url)
+                        if warehouse.product.image
+                        else None
+                    ),
                 }
             else:
-                data[warehouse.product.name]["count"] = +warehouse.arrived_count
-                data[warehouse.product.name]["price"] = +warehouse.gross_price
-        return Response(data)
+                data[name]["count"] += warehouse.arrived_count
+                data[name]["price"] += warehouse.gross_price
+
+        data_list = [
+            {"name": name, **details} for name, details in data.items()
+        ]
+
+        paginator = CustomPageNumberPagination()
+        paginated_data = paginator.paginate_queryset(data_list, request)
+        return paginator.get_paginated_response(paginated_data)
 
 
 class MostUsedProductsListAPIView(AbstractStatisticsAPIView):
     queryset = ProductsUsed.objects.all().select_related(
-        "warehouse", "warehouse__product", "warehouse__product__measure_warehouse"
+        "warehouse", "warehouse__product", "warehouse__product__measure_warehouse", "warehouse__product__section"
     )
 
     def get(self, request, *args, **kwargs):
@@ -94,25 +105,34 @@ class MostUsedProductsListAPIView(AbstractStatisticsAPIView):
 
         for used_product in used_products:
             product = used_product.warehouse.product
+            name = product.name
 
-            if product.name not in data:
-                data = {
-                    product.name: {
-                        "measure": product.measure_warehouse.abbreviation,
-                        "count": float(used_product.count),
-                        "section": product.section.name,
-                        "price": float(used_product.price),
-                        "image": (
-                            request.build_absolute_uri(product.image.url)
-                            if product.image
-                            else None
-                        ),
-                    }
+            count = float(used_product.count)
+            price = float(used_product.price)
+
+            if name not in data:
+                data[name] = {
+                    "measure": product.measure_warehouse.abbreviation,
+                    "count": count,
+                    "section": product.section.name,
+                    "price": price,
+                    "image": (
+                        request.build_absolute_uri(product.image.url)
+                        if product.image else None
+                    ),
                 }
             else:
-                data[product.name]["count"] = +float(used_product.count)
-                data[product.name]["price"] = +float(used_product.price)
-        return Response(data)
+                data[name]["count"] += count
+                data[name]["price"] += price
+
+        data_list = [
+            {"name": name, **details} for name, details in data.items()
+        ]
+
+        paginator = CustomPageNumberPagination()
+        paginated_data = paginator.paginate_queryset(data_list, request)
+        return paginator.get_paginated_response(paginated_data)
+
 
 
 class CheckInCheckoutDiagramAPIView(CustomGenericAPIView):

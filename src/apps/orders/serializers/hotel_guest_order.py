@@ -84,14 +84,14 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
 
 
 {
-    "hotel": "83f17927-513e-485f-b2b2-5bfd38dd7a7d",
+    "hotel": "2372428f-c367-4920-a958-3d8a077dd350",
     "order_status": "Active",
-    "room": "4a89b391-f23c-4e55-a521-35aadd8c31b4",
+    "room": "a53faadc-8fc5-469d-b3a0-cba5d5c67a67",
     "guest_details": [
-    {"full_name": "Victus", "gender": 1}
+    {"full_name": "Gossen", "gender": 1},
+    {"full_name": "Gossen", "gender": 1}
 ],
-    "food_order": ["4d72f09e-acf8-40ca-b719-e89d3886d1a6"],
-    "check_in": "1.06.2025 14:50",
-    "check_out": "8.06.2025 14:50",
-    "count_of_people": 1
+    "check_in": "12.07.2025 15:50",
+    "check_out": "15.07.2025 15:50",
+    "count_of_people": 2
 }

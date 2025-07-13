@@ -4,6 +4,7 @@ from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
 
 from apps.guests.models import Guest
+from apps.orders.filters import HotelFilterForGuests
 from apps.orders.models import HotelOrder
 from apps.rooms.models import Room, RoomType
 from apps.base.views import CustomListAPIView
@@ -33,7 +34,8 @@ class NoActiveHotelOrderListAPIView(CustomListAPIView):
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ["hotel__name"]
     filterset_fields = {"created_at": ["range"], "check_in": ["gte"], "check_out": ["lte"]}
-    
+    filterset_class = HotelFilterForGuests
+
     def get_queryset(self):
         return HotelOrder.objects.completed_orders().select_related("hotel").prefetch_related("guests",
                                                                                            "guests__room",

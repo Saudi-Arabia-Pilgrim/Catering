@@ -2,6 +2,7 @@ import calendar
 
 from rest_framework.response import Response
 
+from apps.base.pagination import CustomPageNumberPagination
 from apps.base.views import CustomGenericAPIView
 from apps.foods.models import FoodSection, Food
 from apps.orders.models import HotelOrder
@@ -15,7 +16,7 @@ from apps.warehouses.models import Warehouse
 class SectionStatisticListAPIView(AbstractStatisticsAPIView):
     queryset = FoodSection.objects.all().prefetch_related("foods")
 
-    def get(self, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         sections = self.get_queryset()
         data = []
         for section in sections:
@@ -30,7 +31,9 @@ class SectionStatisticListAPIView(AbstractStatisticsAPIView):
         data.sort(
             key=lambda section_statistic: section_statistic["price"], reverse=True
         )
-        return Response(data)
+        paginator = CustomPageNumberPagination()
+        paginated_data = paginator.paginate_queryset(data, request)
+        return paginator.get_paginated_response(paginated_data)
 
 
 class FoodStatisticListAPIView(AbstractStatisticsAPIView):
@@ -54,7 +57,9 @@ class FoodStatisticListAPIView(AbstractStatisticsAPIView):
                     food_data["price"] += order.profit
             data.append(food_data)
         data.sort(key=lambda food_data: food_data["price"], reverse=True)
-        return Response(data)
+        paginator = CustomPageNumberPagination()
+        paginated_data = paginator.paginate_queryset(data, request)
+        return paginator.get_paginated_response(paginated_data)
 
 
 class MenuStatisticListAPIView(AbstractStatisticsAPIView):
@@ -81,7 +86,9 @@ class MenuStatisticListAPIView(AbstractStatisticsAPIView):
                     menu_data["gross_price"] += order.price
             data.append(menu_data)
         data.sort(key=lambda menu_data: menu_data["profit"], reverse=True)
-        return Response(data)
+        paginator = CustomPageNumberPagination()
+        paginated_data = paginator.paginate_queryset(data, request)
+        return paginator.get_paginated_response(paginated_data)
 
 
 class RecipeStatisticListAPIView(AbstractStatisticsAPIView):
@@ -103,7 +110,7 @@ class RecipeStatisticListAPIView(AbstractStatisticsAPIView):
                     total += order.profit
             data.append(recipe_data)
         data.sort(key=lambda recipe_data: recipe_data["price"], reverse=True)
-        return Response({"total": total, "result": data})
+        return Response({"total": total, "result": data[:5]})
 
 
 class StatisticKitchenAPIView(CustomGenericAPIView):

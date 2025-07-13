@@ -11,6 +11,7 @@ from apps.rooms.models import Room
 def update_daily_guest_prices():
     today = now().date()
 
+    print("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO WORKED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     # 1. Bugungi kundan oldin chiqib ketgan mehmonlarni yakunlaymiz
     finished_guests = Guest.objects.filter(
         check_out__lte=today + timedelta(days=1),  # check_out <= today (ya'ni chiqib ketgan)

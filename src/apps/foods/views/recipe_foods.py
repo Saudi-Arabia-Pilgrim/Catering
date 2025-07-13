@@ -37,14 +37,10 @@ class RecipeFoodListCreateAPIView(CustomListCreateAPIView):
         count = serializer.validated_data.get("count")
         product = serializer.validated_data.get("product")
 
-        instance, created = RecipeFood.objects.get_or_create(
-            count=count,
-            product=product,
-            defaults=serializer.validated_data
-        )
+        food_recipe = RecipeFood.objects.create(count=count, product=product)
 
-        output_serializer = self.get_serializer(instance)
-        return Response(output_serializer.data, status=201 if created else 200)
+        output_serializer = self.get_serializer(food_recipe)
+        return Response(output_serializer.data, status=201)
 
 
 class RecipeFoodsOnFood(CustomGenericAPIView):

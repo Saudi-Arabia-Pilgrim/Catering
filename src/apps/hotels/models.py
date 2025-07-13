@@ -56,6 +56,7 @@ class Hotel(AbstractBaseModel):
     )
 
     class Meta:
+        ordering = ["-created_at"]
         constraints = [
             models.UniqueConstraint(fields=['email'], name='unique_hotel_email'),
             models.UniqueConstraint(fields=['slug'], name='unique_hotel_slug')
