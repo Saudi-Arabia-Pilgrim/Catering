@@ -114,6 +114,7 @@ class RoomUpdateSerializer(serializers.ModelSerializer):
         max_digits=10, decimal_places=2, read_only=True
     )
 
+    capacity = serializers.IntegerField(required=False)
     count = serializers.IntegerField(write_only=True, required=False)
     count_view = serializers.SerializerMethodField(read_only=True)
 
@@ -122,6 +123,7 @@ class RoomUpdateSerializer(serializers.ModelSerializer):
         fields = [
             "id", "room_type", "hotel",
             "net_price", "profit", "gross_price",
+            "capacity",
             "count", "count_view"
         ]
 
@@ -136,16 +138,3 @@ class RoomUpdateSerializer(serializers.ModelSerializer):
             attrs["gross_price"] = net_price + profit
 
         return attrs
-
-{
-    "hotel": "5387b602-0025-4cec-9efa-76f6288bfb74",
-    "order_status": "Active",
-    "room": "2f07bae8-2693-4ee5-9237-f5013c65e025",
-    "guest_details": [
-    {"full_name": "Leyla", "gender": 2},
-    {"full_name": "Gossen", "gender": 1},
-],
-    "check_in": "25.05.2025 15:50",
-    "check_out": "29.05.2025 15:50",
-    "count_of_people": 2
-}

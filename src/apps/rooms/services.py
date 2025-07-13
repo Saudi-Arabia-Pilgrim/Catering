@@ -16,14 +16,14 @@ class RoomService:
 
 def update_rooms_price(rooms, validated_data):
     for room in rooms:
-        for field in ["net_price", "profit"]:
+        for field in ["net_price", "profit", "capacity"]:
             if field in validated_data:
                 setattr(room, field, validated_data[field])
         room.apply_save_logic()
 
     Room.objects.bulk_update(
         rooms,
-        ["net_price", "profit", "gross_price", "available_count", "occupied_count", "is_busy"]
+        ["net_price", "profit", "gross_price", "capacity", "available_count", "occupied_count", "is_busy"]
     )
 
 
