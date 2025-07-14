@@ -27,11 +27,7 @@ class CheckoutListAPIView(AbstractStatisticsAPIView):
             measure_warehouse = product.measure_warehouse
             name = product.name
 
-            count_value = (
-                int(experience.count) / product.difference_measures
-                if product.difference_measures > 0
-                else 1
-            )
+            count_value = experience.count
 
             if name not in data:
                 data[name] = {

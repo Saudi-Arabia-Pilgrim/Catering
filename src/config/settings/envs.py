@@ -19,7 +19,8 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(',')
 TIME_ZONE = os.getenv("TIME_ZONE")
 USE_I18N = os.getenv("USE_I18N")
 USE_L10N = os.getenv("USE_L10N")
-USE_TZ = os.getenv("USE_TZ")
+USE_TZ_str = os.getenv("USE_TZ")
+USE_TZ = True if USE_TZ_str.lower in ("true", "yes", "1") else False
 
 
 # ===================== Company Email Message configurations =====================
