@@ -31,9 +31,9 @@ class WarehouseExpensesRetrieveAPIView(CustomGenericAPIView):
         serializer.save()
         validated_data = serializer.validated_data
         data = f"{validated_data["amount"]}{validated_data["measure_abbreviation"]} {validated_data["product_name"]} were successfully removed from the warehouse"
-        net_price = float(warehouse.get_net_price()) * float(validated_data["amount"])
+        price = float(warehouse.get_net_price()) * warehouse.product.difference_measures * float(validated_data["amount"])
         Experience.objects.create(
-            warehouse=warehouse, count=validated_data["amount"], price=net_price
+            warehouse=warehouse, count=validated_data["amount"], price=price
         )
         return Response(data, status=200)
 

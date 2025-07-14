@@ -42,6 +42,7 @@ def validate_from_and_date_to_date(request):
     current_date = date(now().year, now().month, now().day)
     from_date = datetime.combine(current_date - relativedelta(months=11), time.min)
     to_date = datetime.combine(current_date, time.max)
+    print(to_date, now())
 
     if from_date_str and to_date_str:
         from_date = str_to_date(str_date=from_date_str)
