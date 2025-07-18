@@ -3,9 +3,8 @@ from apps.expenses.views import (
     MonthlySalaryListAPIView,
     MonthlySalaryUpdateAPIView,
     MonthlySalaryGenericAPIView,
-    HiringExpenseListAPIView,
-    HiringExpenseCreateAPIView,
-    HiringExpenseRetrieveUpdateDestroyAPIView,
+    EmployeeHiringExpenseListCreateAPIView,
+    EmployeeHiringExpenseRetrieveUpdateDestroyAPIView,
 )
 
 urlpatterns = [
@@ -14,7 +13,8 @@ urlpatterns = [
     path("monthly-salary/<int:id>/", MonthlySalaryGenericAPIView.as_view(), name="monthly_salary_detail"),
     path("monthly-salary/update/<int:id>/", MonthlySalaryUpdateAPIView.as_view(), name="monthly_salary_update"),
   
-    path('hiring-expenses/list/', HiringExpenseListAPIView.as_view(), name='hiring_expenses_list'),
-    path("hiring-expense/", HiringExpenseCreateAPIView.as_view(), name="hiring_expense_create"),
-    path("hiring-expense/<uuid:pk>/", HiringExpenseRetrieveUpdateDestroyAPIView.as_view(), name="hiring_expense_detail"),
+    path('<uuid:employee_id>/expenses/', EmployeeHiringExpenseListCreateAPIView.as_view(),
+         name='employee_hiring_expenses_list_create'),
+    path("<uuid:employee_id>/expenses/<uuid:pk>/", EmployeeHiringExpenseRetrieveUpdateDestroyAPIView.as_view(),
+         name="employee_hiring_expense_detail"),
 ]
