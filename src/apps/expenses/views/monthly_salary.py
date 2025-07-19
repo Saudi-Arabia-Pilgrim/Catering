@@ -59,7 +59,6 @@ class MonthlySalaryGenericAPIView(CustomGenericAPIView):
         """
         # Check if employee_id query parameter is present
         employee_id = request.query_params.get('employee_id')
-
         if employee_id:
             # Check if the user has permission to view other employees' records
             if request.user.role in [CustomUser.UserRole.HR, CustomUser.UserRole.CEO, CustomUser.UserRole.ADMIN] or request.user.is_superuser:
@@ -83,8 +82,9 @@ class MonthlySalaryGenericAPIView(CustomGenericAPIView):
 
         # Use employee.date_come if available, otherwise use the current date
         start_date = employee.date_come or timezone.now().date()
-        start_date = start_date.replace(day=1)  # Set to the first day of the month
-        end_date = timezone.now().date().replace(day=1)
+        start_date = start_date.replace(day=1)
+        today = timezone.now().date()
+        end_date = (today.replace(day=1) + relativedelta(months=1))
 
         # Generate all month start dates between start_date and end_date
         months = []
@@ -111,7 +111,7 @@ class MonthlySalaryGenericAPIView(CustomGenericAPIView):
                     status=False
                 )
             records.append(record)
-        serializer = MonthlySalarySerializer(records, many=True)
+        serializer = MonthlySalarySerializer(records, many=True, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
@@ -126,7 +126,7 @@ class MonthlySalaryGenericAPIView(CustomGenericAPIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        serializer = MonthlySalaryCreateSerializer(data=request.data)
+        serializer = MonthlySalaryCreateSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
             try:
                 salary = serializer.save()

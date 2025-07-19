@@ -67,14 +67,14 @@ class EmployeeHiringExpenseRetrieveUpdateDestroyAPIView(CustomRetrieveUpdateDest
     def get_object(self):
         employee_id = self.kwargs.get('employee_id')
         expense_id = self.kwargs.get('pk')
-        
-        employee = get_object_or_404(CustomUser, id=employee_id)
-        
         # Check permissions
         allowed_roles = [CustomUser.UserRole.HR, CustomUser.UserRole.CEO, CustomUser.UserRole.ADMIN]
-        if (self.request.user.id != employee.id and 
+        if (self.request.user.id != employee_id and
             self.request.user.role not in allowed_roles and 
             not self.request.user.is_superuser):
             raise PermissionDenied("You do not have permission to access this employee's expenses.")
-        
-        return get_object_or_404(HiringExpense, id=expense_id, user=employee)
+
+        print(HiringExpense.objects.filter(id=employee_id))
+        print(HiringExpense.objects.filter(user_id=expense_id))
+
+        return get_object_or_404(HiringExpense, id=expense_id, user_id=employee_id)
