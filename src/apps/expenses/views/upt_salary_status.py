@@ -1,4 +1,4 @@
-from apps.base.views import CustomUpdateAPIView
+from apps.base.views import CustomRetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
@@ -7,10 +7,11 @@ from django.http import Http404
 
 from apps.expenses.serializers import MonthlySalaryUpdateSerializer
 from apps.expenses.models import MonthlySalary
+from apps.expenses.serializers.monthly_salary import MonthlySalarySerializer
 from apps.users.models import CustomUser
 
 
-class MonthlySalaryUpdateAPIView(CustomUpdateAPIView):
+class MonthlySalaryRetrieveUpdateAPIView(CustomRetrieveUpdateAPIView):
     """
     Endpoint to update the paid status of a monthly salary record.
     Expect a PATCH with a payload like {"status": true} to mark the salary as paid.
@@ -22,6 +23,11 @@ class MonthlySalaryUpdateAPIView(CustomUpdateAPIView):
     lookup_field = "id"
 
     def get_object(self):
+        if self.request.method in ['PATCH', 'PUT']:
+            return self.get_object_by_update()
+        return self.get_object_by_id()
+
+    def get_object_by_update(self):
         """
         Override get_object to support employee_id query parameter.
         HR, CEO, and admin users can specify an employee_id query parameter to update salaries for a specific employee.
@@ -62,3 +68,16 @@ class MonthlySalaryUpdateAPIView(CustomUpdateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+    def get_serializer(self, *args, **kwargs):
+        if self.request.method in ['PATCH', 'PUT']:
+            return super().get_serializer(*args, **kwargs)
+        return MonthlySalarySerializer(*args, **kwargs)
+
+    def get_object_by_id(self):
+        """
+        Retrieve the MonthlySalary object by its ID.
+        """
+        id = self.kwargs.get('id')
+        return get_object_or_404(MonthlySalary, id=id)

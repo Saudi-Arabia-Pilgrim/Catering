@@ -8,6 +8,7 @@ from dateutil.relativedelta import relativedelta
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 
+from apps.base.views.generics import CustomRetrieveAPIView
 from apps.users.models import CustomUser
 from apps.expenses.models import MonthlySalary
 from apps.expenses.filters import MonthlySalaryFilter
@@ -138,3 +139,11 @@ class MonthlySalaryGenericAPIView(CustomGenericAPIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get_serializer(self, *args, **kwargs):
+        """
+        Returns the appropriate serializer based on the request method.
+        """
+        if self.request.method == 'POST':
+            return MonthlySalaryCreateSerializer(*args, **kwargs)
+        return MonthlySalarySerializer(*args, **kwargs)
