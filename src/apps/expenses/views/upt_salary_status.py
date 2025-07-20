@@ -35,24 +35,19 @@ class MonthlySalaryRetrieveUpdateAPIView(CustomRetrieveUpdateAPIView):
         # Get the object ID from the URL
         obj_id = self.kwargs.get(self.lookup_field)
 
-        # Check if employee_id query parameter is present
-        employee_id = self.request.query_params.get('employee_id')
 
-        if employee_id:
-            # Check if the user has permission to update other employees' records
-            if self.request.user.role in [CustomUser.UserRole.HR, CustomUser.UserRole.CEO, CustomUser.UserRole.ADMIN] or self.request.user.is_superuser:
-                try:
-                    # Get the employee with the specified ID
-                    employee = get_object_or_404(CustomUser, id=employee_id)
-                    # Get the monthly salary record for the specified employee
-                    obj = get_object_or_404(MonthlySalary, id=obj_id, user=employee)
-                    return obj
-                except Http404:
-                    raise Http404(f"Monthly salary record with ID {obj_id} not found for employee with ID {employee_id}.")
-            else:
-                # If the user doesn't have permission, return a 403 Forbidden response
-                from rest_framework.exceptions import PermissionDenied
-                raise PermissionDenied("You do not have permission to update records for other employees.")
+        # Check if the user has permission to update other employees' records
+        if self.request.user.role in [CustomUser.UserRole.HR, CustomUser.UserRole.CEO, CustomUser.UserRole.ADMIN] or self.request.user.is_superuser:
+            try:
+                # Get the monthly salary record for the specified employee
+                obj = get_object_or_404(MonthlySalary, id=obj_id)
+                return obj
+            except Http404:
+                raise Http404(f"Monthly salary record with ID {obj_id} not found")
+        else:
+            # If the user doesn't have permission, return a 403 Forbidden response
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("You do not have permission to update records for other employees.")
 
         # If no employee_id is specified or the user doesn't have permission, use the default behavior
         # Get the monthly salary record for the authenticated user
