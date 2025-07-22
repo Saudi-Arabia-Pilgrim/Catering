@@ -27,7 +27,6 @@ class Menu(AbstractBaseModel):
     menu_type = models.CharField(
         max_length=20,
         choices=MenuType.choices,
-        default=MenuType.BREAKFAST,
     )
     # === The name of the menu. ===
     name = models.CharField(max_length=255)
