@@ -29,7 +29,7 @@ class MenuListCreateAPIView(CustomListCreateAPIView):
     queryset = Menu.objects.all().prefetch_related("foods")
     serializer_class = MenuSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    filterset_fields = ["status"]
+    filterset_fields = ["status", "menu_type"]
     search_fields = ["name", "gross_price", "profit"]
 
     def get_serializer(self, *args, **kwargs):

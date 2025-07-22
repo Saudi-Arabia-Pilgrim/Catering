@@ -16,6 +16,19 @@ class Menu(AbstractBaseModel):
 
     # translation_fields = ["name"]
 
+    class MenuType(models.TextChoices):
+        """
+        Enum for menu types.
+        """
+        BREAKFAST = "breakfast", "Breakfast"
+        LUNCH = "lunch", "Lunch"
+        DINNER = "dinner", "Dinner"
+
+    menu_type = models.CharField(
+        max_length=20,
+        choices=MenuType.choices,
+        default=MenuType.BREAKFAST,
+    )
     # === The name of the menu. ===
     name = models.CharField(max_length=255)
     # === A unique slug for the menu. ===
