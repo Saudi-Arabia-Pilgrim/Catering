@@ -30,6 +30,7 @@ class MenuCreateUpdateSerializer(CustomSerializer):
     foods_id = serializers.ListField(write_only=True)
     profit = serializers.DecimalField(max_digits=10, decimal_places=2)
     image = serializers.ImageField(required=False, allow_null=True)
+    menu_type = serializers.ChoiceField(choices=Menu.MenuType.choices)
 
     def validate(self, attrs):
         foods = attrs.get("foods_id", [])
