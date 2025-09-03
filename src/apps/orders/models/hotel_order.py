@@ -1,4 +1,6 @@
 from math import ceil
+from decimal import Decimal, ROUND_HALF_UP
+from datetime import timedelta
 
 from django.core.exceptions import ValidationError
 from django.utils.timezone import now
@@ -8,6 +10,7 @@ from apps.base.exceptions import CustomExceptionError
 from apps.base.models import AbstractBaseModel
 from apps.guests.utils.calculate_price import calculate_guest_price
 from apps.orders.utils import new_id
+from apps.guests.models import Guest
 
 
 class HotelOrderManager(models.Manager):
@@ -106,13 +109,51 @@ class HotelOrder(AbstractBaseModel):
                 self.full_clean()
                 super().save(*args, **kwargs)
 
-                for guest in self.guests.all():
-                    calculate_guest_price(guest)
-                    guest.save(update_fields=["price"])
+                # for guest in self.guests.all():
+                #     calculate_guest_price(guest)
+                #     guest.save(update_fields=["price"])
 
         else:
             self.full_clean()
             super().save(*args, **kwargs)
+
+    def calculate_prices(self):
+        if not self.room:
+            return
+
+        daily_price = self.room.gross_price
+        total_cost = Decimal("0.00")
+        two_places = Decimal("0.01")
+
+        for guest in self.guests.all():
+            guest_cost = Decimal("0.00")
+            current_day = guest.check_in
+
+            while current_day < guest.check_out:
+                # ищем всех гостей в этой комнате на этот день
+                overlapping_guests = Guest.objects.filter(
+                    room=self.room,
+                    check_in__lte=current_day,
+                    check_out__gt=current_day,
+                    status=Guest.Status.NEW
+                )
+
+                guests_count = sum([g.count for g in overlapping_guests]) or 1
+
+                # доля цены за день
+                guest_cost += (daily_price / guests_count) * guest.count
+
+                current_day += timedelta(days=1)
+
+            # округляем и обновляем цену гостя
+            guest_cost = Decimal(guest_cost).quantize(two_places, rounding=ROUND_HALF_UP)
+            guest.price = guest_cost
+            guest.save(update_fields=["price"])
+
+            total_cost += guest_cost
+
+        # общая цена ордера (округление до 2х знаков)
+        self.general_cost = Decimal(total_cost).quantize(two_places, rounding=ROUND_HALF_UP)
 
     def delete(self, *args, **kwargs):
         room = self.room
