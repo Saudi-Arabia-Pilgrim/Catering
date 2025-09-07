@@ -6,7 +6,7 @@ SPECTACULAR_SETTINGS = {
     'VERSION': 'v1',
     'SERVE_INCLUDE_SCHEMA': False,
     'SERVERS': [
-        {"url": "https://catering.mukhsin.space"} if settings.NGROK or settings.ENV == "production"
+        {"url": "https://api.maqom360.com"} if settings.NGROK or settings.ENV == "production"
         else {"url": "http://localhost:8000"}
     ],
     'COMPONENT_SPLIT_REQUEST': True,
