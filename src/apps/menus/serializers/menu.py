@@ -17,9 +17,21 @@ class MenuSerializer(CustomModelSerializer):
         data = super().to_representation(instance)
         data["food_count"] = instance.foods.count()
         data["foods"] = []
+        request = self.context.get("request", None)
+        if not request:
+            raise CustomExceptionError(code=400, detail="No request found")
         for food in instance.foods.all():
             data["foods"].append(
-                {"id": food.id, "name": food.name, "price": food.gross_price}
+                {
+                    "id": food.id,
+                    "name": food.name,
+                    "price": food.gross_price,
+                    "image": (
+                        request.build_absolute_uri(food.image.url)
+                        if food.image
+                        else None
+                    ),
+                }
             )
         return data
 
