@@ -46,7 +46,6 @@ class Room(AbstractBaseModel):
 
     room_number = models.CharField(
         max_length=10,
-        unique=True,
         blank=True,
         help_text="Xona raqami, masalan 101, 205",
     )
