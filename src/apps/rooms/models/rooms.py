@@ -38,6 +38,16 @@ class Room(AbstractBaseModel):
         help_text="The maximum number of guests that can stay in a room of this type."
     )
 
+    floor = models.PositiveSmallIntegerField(
+        help_text="Etaj (qavat) raqami",
+    )
+
+    room_number = models.CharField(
+        max_length=10,
+        unique=True,
+        help_text="Xona raqami, masalan 101, 205",
+    )
+
     remaining_capacity = models.PositiveSmallIntegerField(default=0)
 
     # =============   end room_type   =================

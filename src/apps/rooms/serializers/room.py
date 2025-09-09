@@ -27,6 +27,7 @@ class RoomSerializer(serializers.ModelSerializer):
     hotel = serializers.UUIDField()
     gross_price = serializers.DecimalField(max_digits=15, decimal_places=2)
     count = serializers.IntegerField()
+    floor = serializers.SerializerMethodField()
     occupied_count = serializers.IntegerField()
     available_count = serializers.IntegerField()
     remaining_capacity = serializers.IntegerField()
@@ -40,6 +41,7 @@ class RoomSerializer(serializers.ModelSerializer):
             "room_name",
             "hotel",
             "hotel_name",
+            "floor",
             "count",
             "occupied_count",
             "available_count",
@@ -58,10 +60,14 @@ class RoomSerializer(serializers.ModelSerializer):
             return obj.get("hotel_name")
         return obj.hotel.name
 
+    def get_floor(self, obj):
+        return obj.get("floor") if isinstance(obj, dict) else obj.floor
+
 
 class RoomCreateSerializer(CustomModelSerializer):
     count = serializers.IntegerField(min_value=1, write_only=True)
     room_name = serializers.CharField(source="room_type.name", read_only=True)
+    floor = serializers.IntegerField(min_value=1)
 
     class Meta:
         model = Room
@@ -70,6 +76,7 @@ class RoomCreateSerializer(CustomModelSerializer):
             "hotel",
             "room_type",
             "room_name",
+            "floor",
             "count",
             "capacity",
             "net_price",
@@ -86,14 +93,18 @@ class RoomCreateSerializer(CustomModelSerializer):
 
     def create(self, validated_data):
         counts = validated_data.pop("count")
+        floor = validated_data.pop("floor")
         room_list = []
 
         for count in range(counts):
+            room_number = str(floor * 100 + count)
             room_list.append(Room(
                 hotel=validated_data["hotel"],
                 room_type=validated_data["room_type"],
                 capacity=validated_data["capacity"],
                 count=1,
+                floor=floor,
+                room_number=room_number,
                 available_count=1,
                 occupied_count=0,
                 net_price=validated_data["net_price"],
@@ -123,6 +134,7 @@ class RoomUpdateSerializer(serializers.ModelSerializer):
         fields = [
             "id", "room_type", "hotel",
             "net_price", "profit", "gross_price",
+            "floor",
             "capacity",
             "count", "count_view"
         ]

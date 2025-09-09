@@ -17,6 +17,8 @@ class RoomsOfHotelListSerializer(CustomModelSerializer):
             "hotel_name",
             "room_type",
             "room_name",
+            "floor",
+            "room_number",
             "is_busy",
             "available_count",
             "occupied_count",
