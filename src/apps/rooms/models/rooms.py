@@ -39,12 +39,15 @@ class Room(AbstractBaseModel):
     )
 
     floor = models.PositiveSmallIntegerField(
+        blank=True,
+        null=True,
         help_text="Etaj (qavat) raqami",
     )
 
     room_number = models.CharField(
         max_length=10,
         unique=True,
+        blank=True,
         help_text="Xona raqami, masalan 101, 205",
     )
 
