@@ -5,6 +5,7 @@ from apps.rooms.models.rooms import Room
 from apps.base.views import CustomGenericAPIView
 from apps.rooms.serializers import RoomUpdateSerializer
 from apps.rooms.services import update_rooms_price, create_additional_rooms, delete_excess_rooms
+from apps.rooms.utils.renumber import renumber_rooms
 from apps.rooms.utils.room_format import get_grouped_room_data
 from apps.rooms.serializers.room import RoomSerializer, RoomCreateSerializer
 
@@ -70,12 +71,27 @@ class RoomUpdateAPIView(CustomGenericAPIView):
         existing_count = rooms.count()
         new_count = validated_data.get("count", existing_count)
 
-        update_rooms_price(rooms, validated_data)
+        # Agar foydalanuvchi etajni yangilasa — faqat 4 bo‘lishi kerak (emas 400)
+        new_floor = None
+        if "floor" in request.data:
+            new_floor = int(request.data["floor"])
+            renumber_rooms(rooms, new_floor=new_floor)
 
-        if new_count > existing_count:
-            create_additional_rooms(instance, validated_data, new_count, existing_count)
-        elif new_count < existing_count:
+        if new_count < existing_count:
             delete_excess_rooms(rooms, new_count, existing_count)
+            rooms = rooms[:new_count]
+            # count kamayganda ham floor bir xillikda bo‘lishi kerak
+            renumber_rooms(rooms, new_floor=new_floor or rooms[0].floor)
+
+        elif new_count > existing_count:
+            create_additional_rooms(instance, validated_data, new_count, existing_count)
+            rooms = Room.objects.filter(
+                room_type=instance.room_type,
+                hotel=instance.hotel
+            ).order_by("created_at")
+            renumber_rooms(rooms, new_floor=new_floor or rooms[0].floor)
+
+        update_rooms_price(rooms, validated_data)
 
         return Response({
             "detail": "Rooms updated successfully",

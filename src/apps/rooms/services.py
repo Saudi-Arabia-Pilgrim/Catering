@@ -31,7 +31,15 @@ def create_additional_rooms(instance, validated_data, new_count, existing_count)
     diff = new_count - existing_count
     to_create = []
 
-    for _ in range(diff):
+    current_rooms = Room.objects.filter(
+        hotel=instance.hotel,
+        room_type=instance.room_type
+    ).order_by("created_at")
+
+    floor = current_rooms.first().floor if current_rooms.exists() else validated_data.get("floor", 1)
+
+    for idx in range(existing_count, new_count):
+        room_number = str(floor * 100 + idx)
         new_room = Room(
             hotel=instance.hotel,
             room_type=instance.room_type,
@@ -44,6 +52,8 @@ def create_additional_rooms(instance, validated_data, new_count, existing_count)
             occupied_count=0,
             is_busy=False,
             count=1,
+            floor=floor,
+            room_number=room_number,
         )
         new_room.apply_save_logic()
         to_create.append(new_room)
