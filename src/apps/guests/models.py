@@ -1,5 +1,6 @@
 import random
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Sum
 from django.utils.timezone import now
@@ -127,3 +128,15 @@ class Guest(AbstractBaseModel):
         Return a string representation of the guest, which is the full name.
         """
         return self.full_name
+
+
+class GuestGroup(AbstractBaseModel):
+    name = models.CharField(max_length=255)
+    count = models.PositiveSmallIntegerField()
+
+    def clean(self):
+        if self.count < 1:
+            raise ValidationError("Guruhdagi odamlar soni 1 dan kam bo`lishi mumkin emas.")
+
+    def __str__(self):
+        return self.name
