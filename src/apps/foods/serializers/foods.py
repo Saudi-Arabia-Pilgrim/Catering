@@ -3,6 +3,7 @@ from rest_framework import serializers
 from apps.base.exceptions import CustomExceptionError
 from apps.base.serializers import CustomModelSerializer, CustomSerializer
 from apps.foods.models import Food, RecipeFood, FoodSection
+from apps.foods.serializers.recipe_foods import RecipeFoodSerializer
 
 
 class FoodSectionSerializer(CustomModelSerializer):
@@ -33,7 +34,7 @@ class FoodSerializer(CustomModelSerializer):
 
     def get_recipe_foods(self, obj):
         recipes = obj.recipes.all()
-        return [f"{recipe.product.name}-{recipe.count}" for recipe in recipes]
+        return RecipeFoodSerializer(recipes, many=True).data
 
     def get_section_name(self, obj):
         return obj.section.name
