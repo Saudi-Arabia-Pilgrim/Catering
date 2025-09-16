@@ -14,7 +14,8 @@ from apps.warehouses.utils import validate_uuid
 
 
 class HotelListSerializer(CustomModelSerializer):
-    rooms = serializers.SerializerMethodField(help_text="List of rooms associated with the hotel.", read_only=True)
+    rooms = serializers.SerializerMethodField()
+    _cached_room_data = None  # class-level cache
 
     class Meta:
         model = Hotel
@@ -29,7 +30,12 @@ class HotelListSerializer(CustomModelSerializer):
         ]
 
     def get_rooms(self, obj):
-        return get_grouped_room_data(hotel=obj)
+        if HotelListSerializer._cached_room_data is None:
+            from apps.rooms.utils.room_format import get_grouped_room_data
+            HotelListSerializer._cached_room_data = get_grouped_room_data()
+
+        hotel_id = obj.id
+        return [r for r in HotelListSerializer._cached_room_data if r["hotel"] == hotel_id]
 
     def get_total_guests_price(self, obj):
         return obj.guests.aggregate(total=models.Sum("price"))["total"] or 0
