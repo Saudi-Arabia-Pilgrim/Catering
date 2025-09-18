@@ -2,8 +2,9 @@ from django.db import transaction
 
 from rest_framework import serializers
 
+from apps.orders.utils.calculate_price import calculate_prices_for_order
 from apps.rooms.models import Room
-from apps.guests.models import Guest
+from apps.guests.models import Guest, GuestGroup
 from apps.base.exceptions import CustomExceptionError
 from apps.orders.models.hotel_order import HotelOrder
 from apps.base.serializers import CustomModelSerializer
@@ -17,6 +18,8 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
     guests = GuestListSerializer(many=True, read_only=True)
     guest_details = serializers.ListField(write_only=True, child=serializers.DictField(), required=False)
     guest_group = serializers.UUIDField(write_only=True, required=False)
+    guest_group_id = serializers.UUIDField(source="guest_group.id", read_only=True)
+    guest_group_name = serializers.CharField(source="guest_group.name", read_only=True, default=None)
     order_status = serializers.CharField(read_only=True)
     hotel_name = serializers.CharField(source="hotel.name", read_only=True)
     guest_type = serializers.CharField(read_only=True)
@@ -34,6 +37,8 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
             "guests",
             "guest_details",
             "guest_group",
+            "guest_group_id",
+            "guest_group_name",
             "order_food",
             "food_order",
             "rooms",
@@ -56,83 +61,85 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
             data["total_food_price"] += order["total_price"]
             data["general_cost"] += order["total_price"]
         data["general_cost"] += data["hotel_total_price"]
+
+        # 🔥 guest_group ma’lumotlarini qo‘shish
+        if instance.guest_group:
+            data["guest_group"] = {
+                "id": str(instance.guest_group.id),
+                "name": instance.guest_group.name
+            }
+        else:
+            data["guest_group"] = None
+
         return data
 
     def validate(self, data):
-        count_of_people = data.get("count_of_people", 0)
-        guests_data = data.get("guest_details", [])
-        guest_group = data.get("guest_group", None)
+        guests_data = data.get("guest_details")
+        guest_group = data.get("guest_group")
+        rooms = data.get("rooms")
+        room = data.get("room")
 
         if guest_group and guests_data:
-            raise CustomExceptionError(
-                code=400,
-                detail="Iltimos, yoki `guest_group`, yoki `guest_details` dan birini kiriting — ikkalasi birga bo‘lmaydi.")
+            raise CustomExceptionError(code=400, detail="Faqat bittasi: guest_group yoki guest_details")
 
         if not guest_group and not guests_data:
-            raise CustomExceptionError(
-                code=400,
-                detail="Iltimos, `guest_group` yoki `guest_details` dan birini kiriting.")
+            raise CustomExceptionError(code=400, detail="guest_group yoki guest_details kerak")
 
-        if guests_data and count_of_people != len(guests_data):
-            raise CustomExceptionError(code=400, detail="Mehmonlar soni kiritilgan odamlar soniga teng bo‘lishi kerak.")
+        if guests_data and not room:
+            raise CustomExceptionError(code=400, detail="Individual order uchun room shart")
+
+        if guest_group and not rooms:
+            raise CustomExceptionError(code=400, detail="Group order uchun rooms kerak")
+
+        if guests_data and data.get("count_of_people") != len(guests_data):
+            raise CustomExceptionError(code=400, detail="guest_details bilan count_of_people mos emas")
 
         return data
 
     def create(self, validated_data):
         guests_data = validated_data.pop("guest_details", [])
         guest_group_id = validated_data.pop("guest_group", None)
-        rooms = validated_data.pop("rooms", [])  # M2M bo‘lsa, kerak bo‘ladi
+        rooms = validated_data.pop("rooms", [])
         food_orders = validated_data.pop("food_order", [])
 
+        validated_data["guest_type"] = (
+            HotelOrder.GuestType.GROUP if guest_group_id else HotelOrder.GuestType.INDIVIDUAL
+        )
+
         with transaction.atomic():
-            # Guest turi aniqlanadi
-            if guest_group_id:
-                validated_data["guest_type"] = HotelOrder.GuestType.GROUP
-            elif guests_data:
-                validated_data["guest_type"] = HotelOrder.GuestType.INDIVIDUAL
-            else:
-                raise CustomExceptionError(code=400, detail="Mehmonlar haqida ma'lumot yo‘q.")
+            order = HotelOrder.objects.create(**validated_data)
+            order.food_order.set(food_orders)
 
-            # Order yaratiladi (rooms, guests holda)
-            hotel_order = HotelOrder.objects.create(**validated_data)
-
-            # Food orders (M2M)
-            hotel_order.food_order.set(food_orders)
-
-            # === INDIVIDUAL ORDER ===
             if guests_data:
                 guests = prepare_bulk_guests(
-                    hotel=hotel_order.hotel,
-                    room=hotel_order.room,
+                    hotel=order.hotel,
+                    room=order.room,
                     guests_data=guests_data,
-                    check_in=hotel_order.check_in,
-                    check_out=hotel_order.check_out
+                    check_in=order.check_in,
+                    check_out=order.check_out
                 )
                 Guest.objects.bulk_create(guests)
-                hotel_order.guests.set(guests)
+                order.guests.set(guests)
 
-            # === GROUP ORDER ===
-            elif guest_group_id:
-                hotel_order.guest_group_id = guest_group_id
-                hotel_order.save(update_fields=["guest_group"])
+            if guest_group_id:
+                order.guest_group_id = guest_group_id
+                order.save(update_fields=["guest_group"])
+                order.rooms.set(rooms)
 
-                # Rooms ni bog‘lash (ManyToMany)
-                hotel_order.rooms.set(rooms)
+                guest_group = GuestGroup.objects.get(id=guest_group_id)
+                guest_group.guest_group_status = GuestGroup.GuestGroupStatus.ACCEPTED
+                guest_group.save(update_fields=["guest_group_status"])
 
-            # Narxlar hisoblanadi
-            hotel_order.calculate_prices()
-            hotel_order.save(update_fields=["general_cost"])
+            calculate_prices_for_order(order)
+            order.save(update_fields=["general_cost"])
 
-            # Occupancy yangilanadi
-            if hotel_order.guest_type == HotelOrder.GuestType.INDIVIDUAL:
-                hotel_order.room.refresh_occupancy()
-            elif hotel_order.guest_type == HotelOrder.GuestType.GROUP:
-                hotel_order.rooms.prefetch_related(None)  # remove prefetch if exists
-                for room in hotel_order.rooms.all():  # Bu yerda bir martalik query ketadi
+            if order.guest_type == HotelOrder.GuestType.INDIVIDUAL:
+                order.room.refresh_occupancy()
+            else:
+                for room in order.rooms.all():
                     room.refresh_occupancy()
 
-        return hotel_order
-
+        return order
 
 {
     "hotel": "5956b868-ff3c-4ab8-871f-6e74bebb44f4",

@@ -75,7 +75,7 @@ class HotelOrderListAPIView(CustomGenericAPIView):
 
 
 class HotelOrderCreateAPIView(CustomGenericAPIView):
-    queryset = HotelOrder.objects.select_related("room", "room__room_type").prefetch_related(
+    queryset = HotelOrder.objects.select_related("room", "room__room_type", "guest_group").prefetch_related(
         "guests", "guests__room", "guests__room__room_type", "food_order", "food_order__counter_agent"
     )
     serializer_class = HotelOrderGuestSerializer
