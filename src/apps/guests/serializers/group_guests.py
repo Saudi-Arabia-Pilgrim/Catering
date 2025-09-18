@@ -9,8 +9,9 @@ class GuestGroupListSerializer(CustomModelSerializer):
             "id",
             "name",
             "count",
+            'guest_group_status'
         ]
-        read_only_fields = ["created_at", "updated_at"]
+        read_only_fields = ["created_at", "updated_at", "guest_group_status"]
 
 
 class GuestGroupCreateSerializer(CustomModelSerializer):
@@ -31,8 +32,9 @@ class GuestGroupRetrieveUpdateSerializer(CustomModelSerializer):
             "id",
             "name",
             "count",
+            "guest_group_status"
         ]
-        read_only_fields = ["created_at", "updated_at"]
+        read_only_fields = ["created_at", "updated_at", "guest_group_status"]
 
 
 class GuestGroupDeleteSerializer(CustomModelSerializer):

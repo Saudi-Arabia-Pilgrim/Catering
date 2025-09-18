@@ -19,6 +19,7 @@ class Guest(AbstractBaseModel):
         full_name (CharField): The full name of the guest.
         price (DecimalField): The price associated with the guest's stay.
     """
+
     class Status(models.TextChoices):
         NEW = "New"
         COMPLETED = "Completed"
@@ -90,7 +91,8 @@ class Guest(AbstractBaseModel):
                 raise CustomExceptionError(code=400, detail="Check-out check-in dan keyin bo‘lishi kerak.")
 
             if self.count > room.capacity:
-                raise CustomExceptionError(code=400, detail=f"Bu xonaga {room.capacity} tadan ko‘p odam joylasholmaydi.")
+                raise CustomExceptionError(code=400,
+                                           detail=f"Bu xonaga {room.capacity} tadan ko‘p odam joylasholmaydi.")
 
             needed_rooms = self.count // room.capacity
             if self.count % room.capacity:
@@ -131,7 +133,17 @@ class Guest(AbstractBaseModel):
 
 
 class GuestGroup(AbstractBaseModel):
+    class GuestGroupStatus(models.TextChoices):
+        PENDING = "Pending", "Pending"
+        ACCEPTED = "Accepted", "Accepted"
+        FINISHED = "Finished", "Finished"
+
     name = models.CharField(max_length=255)
+    guest_group_status = models.CharField(
+        choices=GuestGroupStatus.choices,
+        max_length=20,
+        default=GuestGroupStatus.PENDING
+    )
     count = models.PositiveSmallIntegerField()
 
     def clean(self):
