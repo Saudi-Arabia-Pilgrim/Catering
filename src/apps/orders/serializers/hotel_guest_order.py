@@ -2,18 +2,20 @@ from django.db import transaction
 
 from rest_framework import serializers
 
-from apps.base.exceptions import CustomExceptionError
+from apps.rooms.models import Room
 from apps.guests.models import Guest
-from apps.guests.utils.prepare_guests import prepare_bulk_guests
+from apps.base.exceptions import CustomExceptionError
 from apps.orders.models.hotel_order import HotelOrder
 from apps.base.serializers import CustomModelSerializer
-from apps.guests.serializers.order_guests import GuestListSerializer
 from apps.orders.serializers import OnlyFoodOrderSerializer
+from apps.guests.utils.prepare_guests import prepare_bulk_guests
+from apps.guests.serializers.order_guests import GuestListSerializer
 
 
 class HotelOrderGuestSerializer(CustomModelSerializer):
+    room = serializers.PrimaryKeyRelatedField(queryset=Room.objects.all(), required=False)
     guests = GuestListSerializer(many=True, read_only=True)
-    guest_details = serializers.ListField(write_only=True, child=serializers.DictField())
+    guest_details = serializers.ListField(write_only=True, child=serializers.DictField(), required=False)
     guest_group = serializers.UUIDField(write_only=True, required=False)
     order_status = serializers.CharField(read_only=True)
     hotel_name = serializers.CharField(source="hotel.name", read_only=True)
@@ -34,6 +36,7 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
             "guest_group",
             "order_food",
             "food_order",
+            "rooms",
             "check_in",
             "check_out",
             "count_of_people",
@@ -77,13 +80,26 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
 
     def create(self, validated_data):
         guests_data = validated_data.pop("guest_details", [])
-        guest_group = validated_data.pop("guest_group", None)
+        guest_group_id = validated_data.pop("guest_group", None)
+        rooms = validated_data.pop("rooms", [])  # M2M bo‘lsa, kerak bo‘ladi
         food_orders = validated_data.pop("food_order", [])
 
         with transaction.atomic():
+            # Guest turi aniqlanadi
+            if guest_group_id:
+                validated_data["guest_type"] = HotelOrder.GuestType.GROUP
+            elif guests_data:
+                validated_data["guest_type"] = HotelOrder.GuestType.INDIVIDUAL
+            else:
+                raise CustomExceptionError(code=400, detail="Mehmonlar haqida ma'lumot yo‘q.")
+
+            # Order yaratiladi (rooms, guests holda)
             hotel_order = HotelOrder.objects.create(**validated_data)
+
+            # Food orders (M2M)
             hotel_order.food_order.set(food_orders)
 
+            # === INDIVIDUAL ORDER ===
             if guests_data:
                 guests = prepare_bulk_guests(
                     hotel=hotel_order.hotel,
@@ -95,41 +111,53 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
                 Guest.objects.bulk_create(guests)
                 hotel_order.guests.set(guests)
 
-            elif guest_group:
-                hotel_order.guest_group_id = guest_group
+            # === GROUP ORDER ===
+            elif guest_group_id:
+                hotel_order.guest_group_id = guest_group_id
                 hotel_order.save(update_fields=["guest_group"])
 
+                # Rooms ni bog‘lash (ManyToMany)
+                hotel_order.rooms.set(rooms)
+
+            # Narxlar hisoblanadi
             hotel_order.calculate_prices()
             hotel_order.save(update_fields=["general_cost"])
 
-            if hotel_order.guest_type == HotelOrder.GuestType.INDIVIDUAL and hotel_order.room:
+            # Occupancy yangilanadi
+            if hotel_order.guest_type == HotelOrder.GuestType.INDIVIDUAL:
                 hotel_order.room.refresh_occupancy()
             elif hotel_order.guest_type == HotelOrder.GuestType.GROUP:
-                for room in hotel_order.rooms.all():
+                hotel_order.rooms.prefetch_related(None)  # remove prefetch if exists
+                for room in hotel_order.rooms.all():  # Bu yerda bir martalik query ketadi
                     room.refresh_occupancy()
 
         return hotel_order
 
 
 {
-    "hotel": "ee3c774a-705e-4689-add4-2424d58a40cf",
+    "hotel": "5956b868-ff3c-4ab8-871f-6e74bebb44f4",
     "order_status": "Planned",
-    "room": "7894f1bd-27ef-4421-91eb-e5ee2d134b3e",
+    "room": "56ee7e7d-a7ea-4c39-8c6a-89f12f69e194",
     "guest_details": [
-        {"full_name": "Franko", "gender": 1},
-        {"full_name": "Victus", "gender": 1}
+        {"full_name": "Franko", "gender": 1}
     ],
-    "check_in": "22.09.2025 15:50",
+    "check_in": "18.09.2025 15:50",
     "check_out": "25.09.2025 15:50",
-    "count_of_people": 2
+    "count_of_people": 1
 }
 
 {
-    "hotel": "37e482df-9319-435f-afc8-d2f5adb4d19e",
-    "order_status": "Planned",
-    "room": "fcd4bfa7-fbac-47d6-a93f-8fce844f3238",
-    "guest_group": "97893ec0-3345-4130-a801-e3d05735feba",
-    "check_in": "22.07.2025 15:50",
+    "hotel": "7aa1b483-04a2-4d4d-b57f-ff7bfc0f4340",
+    "order_status": "Active",
+    "rooms": [
+     "ecccc7e4-225b-4531-a40d-64f74d2db2ec",
+     "43c8e031-1c7a-4b1c-a44c-b6acd367dd05",
+     "5cc6210a-de71-4219-826e-53c796f044a9",
+     "f069547b-52de-4c22-adb1-aab44ff43228",
+     "2dfa94a0-1a32-4289-9b67-84297410aaa0"
+],
+    "guest_group": "07d73f63-11dd-4531-baba-2136cd061605",
+    "check_in": "18.07.2025 15:50",
     "check_out": "25.07.2025 15:50",
-    "count_of_people": 2
+    "count_of_people": 10
 }

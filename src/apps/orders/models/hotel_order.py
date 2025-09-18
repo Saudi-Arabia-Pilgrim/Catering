@@ -1,21 +1,21 @@
 from math import ceil
-from decimal import Decimal, ROUND_HALF_UP
 from datetime import timedelta
+from decimal import Decimal, ROUND_HALF_UP
 
-from django.core.exceptions import ValidationError
 from django.utils.timezone import now
 from django.db import models, transaction
+from django.core.exceptions import ValidationError
 
-from apps.base.exceptions import CustomExceptionError
-from apps.base.models import AbstractBaseModel
-from apps.guests.utils.calculate_price import calculate_guest_price
 from apps.orders.utils import new_id
 from apps.guests.models import Guest
+from apps.base.models import AbstractBaseModel
+from apps.base.exceptions import CustomExceptionError
 
 
 class HotelOrderManager(models.Manager):
     def active_orders(self):
         return self.filter(order_status=HotelOrder.OrderStatus.ACTIVE)
+
     def completed_orders(self):
         return self.filter(order_status=HotelOrder.OrderStatus.COMPLETED)
 
@@ -40,12 +40,15 @@ class HotelOrder(AbstractBaseModel):
 
     hotel = models.ForeignKey(
         'hotels.Hotel',
-        on_delete=models.SET_NULL, null=True,
+        on_delete=models.SET_NULL,
+        null=True,
         related_name='orders'
     )
     room = models.ForeignKey(
         "rooms.Room",
-        on_delete=models.SET_NULL, null=True,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
         related_name="orders"
     )
     rooms = models.ManyToManyField(
@@ -88,7 +91,7 @@ class HotelOrder(AbstractBaseModel):
     check_in = models.DateTimeField()
     check_out = models.DateTimeField()
     count_of_people = models.PositiveSmallIntegerField()  # Bu xona sig‘imidan oshmasligi lozim.
-    general_cost = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
+    general_cost = models.DecimalField(max_digits=10, decimal_places=2, editable=False, default=0)
 
     class Meta:
         ordering = ['-created_at']
@@ -100,34 +103,26 @@ class HotelOrder(AbstractBaseModel):
     def clean(self):
         if self.check_in >= self.check_out:
             raise ValidationError("Check-out sanasi check-in sanasidan keyin bo‘lishi kerak.")
-
         days = (self.check_out - self.check_in).days
         if days < 1:
             raise ValidationError("Mehmon kamida 1 kun qolishi kerak.")
 
-        # === Individual mehmonlar uchun (guests + room)
-        if self.room and self.guests.exists():
-            if self.count_of_people > self.room.capacity:
-                raise ValidationError(f"Bu xonada faqat {self.room.capacity} kishi yashashi mumkin.")
-            self.general_cost = self.room.gross_price * days
+        errors = {}
 
-        # === Guruhli mehmonlar uchun (guest_group + rooms)
-        if self.guest_group and self.rooms.exists():
-            group_count = self.guest_group.count
-            total_capacity = sum(room.capacity for room in self.rooms.all())
+        if self.guest_type == self.GuestType.INDIVIDUAL:
+            if not self.room:
+                errors["room"] = "Individual order uchun xona (room) ko‘rsatilishi shart."
+            elif self.count_of_people > self.room.capacity:
+                errors["room"] = f"Bu xonada faqat {self.room.capacity} kishi yashashi mumkin."
 
-            if group_count > total_capacity:
-                raise ValidationError(f"Guruh sig‘imi {total_capacity} kishidan oshmasligi kerak.")
+        elif self.guest_type == self.GuestType.GROUP:
+            if not self.guest_group:
+                errors["__all__"] = "Group order uchun 'guest_group' kiritilishi shart."
+            if not self.rooms.exists():
+                errors["__all__"] = "Group order uchun hech bo‘lmaganda bitta xona kerak."
 
-            total_cost = Decimal("0.00")
-            current_day = self.check_in
-            while current_day < self.check_out:
-                for room in self.rooms.all():
-                    per_guest_price = room.gross_price / room.capacity
-                    total_cost += per_guest_price * min(room.capacity, group_count)
-                current_day += timedelta(days=1)
-
-            self.general_cost = total_cost.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        if errors:
+            raise ValidationError(errors)
 
     def define_guest_type(self):
         if self.guest_group_id:
@@ -147,23 +142,19 @@ class HotelOrder(AbstractBaseModel):
 
     def save(self, *args, **kwargs):
         self.order_status = self.define_order_status()
-        self.guest_type = self.define_guest_type()
-
         is_new = self._state.adding
 
         if is_new:
-            room = self.room
-
-            if self.guest_type == self.GuestType.INDIVIDUAL:
+            if self.guest_type == self.GuestType.INDIVIDUAL and self.room:
                 needed_rooms = ceil(self.count_of_people / self.room.capacity)
-                if room.available_count < needed_rooms:
-                    raise CustomExceptionError(code=400, detail="Here not enough empty rooms for this order.")
+                if self.room.available_count < needed_rooms:
+                    raise CustomExceptionError(code=400, detail="Yetarli bo‘sh xona yo‘q.")
 
                 with transaction.atomic():
-                    room.occupied_count += needed_rooms
-                    room.save(update_fields=["occupied_count"])
                     self.full_clean()
                     super().save(*args, **kwargs)
+                    self.room.occupied_count += needed_rooms
+                    self.room.save(update_fields=["occupied_count"])
 
             elif self.guest_type == self.GuestType.GROUP:
                 self.full_clean()
@@ -178,40 +169,45 @@ class HotelOrder(AbstractBaseModel):
         two_places = Decimal("0.01")
 
         if self.guest_type == self.GuestType.INDIVIDUAL and self.room and self.guests.exists():
+            all_guests = list(self.guests.filter(status=Guest.Status.NEW))  # Prefilter
             daily_price = self.room.gross_price
-            for guest in self.guests.all():
+            guest_updates = []
+
+            for guest in all_guests:
                 guest_cost = Decimal("0.00")
                 current_day = guest.check_in
 
                 while current_day < guest.check_out:
-                    overlapping_guests = self.guests.filter(
-                        check_in__lte=current_day,
-                        check_out__gt=current_day,
-                        status=guest.Status.NEW
-                    )
-                    guests_count = sum([g.count for g in overlapping_guests]) or 1
+                    overlapping_guests = [
+                        g for g in all_guests if g.check_in <= current_day < g.check_out
+                    ]
+                    guests_count = sum(g.count for g in overlapping_guests) or 1
                     guest_cost += (daily_price / guests_count) * guest.count
                     current_day += timedelta(days=1)
 
-                guest_cost = guest_cost.quantize(two_places, rounding=ROUND_HALF_UP)
-                guest.price = guest_cost
-                guest.save(update_fields=["price"])
-                total_cost += guest_cost
+                guest.price = guest_cost.quantize(two_places, rounding=ROUND_HALF_UP)
+                guest_updates.append(guest)
+                total_cost += guest.price
+
+            # ✅ bulk update
+            Guest.objects.bulk_update(guest_updates, ["price"])
 
             self.general_cost = total_cost.quantize(two_places, rounding=ROUND_HALF_UP)
 
         elif self.guest_type == self.GuestType.GROUP and self.rooms.exists() and self.guest_group_id:
+            all_rooms = list(self.rooms.all())  # BIR MARTA QUERY
             group_count = self.guest_group.count
             current_day = self.check_in
 
             while current_day < self.check_out:
-                for room in self.rooms.all():
+                for room in all_rooms:
                     room_price = room.gross_price
                     per_guest_price = room_price / room.capacity
                     total_cost += per_guest_price * room.capacity
                 current_day += timedelta(days=1)
 
             self.general_cost = total_cost.quantize(two_places, rounding=ROUND_HALF_UP)
+
         else:
             raise CustomExceptionError(code=400, detail="Guest type aniqlanmagan yoki noto‘g‘ri holat.")
 
@@ -229,3 +225,4 @@ class HotelOrder(AbstractBaseModel):
 
     def __str__(self):
         return f"{self.order_id}"
+
