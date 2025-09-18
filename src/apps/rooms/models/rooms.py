@@ -114,15 +114,21 @@ class Room(AbstractBaseModel):
             check_out__gte=today
         ).aggregate(total=Sum("count"))["total"] or 0
 
-        group_orders = HotelOrder.objects.filter(
-            rooms=self,
-            check_in__lte=today,
-            check_out__gte=today,
-            order_status=HotelOrder.OrderStatus.ACTIVE,
-            guest_type=HotelOrder.GuestType.GROUP
+        group_orders = (
+            HotelOrder.objects
+            .filter(
+                rooms=self,
+                check_in__lte=today,
+                check_out__gte=today,
+                order_status=HotelOrder.OrderStatus.ACTIVE,
+                guest_type=HotelOrder.GuestType.GROUP
+            )
+            .select_related("guest_group")
         )
 
-        group_guests_total = sum(order.guest_group.count for order in group_orders if order.guest_group)
+        group_guests_total = sum(
+            order.guest_group.count for order in group_orders if order.guest_group
+        )
 
         total_people = individual_guests_count + group_guests_total
 
@@ -130,7 +136,6 @@ class Room(AbstractBaseModel):
             raise CustomExceptionError(code=400, detail="Room capacity cannot be null or zero.")
 
         occupied_rooms = ceil(total_people / self.capacity)
-
         self.occupied_count = occupied_rooms
         self.available_count = max(self.count - occupied_rooms, 0)
         self.is_busy = self.available_count == 0
