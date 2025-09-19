@@ -1,3 +1,5 @@
+from math import ceil
+
 from django.db import models
 from django.db.models import Sum
 from django.utils import timezone
@@ -102,31 +104,44 @@ class Room(AbstractBaseModel):
         return remaining_capacity
 
     def refresh_occupancy(self, save=True):
-        pass
+        from apps.orders.models import HotelOrder
         today = timezone.now().date()
 
-        active_guests = Guest.objects.filter(
+        individual_guests_count = Guest.objects.filter(
             room=self,
             status=Guest.Status.NEW,
             check_in__lte=today,
             check_out__gte=today
-        ).aggregate(total=Sum("count"))
+        ).aggregate(total=Sum("count"))["total"] or 0
 
-        total_people = active_guests["total"] or 0
+        group_orders = (
+            HotelOrder.objects
+            .filter(
+                rooms=self,
+                check_in__lte=today,
+                check_out__gte=today,
+                order_status=HotelOrder.OrderStatus.ACTIVE,
+                guest_type=HotelOrder.GuestType.GROUP
+            )
+            .select_related("guest_group")
+        )
 
-        if self.capacity is None or self.capacity == 0:
-            raise CustomExceptionError(code=400, detail="Capacity cannot be None or zero.")
+        group_guests_total = sum(
+            order.guest_group.count for order in group_orders if order.guest_group
+        )
 
-        occupied_rooms = total_people // self.capacity
-        if total_people % self.capacity:
-            occupied_rooms += 1
+        total_people = individual_guests_count + group_guests_total
+
+        if not self.capacity:
+            raise CustomExceptionError(code=400, detail="Room capacity cannot be null or zero.")
+
+        occupied_rooms = ceil(total_people / self.capacity)
+        self.occupied_count = occupied_rooms
+        self.available_count = max(self.count - occupied_rooms, 0)
+        self.is_busy = self.available_count == 0
 
         if save:
-            self.save(update_fields=[
-                "occupied_count",
-                "available_count",
-                "is_busy"
-            ])
+            self.save(update_fields=["occupied_count", "available_count", "is_busy"])
 
     def apply_save_logic(self):
         self.refresh_occupancy(save=False)
@@ -146,6 +161,7 @@ class Room(AbstractBaseModel):
 
     def save(self, *args, **kwargs):
         self.apply_save_logic()
+        self.refresh_occupancy(save=False)
         super().save(*args, **kwargs)
 
     def __str__(self):

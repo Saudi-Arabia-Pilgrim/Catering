@@ -1,109 +1,114 @@
-# class HotelListAPIView(CustomGenericAPIView):
-#     """
-#     API view to retrieve a list of hotels.
+# from django import apps
+# from django.db.models import Count, Sum, Max
 #
-#     This view fetches all hotels from the database and returns their serialized data.
-#     """
-#     queryset = Hotel.objects.prefetch_related(
-#         Prefetch(
-#             "rooms",
-#             queryset=Room.objects.select_related("room_type")
-#             .only(
-#                 'id', 'room_type__name', 'gross_price', 'occupied_count',
-#                 'count', 'hotel_id', 'room_type_id', 'capacity', 'net_price'
-#             )
-#         ),
-#         Prefetch(
-#             "guests",
-#             queryset=Guest.objects.select_related('room', 'room__room_type')
-#             .only(
-#                 'id', 'full_name', 'order_number', 'room_id',
-#                 'gender', 'check_in', 'check_out', 'hotel_id'
-#             )
-#         )HotelListAPIView
-#     ).all()
-#     serializer_class = HotelSerializer
-#     filter_backends = [DjangoFilterBackend, SearchFilter]
-#     filterset_class = RoomWithGuestFilter
-#     search_fields = ["name__icontains"]
+# Room = apps.apps.get_model("rooms.Room")
 #
-#     def get(self, *args, **kwargs):
-#         """
-#         Handle GET requests to return the list of hotels.
 #
-#         Returns:
-#             Response: A response containing the serialized list of hotels.
-#         """
-#         queryset = self.filter_queryset(self.get_queryset())
+# def get_grouped_room_data(hotel=None):
+#     queryset = Room.objects.select_related("hotel", "room_type")
 #
-#         page = self.paginate_queryset(queryset)
-#         if page is not None:
-#             serializer = self.get_serializer(page, many=True)
-#             return self.get_paginated_response(serializer.data)
+#     if hotel:
+#         queryset = queryset.filter(hotel=hotel)
 #
-#         serializer = self.get_serializer(queryset, many=True)
-#         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-
-
-
-
-
-
-
-
-# ========================================
-
-# class HotelListAPIView(CustomGenericAPIView):
-#     """
-#     API view to retrieve a list of hotels filtered by room type name.
-#     """
-#
-#     serializer_class = HotelSerializer
-#     filter_backends = [DjangoFilterBackend, SearchFilter]
-#     filterset_class = RoomWithGuestFilter
-#     search_fields = ["name__icontains"]
-#
-#     def get_queryset(self):
-#         room_type_name = self.request.query_params.get("room_type_name")
-#
-#         # Filter Guests
-#         guest_qs = Guest.objects.select_related('room', 'room__room_type').only(
-#             'id', 'full_name', 'order_number', 'room_id',
-#             'gender', 'check_in', 'check_out', 'hotel_id'
+#     queryset = (
+#         queryset
+#         .values(
+#             "id",
+#             "room_type", "room_type__name",
+#             "hotel", "hotel__name",
+#             "floor", "net_price", "profit", "capacity"
 #         )
-#         if room_type_name:
-#             guest_qs = guest_qs.filter(room__room_type__name__icontains=room_type_name)
-#
-#         # Filter Rooms
-#         room_qs = Room.objects.select_related("room_type").only(
-#             'id', 'room_type__name', 'gross_price', 'occupied_count',
-#             'count', 'hotel_id', 'room_type_id', 'capacity', 'net_price'
+#         .annotate(
+#             gross_price=Max("gross_price"),
+#             count=Count("id"),
+#             occupied_count=Sum("occupied_count"),
 #         )
-#         if room_type_name:
-#             room_qs = room_qs.filter(room_type__name__icontains=room_type_name)
+#     )
 #
-#         # Filter Hotels with only matching rooms
-#         hotels_qs = Hotel.objects.prefetch_related(
-#             Prefetch("rooms", queryset=room_qs),
-#             Prefetch("guests", queryset=guest_qs)
+#     result = []
+#     for item in queryset:
+#         count = item["count"] or 0
+#         occupied = item["occupied_count"] or 0
+#         available = count - occupied
+#
+#         remaining_capacity = max(0, (item["capacity"] or 0) * available)
+#
+#         result.append({
+#             "id": item["id"],
+#             "hotel": item["hotel"],
+#             "hotel_name": item["hotel__name"],
+#             "room_type": item["room_type"],
+#             "room_name": item["room_type__name"],
+#             "count": count,
+#             "occupied_count": occupied,
+#             "available_count": available,
+#             "remaining_capacity": remaining_capacity,
+#             "capacity": item["capacity"],
+#             "floor": item["floor"],
+#             "net_price": item["net_price"],
+#             "profit": item["profit"],
+#             "gross_price": item["gross_price"],
+#         })
+#
+#     return result
+
+
+# ================================== OLD CODE ====================================
+
+# from django import apps
+# from django.db.models import Count, Sum, Max
+#
+# Room = apps.apps.get_model("rooms.Room")
+#
+#
+# def get_grouped_room_data(hotel=None):
+#
+#     queryset = Room.objects.select_related("hotel", "room_type")
+#
+#     if hotel:
+#         queryset = queryset.filter(hotel=hotel)
+#
+#     queryset = (
+#         queryset
+#         .values(
+#             "room_type", "room_type__name",
+#             "hotel", "hotel__name"
 #         )
-#         if room_type_name:
-#             hotels_qs = hotels_qs.filter(rooms__room_type__name__icontains=room_type_name).distinct()
+#         .annotate(
+#             gross_price=Max("gross_price"),
+#             count=Count("id"),
+#             occupied_count=Sum("occupied_count"),
+#         )
+#     )
 #
-#         return hotels_qs
+#     result = []
+#     for item in queryset:
+#         count = item["count"] or 0
+#         occupied = item["occupied_count"] or 0
 #
-#     def get(self, *args, **kwargs):
-#         """
-#         Handle GET requests to return the list of hotels.
-#         """
-#         queryset = self.filter_queryset(self.get_queryset())
+#         rooms = Room.objects.filter(
+#             hotel_id=item["hotel"],
+#             room_type_id=item["room_type"]
+#         )
 #
-#         page = self.paginate_queryset(queryset)
-#         if page is not None:
-#             serializer = self.get_serializer(page, many=True)
-#             return self.get_paginated_response(serializer.data)
+#         representative_room = rooms.first()
+#         remaining_capacity = Room.remaining_capacity_calculated(rooms)
 #
-#         serializer = self.get_serializer(queryset, many=True)
-#         return Response(serializer.data, status=status.HTTP_200_OK)
+#         result.append({
+#             "id": representative_room.id if representative_room else None,
+#             "hotel": item["hotel"],
+#             "hotel_name": item["hotel__name"],
+#             "room_type": item["room_type"],
+#             "room_name": item["room_type__name"],
+#             "count": count,
+#             "occupied_count": occupied,
+#             "available_count": count - occupied,
+#             "remaining_capacity": remaining_capacity,
+#             "gross_price": item["gross_price"],
+#             "floor": representative_room.floor if representative_room else None,
+#             "net_price": representative_room.net_price if representative_room else None,
+#             "profit": representative_room.profit if representative_room else None,
+#             "capacity": representative_room.capacity if representative_room else None,
+#         })
+#
+#     return result

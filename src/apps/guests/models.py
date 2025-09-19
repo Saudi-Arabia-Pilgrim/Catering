@@ -1,5 +1,6 @@
 import random
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Sum
 from django.utils.timezone import now
@@ -18,6 +19,7 @@ class Guest(AbstractBaseModel):
         full_name (CharField): The full name of the guest.
         price (DecimalField): The price associated with the guest's stay.
     """
+
     class Status(models.TextChoices):
         NEW = "New"
         COMPLETED = "Completed"
@@ -89,7 +91,8 @@ class Guest(AbstractBaseModel):
                 raise CustomExceptionError(code=400, detail="Check-out check-in dan keyin bo‘lishi kerak.")
 
             if self.count > room.capacity:
-                raise CustomExceptionError(code=400, detail=f"Bu xonaga {room.capacity} tadan ko‘p odam joylasholmaydi.")
+                raise CustomExceptionError(code=400,
+                                           detail=f"Bu xonaga {room.capacity} tadan ko‘p odam joylasholmaydi.")
 
             needed_rooms = self.count // room.capacity
             if self.count % room.capacity:
@@ -127,3 +130,35 @@ class Guest(AbstractBaseModel):
         Return a string representation of the guest, which is the full name.
         """
         return self.full_name
+
+
+class GuestGroup(AbstractBaseModel):
+    class GuestGroupStatus(models.TextChoices):
+        PENDING = "Pending", "Pending"
+        ACCEPTED = "Accepted", "Accepted"
+        FINISHED = "Finished", "Finished"
+
+    name = models.CharField(max_length=255)
+    guest_group_status = models.CharField(
+        choices=GuestGroupStatus.choices,
+        max_length=20,
+        default=GuestGroupStatus.PENDING
+    )
+    count = models.PositiveSmallIntegerField()
+
+    def clean(self):
+        if self.count < 1:
+            raise ValidationError("Guruhdagi odamlar soni 1 dan kam bo`lishi mumkin emas.")
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        from apps.orders.models import HotelOrder
+
+        # 🟡 Shu guruhga bog‘langan orderlar orqali xonalarni topamiz
+        related_orders = HotelOrder.objects.filter(guest_group=self)
+        for order in related_orders:
+            for room in order.rooms.all():
+                room.refresh_occupancy()
+
+    def __str__(self):
+        return self.name
