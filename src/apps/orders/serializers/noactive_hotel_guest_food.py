@@ -3,6 +3,7 @@ from rest_framework import serializers
 
 from apps.guests.models import Guest
 from apps.guests.serializers import ActiveNoGuestListSerializer
+from apps.guests.serializers.group_guests import GuestGroupListSerializer
 from apps.orders.models import HotelOrder
 from apps.base.serializers import CustomModelSerializer
 from apps.orders.serializers import OnlyFoodOrderSerializer
@@ -70,6 +71,7 @@ class NoActiveHotelOrderSerializer(CustomModelSerializer):
     guests = serializers.SerializerMethodField(read_only=True)
     food_order = OnlyFoodOrderSerializer(many=True, read_only=True)
     nights = serializers.SerializerMethodField()
+    guest_group = GuestGroupListSerializer(read_only=True)
     total_guest_cost = serializers.SerializerMethodField()
     total_food_cost = serializers.SerializerMethodField()
     total_cost = serializers.SerializerMethodField()
@@ -89,6 +91,7 @@ class NoActiveHotelOrderSerializer(CustomModelSerializer):
             "nights",
             "count_of_people",
             "guests",
+            "guest_group",
             "food_order",
             "total_guest_cost",
             "total_food_cost",

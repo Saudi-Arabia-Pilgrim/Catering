@@ -18,8 +18,6 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
     guests = GuestListSerializer(many=True, read_only=True)
     guest_details = serializers.ListField(write_only=True, child=serializers.DictField(), required=False)
     guest_group = serializers.UUIDField(write_only=True, required=False)
-    guest_group_id = serializers.UUIDField(source="guest_group.id", read_only=True)
-    guest_group_name = serializers.CharField(source="guest_group.name", read_only=True, default=None)
     order_status = serializers.CharField(read_only=True)
     hotel_name = serializers.CharField(source="hotel.name", read_only=True)
     guest_type = serializers.CharField(read_only=True)
@@ -37,8 +35,6 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
             "guests",
             "guest_details",
             "guest_group",
-            "guest_group_id",
-            "guest_group_name",
             "order_food",
             "food_order",
             "rooms",
@@ -62,12 +58,14 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
             data["general_cost"] += order["total_price"]
         data["general_cost"] += data["hotel_total_price"]
 
-        # 🔥 guest_group ma’lumotlarini qo‘shish
         if instance.guest_group:
             data["guest_group"] = {
                 "id": str(instance.guest_group.id),
-                "name": instance.guest_group.name
+                "name": instance.guest_group.name,
+                "count": instance.guest_group.count,
+                "guest_group_status": instance.guest_group.guest_group_status,
             }
+
         else:
             data["guest_group"] = None
 
@@ -121,7 +119,8 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
                 Guest.objects.bulk_create(guests)
                 order.guests.set(guests)
 
-            if guest_group_id:
+            # Group guest order (ko‘p room, 1 ta guest_group)
+            elif guest_group_id:
                 order.guest_group_id = guest_group_id
                 order.save(update_fields=["guest_group"])
                 order.rooms.set(rooms)
@@ -130,21 +129,23 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
                 guest_group.guest_group_status = GuestGroup.GuestGroupStatus.ACCEPTED
                 guest_group.save(update_fields=["guest_group_status"])
 
+            # Har doim narxni hisoblash
             calculate_prices_for_order(order)
             order.save(update_fields=["general_cost"])
 
-            if order.guest_type == HotelOrder.GuestType.INDIVIDUAL:
-                order.room.refresh_occupancy()
-            else:
-                for room in order.rooms.all():
-                    room.refresh_occupancy()
+            # Faqat kerakli room'lar uchun occupancy ni yangilash
+            rooms_to_refresh = [
+                order.room] if order.guest_type == HotelOrder.GuestType.INDIVIDUAL else order.rooms.all()
+            for room in rooms_to_refresh:
+                room.refresh_occupancy()
 
         return order
 
+
 {
-    "hotel": "5956b868-ff3c-4ab8-871f-6e74bebb44f4",
+    "hotel": "31b1954a-fe25-45f1-9a41-f31b5bcd7186",
     "order_status": "Planned",
-    "room": "56ee7e7d-a7ea-4c39-8c6a-89f12f69e194",
+    "room": "3e8a7343-c62c-4569-b8aa-b3190ab59bf5",
     "guest_details": [
         {"full_name": "Franko", "gender": 1}
     ],
@@ -154,16 +155,16 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
 }
 
 {
-    "hotel": "7aa1b483-04a2-4d4d-b57f-ff7bfc0f4340",
+    "hotel": "31b1954a-fe25-45f1-9a41-f31b5bcd7186",
     "order_status": "Active",
     "rooms": [
-     "ecccc7e4-225b-4531-a40d-64f74d2db2ec",
-     "43c8e031-1c7a-4b1c-a44c-b6acd367dd05",
-     "5cc6210a-de71-4219-826e-53c796f044a9",
-     "f069547b-52de-4c22-adb1-aab44ff43228",
-     "2dfa94a0-1a32-4289-9b67-84297410aaa0"
+     "8f66f215-6e94-4137-adbc-b26a556b63ee",
+     "8cbdf875-530f-4f05-966e-6bb04bc3368f",
+     "e3cb2b84-047f-4e2f-b233-f8f0662c9cf9",
+     "6cb674da-4929-47c7-95c8-aa6a6f9fc07c",
+     "896a2cf0-b366-4c2d-b3f7-16ab9ed62829"
 ],
-    "guest_group": "07d73f63-11dd-4531-baba-2136cd061605",
+    "guest_group": "f08a0375-452c-4134-a8ad-c680dce608ac",
     "check_in": "18.07.2025 15:50",
     "check_out": "25.07.2025 15:50",
     "count_of_people": 10

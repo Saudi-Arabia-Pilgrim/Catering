@@ -1,8 +1,8 @@
 from datetime import timedelta
 from decimal import Decimal, ROUND_HALF_UP
 
-from apps.base.exceptions import CustomExceptionError
 from apps.guests.models import Guest
+from apps.base.exceptions import CustomExceptionError
 
 
 def calculate_prices_for_order(order):

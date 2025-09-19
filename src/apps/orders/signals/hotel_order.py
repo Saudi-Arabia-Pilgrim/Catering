@@ -34,3 +34,10 @@ def hotel_order_guests_changed(sender, instance: HotelOrder, action, **kwargs):
     HotelOrder.objects.filter(pk=instance.pk).update(
         general_cost=instance.general_cost
     )
+
+
+@receiver(m2m_changed, sender=HotelOrder.rooms.through)
+def update_room_occupancy_on_m2m_change(sender, instance, action, **kwargs):
+    if action in {"post_add", "post_remove", "post_clear"}:
+        for room in instance.rooms.all():
+            room.refresh_occupancy()

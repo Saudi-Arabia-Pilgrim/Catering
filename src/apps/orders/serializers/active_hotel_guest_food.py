@@ -3,6 +3,7 @@ from rest_framework import serializers
 
 from apps.base.serializers import CustomModelSerializer
 from apps.guests.models import Guest
+from apps.guests.serializers.group_guests import GuestGroupListSerializer
 from apps.orders.models import FoodOrder
 from apps.orders.models.hotel_order import HotelOrder
 from apps.guests.serializers import ActiveNoGuestListSerializer
@@ -15,6 +16,7 @@ class ActiveHotelOrderFoodSerializer(CustomModelSerializer):
     hotel_name = serializers.CharField(source="hotel.name")
     guests = serializers.SerializerMethodField(read_only=True)
     food_order = OnlyFoodOrderSerializer(many=True, read_only=True)
+    guest_group = GuestGroupListSerializer(read_only=True)
     nights = serializers.SerializerMethodField()
     total_guest_cost = serializers.SerializerMethodField()
     total_food_cost = serializers.SerializerMethodField()
@@ -27,8 +29,10 @@ class ActiveHotelOrderFoodSerializer(CustomModelSerializer):
             "order_id",
             "hotel",
             "hotel_name",
-            "room",
+            "room",  # individual guests uchun asosiy xona
+            "rooms",  # group guests uchun ko‘p xonalar
             "food_service",
+            "guest_group",  # group guests holati uchun group info
             "order_status",
             "check_in",
             "check_out",
@@ -47,9 +51,11 @@ class ActiveHotelOrderFoodSerializer(CustomModelSerializer):
         request = self.context.get("request")
         if not request:
             return ActiveNoGuestListSerializer(obj.guests.all(), many=True).data
+
         room_type_id = request.GET.get("room_type")
         if not room_type_id:
             return ActiveNoGuestListSerializer(obj.guests.all(), many=True).data
+
         validate_uuid(room_type_id)
         room_type = get_object_or_404(RoomType, pk=room_type_id)
         rooms = Room.objects.filter(room_type=room_type)
@@ -60,12 +66,10 @@ class ActiveHotelOrderFoodSerializer(CustomModelSerializer):
         return (obj.check_out - obj.check_in).days
 
     def get_total_guest_cost(self, obj):
-        total = sum([guest.price for guest in obj.guests.all()])
-        return total
+        return sum([guest.price for guest in obj.guests.all()])
 
     def get_total_food_cost(self, obj):
-        total = sum([f.total_price for f in obj.food_order.all()])
-        return total
+        return sum([f.total_price for f in obj.food_order.all()])
 
     def get_general_cost(self, obj):
         return self.get_total_guest_cost(obj) + self.get_total_food_cost(obj)
