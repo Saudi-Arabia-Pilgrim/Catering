@@ -150,5 +150,15 @@ class GuestGroup(AbstractBaseModel):
         if self.count < 1:
             raise ValidationError("Guruhdagi odamlar soni 1 dan kam bo`lishi mumkin emas.")
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        from apps.orders.models import HotelOrder
+
+        # 🟡 Shu guruhga bog‘langan orderlar orqali xonalarni topamiz
+        related_orders = HotelOrder.objects.filter(guest_group=self)
+        for order in related_orders:
+            for room in order.rooms.all():
+                room.refresh_occupancy()
+
     def __str__(self):
         return self.name
