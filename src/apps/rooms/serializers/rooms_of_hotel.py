@@ -23,6 +23,7 @@ class RoomsOfHotelListSerializer(CustomModelSerializer):
             "available_count",
             "occupied_count",
             "remaining_capacity",
+            "capacity",
             "gross_price"
         ]
 
