@@ -3,6 +3,7 @@ from django.db import models
 from apps.guests.models import GuestGroup
 from apps.orders.utils import new_id
 from apps.base.models import AbstractBaseModel
+from apps.orders.utils.refresh_rooms import update_room_occupancy
 
 
 class HotelOrderManager(models.Manager):
@@ -96,7 +97,7 @@ class HotelOrder(AbstractBaseModel):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         for room in self.rooms.all():
-            room.refresh_occupancy()
+            update_room_occupancy(room)
 
         if self.guest_group:
             self.guest_group.guest_group_status = GuestGroup.GuestGroupStatus.ACCEPTED
