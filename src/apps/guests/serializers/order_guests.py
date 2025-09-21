@@ -4,6 +4,7 @@ from apps.guests.models import Guest
 from apps.base.exceptions import CustomExceptionError
 from apps.base.serializers import CustomModelSerializer
 from apps.guests.utils.calculate_price import calculate_guest_price
+from apps.orders.utils.refresh_rooms import update_room_occupancy
 
 
 class GuestBaseSerializer(CustomModelSerializer):
@@ -33,7 +34,7 @@ class GuestCreateSerializer(GuestBaseSerializer):
         guest = Guest.objects.create(**validated_data)
         calculate_guest_price(guest)
         guest.save(update_fields=["price"])
-        guest.room.refresh_occupancy()
+        update_room_occupancy(guest.room)
         return guest
 
 
@@ -48,7 +49,7 @@ class GuestUpdateSerializer(GuestBaseSerializer):
 
         calculate_guest_price(instance)
         instance.save()
-        instance.room.refresh_occupancy()
+        update_room_occupancy(instance.room)
         return instance
 
 
