@@ -1,8 +1,9 @@
-from django.db.models.signals import post_save, m2m_changed
 from django.dispatch import receiver
+from django.db.models.signals import post_save, m2m_changed
 
 from apps.orders.models.hotel_order import HotelOrder
 from apps.orders.utils.calculate_price import calculate_prices_for_order
+from apps.orders.utils.refresh_rooms import update_room_occupancy
 
 
 @receiver(post_save, sender=HotelOrder)
@@ -40,4 +41,4 @@ def hotel_order_guests_changed(sender, instance: HotelOrder, action, **kwargs):
 def update_room_occupancy_on_m2m_change(sender, instance, action, **kwargs):
     if action in {"post_add", "post_remove", "post_clear"}:
         for room in instance.rooms.all():
-            room.refresh_occupancy()
+            update_room_occupancy(room)
