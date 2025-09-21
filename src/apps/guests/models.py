@@ -7,6 +7,7 @@ from django.utils.timezone import now
 
 from apps.base.models import AbstractBaseModel
 from apps.base.exceptions import CustomExceptionError
+from apps.orders.utils.refresh_rooms import update_room_occupancy
 
 
 class Guest(AbstractBaseModel):
@@ -87,6 +88,9 @@ class Guest(AbstractBaseModel):
         room = getattr(self, "room", None)
 
         if room:
+            if room.is_busy:
+                raise CustomExceptionError(code=400, detail="Ushbu xona band. Boshqa xona tanlang.")
+
             if self.check_out <= self.check_in:
                 raise CustomExceptionError(code=400, detail="Check-out check-in dan keyin bo‘lishi kerak.")
 
@@ -123,7 +127,7 @@ class Guest(AbstractBaseModel):
     def delete(self, *args, **kwargs):
         room = self.room
         super().delete(*args, **kwargs)
-        room.refresh_occupancy()
+        update_room_occupancy(room)
 
     def __str__(self):
         """
@@ -151,14 +155,28 @@ class GuestGroup(AbstractBaseModel):
             raise ValidationError("Guruhdagi odamlar soni 1 dan kam bo`lishi mumkin emas.")
 
     def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
         from apps.orders.models import HotelOrder
 
-        # 🟡 Shu guruhga bog‘langan orderlar orqali xonalarni topamiz
+        # ⛔ VALIDATSIYA: band xonaga guruhni joylashtirishni taqiqlaymiz
         related_orders = HotelOrder.objects.filter(guest_group=self)
+        busy_rooms = []
+
+        # for order in related_orders:
+        #     for room in order.rooms.all():
+        #         if room.is_busy:
+        #             busy_rooms.append(room)
+        #
+        # if busy_rooms:
+        #     busy_str = ", ".join([str(r) for r in busy_rooms])
+        #     raise CustomExceptionError(code=400, detail=f"Quyidagi xonalar band: {busy_str}")
+
+        # ⚠️ Agar xatolik bo‘lmasa, saqlayveradi
+        super().save(*args, **kwargs)
+
+        # 🔁 Bandlikni yangilab chiqamiz
         for order in related_orders:
             for room in order.rooms.all():
-                room.refresh_occupancy()
+                update_room_occupancy(room)
 
     def __str__(self):
         return self.name
