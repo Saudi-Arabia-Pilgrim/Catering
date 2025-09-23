@@ -92,7 +92,12 @@ class HotelOrder(AbstractBaseModel):
 
     @property
     def profit(self):
-        return self.room.profit
+        if self.guest_type == self.GuestType.INDIVIDUAL:
+            return self.room.profit * (self.check_out - self.check_in).days
+        elif self.guest_type == self.GuestType.GROUP:
+            return sum([room.profit * (self.check_out - self.check_in).days for room in self.rooms.all()])
+        else:
+            return 0
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -228,4 +233,3 @@ class HotelOrder(AbstractBaseModel):
 
     def __str__(self):
         return f"{self.order_id}"
-
