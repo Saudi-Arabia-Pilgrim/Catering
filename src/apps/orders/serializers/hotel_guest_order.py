@@ -202,16 +202,15 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
 }
 
 {
-    "hotel": "ffef15b5-4404-4cc4-ba42-ac201efb5da8",
+    "hotel": "d5852904-054d-4b28-8571-e26637901458",
     "order_status": "Active",
     "rooms": [
-     "310866a4-23fd-4b1b-a466-23467659fab9",
-     "2a6c1a30-05b9-413c-af39-ece2a56f831c",
-     "647b751c-84e1-4bc3-ada5-be029d3242b4"
+     "4ad8079c-e1fb-4a15-8f6c-b75fbcd65972",
+     "147f9ac6-373e-4f63-81f2-0bae57ec2562",
+     "8b4a3fe0-0692-4ca6-96d0-68f38b9000ce"
 ],
-    "guest_group": "0c3e426f-4289-45ea-91e7-f18f1352d6d2",
-    "check_in": "19.09.2025 11:50",
-    "check_out": "25.09.2025 15:50",
+    "guest_group": "38937cfd-bf02-4b77-9180-d05b757bd48e",
+    "check_in": "26.09.2025 11:50",
+    "check_out": "30.09.2025 15:50",
     "count_of_people": 3
 }
-

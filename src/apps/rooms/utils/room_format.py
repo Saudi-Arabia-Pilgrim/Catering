@@ -45,6 +45,10 @@ def get_grouped_room_data():
         occupied = item["occupied_count"] or 0
         capacity = getattr(rep_room, "capacity", 0)
 
+        # remaining_capacity ni to'g'ri hisoblash uchun representative room dan olamiz
+        # chunki u update_room_occupancy funksiyasi orqali to'g'ri hisoblanadi
+        remaining_capacity = getattr(rep_room, "remaining_capacity", 0) if rep_room else 0
+        
         result.append({
             "id": rep_room.id if rep_room else None,
             "hotel": item["hotel_id"],
@@ -55,7 +59,7 @@ def get_grouped_room_data():
             "count": count,
             "occupied_count": occupied,
             "available_count": count - occupied,
-            "remaining_capacity": max(0, (count - occupied) * capacity),
+            "remaining_capacity": remaining_capacity,  # Database dan to'g'ri qiymatni olamiz
             "capacity": capacity,
             "net_price": getattr(rep_room, "net_price", None),
             "profit": getattr(rep_room, "profit", None),
