@@ -96,9 +96,9 @@ class HotelOrder(AbstractBaseModel):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        for room in self.rooms.all():
-            update_room_occupancy(room)
-
+        # Note: update_room_occupancy is called explicitly in serializers
+        # to avoid multiple calls and conflicts
+        
         if self.guest_group:
             self.guest_group.guest_group_status = GuestGroup.GuestGroupStatus.ACCEPTED
             self.guest_group.save(update_fields=["guest_group_status"])

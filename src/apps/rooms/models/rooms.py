@@ -149,17 +149,22 @@ class Room(AbstractBaseModel):
         if self.net_price is not None and self.profit is not None:
             self.gross_price = self.net_price + self.profit
 
-        if self.guests.count() > self.capacity:
-            raise CustomExceptionError(code=400, detail="Guests count should lower than rooms of capacity.")
-
-        self.is_busy = self.guests.count() == self.capacity
-        self.available_count = 0 if self.is_busy else 1
-        self.occupied_count = 1 if self.is_busy else 0
+        # Note: Room occupancy logic is handled by update_room_occupancy function
+        # to properly account for both individual and group guests
+        # The following logic is commented out to avoid conflicts:
+        
+        # if self.guests.count() > self.capacity:
+        #     raise CustomExceptionError(code=400, detail="Guests count should lower than rooms of capacity.")
+        # 
+        # self.is_busy = self.guests.count() == self.capacity
+        # self.available_count = 0 if self.is_busy else 1
+        # self.occupied_count = 1 if self.is_busy else 0
 
 
     def save(self, *args, **kwargs):
         self.apply_save_logic()
-        update_room_occupancy(self, save=False)
+        # Note: update_room_occupancy is called explicitly where needed
+        # to avoid circular calls and conflicts
         super().save(*args, **kwargs)
 
     def __str__(self):
