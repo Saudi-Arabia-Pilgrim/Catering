@@ -23,7 +23,7 @@ class RoomsOfHotelListSerializer(CustomModelSerializer):
             "is_busy",
             "available_count",
             "occupied_count",
-            "remaining_capacity",  # Bu endi model fieldidan keladi
+            "remaining_capacity",
             "capacity",
             "gross_price"
         ]

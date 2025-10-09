@@ -13,6 +13,6 @@ class RoomsOfHotelAPIView(CustomGenericAPIView):
     def get(self, request, pk, *args, **kwargs):
         validate_uuid(pk)
         hotel = get_object_or_404(Hotel, pk=pk)
-        rooms = hotel.rooms.all().select_related("room_type", "hotel").prefetch_related("guests")
+        rooms = hotel.rooms.available().select_related("room_type", "hotel").prefetch_related("guests")
         serializer = self.get_serializer(rooms, many=True)
         return Response(serializer.data, status=200)
