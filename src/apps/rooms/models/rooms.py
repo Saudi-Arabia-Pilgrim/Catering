@@ -10,6 +10,11 @@ from apps.base.exceptions import CustomExceptionError
 from apps.orders.utils.refresh_rooms import update_room_occupancy
 
 
+class RoomQuerySet(models.QuerySet):
+    def available(self):
+        return self.filter(is_busy=False)
+
+
 class Room(AbstractBaseModel):
     """
     Model representing a room in a hotel.
@@ -21,6 +26,8 @@ class Room(AbstractBaseModel):
         occupied_count (PositiveSmallIntegerField): Number of currently occupied rooms. Defaults to 0.
         price (DecimalField): Price per night for the room type.
     """
+
+    objects = RoomQuerySet.as_manager()
 
     hotel = models.ForeignKey(
         "hotels.Hotel",
