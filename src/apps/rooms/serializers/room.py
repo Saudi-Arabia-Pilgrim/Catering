@@ -97,7 +97,7 @@ class RoomCreateSerializer(CustomModelSerializer):
         room_list = []
 
         for count in range(counts):
-            room_number = str(floor * 100 + count)
+            room_number = str(floor * 101 + count)
             room_list.append(Room(
                 hotel=validated_data["hotel"],
                 room_type=validated_data["room_type"],
