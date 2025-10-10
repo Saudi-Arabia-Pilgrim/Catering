@@ -121,6 +121,23 @@ class Order(AbstractBaseModel):
         if self.perform_date and self.perform_date < timezone.now():
             raise CustomExceptionError(detail=_("Perform Date cannot be in the past!"), code=400)
 
+        # Validate passenger_count doesn't exceed transport capacity
+        if self.transport and self.passenger_count:
+            try:
+                passenger_count_int = int(self.passenger_count)
+                amount_of_people_int = int(self.transport.amount_of_people)
+
+                if passenger_count_int > amount_of_people_int:
+                    raise CustomExceptionError(
+                        detail=f"Passenger count ({passenger_count_int}) exceeds the transport's capacity ({amount_of_people_int} people).",
+                        code=400
+                    )
+            except ValueError:
+                raise CustomExceptionError(
+                    detail="Passenger count and amount of people must be valid numbers.",
+                    code=400
+                )
+
     def save(self, *args, **kwargs):
         if not self.order_number:
             self.order_number = self.generate_order_number()
