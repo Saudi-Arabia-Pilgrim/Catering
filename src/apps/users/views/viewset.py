@@ -4,12 +4,14 @@ from django.contrib.auth import get_user_model
 from apps.base.views import CustomModelViewSet
 from apps.users.serializers import UserSerializer
 from apps.users.permissions import RoleBasedPermission
+from apps.users.filters import EmployeeFilter
 
 
 class UserViewSet(CustomModelViewSet):
-    queryset = get_user_model().objects.all()
+    queryset = get_user_model().objects.all().order_by('-created_at')
     serializer_class = UserSerializer
-    department = 'hr'  # This is used by RoleBasedPermission
+    filterset_class = EmployeeFilter
+    department = 'hr'
 
     def get_permissions(self):
         """
