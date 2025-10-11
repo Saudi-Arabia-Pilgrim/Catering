@@ -76,7 +76,7 @@ class HotelRetrieveSerializer(CustomModelSerializer):
         }
 
     def get_rooms(self, obj):
-        return get_grouped_room_data(hotel=obj)
+        return get_grouped_room_data()
 
     def get_guests(self, obj):
         request = self.context.get("request")
