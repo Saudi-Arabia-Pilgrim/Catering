@@ -135,24 +135,11 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
         food_orders = validated_data.pop("food_order", [])
         count_of_people = validated_data.get("count_of_people") or 0
 
-        # ✅ BU YERDA TO‘G‘RI ENUM QIYMATLARI YOZILADI:
 
         with transaction.atomic():
             order = HotelOrder.objects.create(**validated_data)
             order.food_order.set(food_orders)
             guest_type = validated_data.get("guest_type")
-
-            # if guest_type == HotelOrder.GuestType.GROUP:
-            #     for room in rooms:
-                #         if room.remaining_capacity:
-            #             if count_of_people >= room.remaining_capacity:
-            #                 count_of_people -= room.remaining_capacity
-            #                 room.remaining_capacity = 0
-            #             else:
-            #                 room.remaining_capacity -= count_of_people
-            #                 count_of_people = 0
-            #         room.save(update_fields=["remaining_capacity"])
-
             # Individual guest order
             if guests_data:
                 guests = prepare_bulk_guests(

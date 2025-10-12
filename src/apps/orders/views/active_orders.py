@@ -3,11 +3,11 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 
-from apps.base.views import CustomCreateAPIView, CustomListAPIView
+from apps.base.views import CustomListAPIView
 from apps.guests.models import Guest
 from apps.orders.filters import HotelFilterForGuests
 from apps.orders.models.hotel_order import HotelOrder
-from apps.orders.serializers import ActiveHotelOrderFoodSerializer, HotelOrderCreateSerializer
+from apps.orders.serializers import ActiveHotelOrderFoodSerializer
 from apps.rooms.models import Room, RoomType
 
 
