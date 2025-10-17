@@ -1,4 +1,6 @@
 from rest_framework.permissions import IsAuthenticated
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter
 from django.contrib.auth import get_user_model
 
 from apps.base.views import CustomModelViewSet
@@ -11,6 +13,8 @@ class UserViewSet(CustomModelViewSet):
     queryset = get_user_model().objects.all().order_by('-created_at')
     serializer_class = UserSerializer
     filterset_class = EmployeeFilter
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = ["full_name", "email", "phone_number", "passport_number"]
     department = 'hr'
 
     def get_permissions(self):
@@ -46,7 +50,6 @@ class UserViewSet(CustomModelViewSet):
         if not user.is_authenticated:
             return self.queryset.none()
 
-        if user.is_superuser or getattr(user, 'role', '') == 'ceo' or getattr(user, 'role', '') == 'hr':
+        if user.is_superuser or getattr(user, 'role', '') in ('ceo', 'hr', 'admin'):
             return self.queryset
         return self.queryset.filter(id=user.id)
-
