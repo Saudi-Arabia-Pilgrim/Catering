@@ -4,6 +4,7 @@ from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
 
 from apps.base.views import CustomGenericAPIView
+from apps.rooms.filters import RoomTypeFilter
 from apps.rooms.models.room_type import RoomType
 from apps.rooms.serializers.room_type import RoomTypeSerializer
 
@@ -26,6 +27,7 @@ class RoomTypeListsAPIView(CustomGenericAPIView):
     queryset = RoomType.objects.all()
     serializer_class = RoomTypeSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_class = RoomTypeFilter
     search_fields = ["name__icontains"]
 
     def get(self, *args, **kwargs):

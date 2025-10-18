@@ -12,7 +12,7 @@ from apps.warehouses.utils import validate_uuid
 
 
 class WarehouseExpensesRetrieveAPIView(CustomGenericAPIView):
-    queryset = Warehouse.objects.all().select_related("product")
+    queryset = Warehouse.objects.all().select_related("product", "product__measure_warehouse", "product__measure")
     serializer_class = WarehouseSerializer
 
     def get(self, request, pk):
@@ -45,7 +45,7 @@ class WarehouseExpensesRetrieveAPIView(CustomGenericAPIView):
 
 class WarehouseListCreateAPIView(CustomListCreateAPIView):
     queryset = Warehouse.objects.all().select_related(
-        "product", "product__measure_warehouse"
+        "product", "product__measure_warehouse", "product__measure"
     )
     serializer_class = WarehouseSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
