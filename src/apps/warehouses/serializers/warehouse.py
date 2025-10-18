@@ -11,6 +11,9 @@ class WarehouseSerializer(CustomModelSerializer):
     arrived_amount = serializers.FloatField(source="arrived_count")
 
     measure = serializers.CharField(
+        source="product.measure.abbreviation", read_only=True
+    )
+    warehouse_measure = serializers.CharField(
         source="product.measure_warehouse.abbreviation", read_only=True
     )
     image = serializers.SerializerMethodField(read_only=True)
