@@ -77,23 +77,27 @@ def update_room_occupancy(room, save=True):
     print(f"🔍 DEBUG: capacity={room.capacity}, count={room_count}, total_capacity={room.capacity * room_count}")
 
     # === Individual guests ===
-    # Get all active individual guests for this room
+    # Get all active individual guests for this room (faqat hozirgi vaqtda xonada bo'lganlar)
     individual_guests_count = Guest.objects.filter(
         room=room,
-        status=Guest.Status.NEW
+        status=Guest.Status.NEW,
+        check_in__lte=now,  # Check-in vaqti o'tgan
+        check_out__gt=now   # Check-out vaqti hali kelmagan
     ).aggregate(total=Sum("count"))['total'] or 0
 
-    print(f"🔍 DEBUG: Individual guests: {individual_guests_count}")
+    print(f"🔍 DEBUG: Individual guests (hozir xonada): {individual_guests_count}")
 
     # === Group guests ===
-    # Get all active group orders that include this room
+    # Get all active group orders that include this room (faqat hozirgi vaqtda xonada bo'lganlar)
     group_orders = HotelOrder.objects.filter(
         rooms=room,
         order_status=HotelOrder.OrderStatus.ACTIVE,
-        guest_type=HotelOrder.GuestType.GROUP
+        guest_type=HotelOrder.GuestType.GROUP,
+        check_in__lte=now,  # Check-in vaqti o'tgan
+        check_out__gt=now   # Check-out vaqti hali kelmagan
     ).select_related("guest_group").prefetch_related("rooms")
 
-    print(f"🔍 DEBUG: {group_orders.count()} ta group order topildi")
+    print(f"🔍 DEBUG: {group_orders.count()} ta group order topildi (hozir xonada)")
 
     # Calculate group guests using optimal distribution algorithm
     group_guests_count = 0
