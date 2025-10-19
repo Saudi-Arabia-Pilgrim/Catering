@@ -111,67 +111,14 @@ class Room(AbstractBaseModel):
         remaining_capacity = total_capacity - active_guests_count
         return remaining_capacity
 
-    # def refresh_occupancy(self, save=True):
-    #     from apps.orders.models import HotelOrder
-    #     today = timezone.now().date()
-    #
-    #     individual_guests_count = Guest.objects.filter(
-    #         room=self,
-    #         status=Guest.Status.NEW,
-    #         check_in__lte=today,
-    #         check_out__gte=today
-    #     ).aggregate(total=Sum("count"))["total"] or 0
-    #
-    #     group_orders = (
-    #         HotelOrder.objects
-    #         .filter(
-    #             rooms=self,
-    #             check_in__lte=today,
-    #             check_out__gte=today,
-    #             order_status=HotelOrder.OrderStatus.ACTIVE,
-    #             guest_type=HotelOrder.GuestType.GROUP
-    #         )
-    #         .select_related("guest_group")
-    #     )
-    #
-    #     group_guests_total = sum(
-    #         order.guest_group.count for order in group_orders if order.guest_group
-    #     )
-    #
-    #     total_people = individual_guests_count + group_guests_total
-    #
-    #     if not self.capacity:
-    #         raise CustomExceptionError(code=400, detail="Room capacity cannot be null or zero.")
-    #
-    #     occupied_rooms = ceil(total_people / self.capacity)
-    #     self.occupied_count = occupied_rooms
-    #     self.available_count = max(self.count - occupied_rooms, 0)
-    #     self.is_busy = self.available_count == 0
-    #
-    #     if save:
-    #         self.save(update_fields=["occupied_count", "available_count", "is_busy"])
-
     def apply_save_logic(self):
 
         if self.net_price is not None and self.profit is not None:
             self.gross_price = self.net_price + self.profit
 
-        # Note: Room occupancy logic is handled by update_room_occupancy function
-        # to properly account for both individual and group guests
-        # The following logic is commented out to avoid conflicts:
-        
-        # if self.guests.count() > self.capacity:
-        #     raise CustomExceptionError(code=400, detail="Guests count should lower than rooms of capacity.")
-        # 
-        # self.is_busy = self.guests.count() == self.capacity
-        # self.available_count = 0 if self.is_busy else 1
-        # self.occupied_count = 1 if self.is_busy else 0
-
 
     def save(self, *args, **kwargs):
         self.apply_save_logic()
-        # Note: update_room_occupancy is called explicitly where needed
-        # to avoid circular calls and conflicts
         super().save(*args, **kwargs)
 
     def __str__(self):

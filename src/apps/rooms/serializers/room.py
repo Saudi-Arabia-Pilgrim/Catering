@@ -1,4 +1,3 @@
-from celery.app.trace import send_postrun
 from rest_framework import serializers
 
 from apps.hotels.models import Hotel
@@ -7,7 +6,7 @@ from apps.rooms.models.rooms import Room
 from apps.base.serializers import CustomModelSerializer
 
 
-class RoomSerializer(serializers.ModelSerializer):
+class RoomSerializer(CustomModelSerializer):
     """
     Serializer for the Room model.
 
@@ -97,7 +96,7 @@ class RoomCreateSerializer(CustomModelSerializer):
         room_list = []
 
         for count in range(counts):
-            room_number = str(floor * 101 + count)
+            room_number = str(floor * 100 + 1 + count)
             room_list.append(Room(
                 hotel=validated_data["hotel"],
                 room_type=validated_data["room_type"],
@@ -115,7 +114,7 @@ class RoomCreateSerializer(CustomModelSerializer):
         return room_list
 
 
-class RoomUpdateSerializer(serializers.ModelSerializer):
+class RoomUpdateSerializer(CustomModelSerializer):
     room_type = serializers.PrimaryKeyRelatedField(queryset=RoomType.objects.all())
     hotel = serializers.PrimaryKeyRelatedField(queryset=Hotel.objects.all())
 
