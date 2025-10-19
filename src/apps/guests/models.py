@@ -76,10 +76,10 @@ class Guest(AbstractBaseModel):
         editable=False,
         help_text="Price associated with the guest's stay."
     )
-    check_in = models.DateField(
+    check_in = models.DateTimeField(
         help_text="Date of check-in."
     )
-    check_out = models.DateField(
+    check_out = models.DateTimeField(
         help_text="Date of check-out."
     )
 
@@ -123,6 +123,9 @@ class Guest(AbstractBaseModel):
 
         self.full_clean()
         super().save(*args, **kwargs)
+
+        if self.room:
+            update_room_occupancy(self.room)
 
     def delete(self, *args, **kwargs):
         room = self.room

@@ -38,8 +38,8 @@ def create_additional_rooms(instance, validated_data, new_count, existing_count)
 
     floor = current_rooms.first().floor if current_rooms.exists() else validated_data.get("floor", 1)
 
-    for idx in range(existing_count, new_count):
-        room_number = str(floor * 100 + idx + 1)
+    for idx in range(1, diff + 1):  # always start from 1
+        room_number = str(floor * 100 + idx)
         new_room = Room(
             hotel=instance.hotel,
             room_type=instance.room_type,

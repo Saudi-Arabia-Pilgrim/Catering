@@ -177,27 +177,25 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
         return order
 
 {
-    "hotel": "811fb92c-cf10-4c88-a6d0-ec1de04dd320",
+    "hotel": "53c020ff-48f4-447a-a760-5047fe436439",
     "order_status": "Active",
-    "room": "680a692a-e814-4ac2-bbb4-d4d845cebbfb",
+    "room": "86c0e5f7-888e-4d36-b537-ce6a759de2e6",
     "guest_details": [
-        {"full_name": "Gelian", "gender": 1}
+        {"full_name": "Gerakl", "gender": 1}
     ],
-    "check_in": "20.09.2025 11:50",
-    "check_out": "25.09.2025 15:50",
+    "check_in": "19.10.2025 15:10",
+    "check_out": "19.10.2025 15:12",
     "count_of_people": 1
 }
 
 {
-    "hotel": "d5852904-054d-4b28-8571-e26637901458",
+    "hotel": "47e4e8a4-5672-4450-b8e6-f4f01f8806c7",
     "order_status": "Active",
     "rooms": [
-     "4ad8079c-e1fb-4a15-8f6c-b75fbcd65972",
-     "147f9ac6-373e-4f63-81f2-0bae57ec2562",
-     "8b4a3fe0-0692-4ca6-96d0-68f38b9000ce"
+     "b02b190a-c79f-45a0-aea1-fbc844a22e5d"
 ],
-    "guest_group": "38937cfd-bf02-4b77-9180-d05b757bd48e",
-    "check_in": "26.09.2025 11:50",
-    "check_out": "30.09.2025 15:50",
-    "count_of_people": 3
+    "guest_group": "b1ce9272-fd4d-4964-84b6-c4cc46a46bea",
+    "check_in": "18.10.2025 11:50",
+    "check_out": "18.10.2025 11:52",
+    "count_of_people": 2
 }

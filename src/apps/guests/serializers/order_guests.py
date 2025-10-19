@@ -8,6 +8,9 @@ from apps.orders.utils.refresh_rooms import update_room_occupancy
 
 
 class GuestBaseSerializer(CustomModelSerializer):
+    check_in = serializers.DateTimeField(input_formats=["%d.%m.%Y %H:%M"])
+    check_out = serializers.DateTimeField(input_formats=["%d.%m.%Y %H:%M"])
+
     class Meta:
         model = Guest
         fields = "__all__"
