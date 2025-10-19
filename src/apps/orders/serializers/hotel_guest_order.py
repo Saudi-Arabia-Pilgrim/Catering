@@ -179,12 +179,12 @@ class HotelOrderGuestSerializer(CustomModelSerializer):
 {
     "hotel": "53c020ff-48f4-447a-a760-5047fe436439",
     "order_status": "Active",
-    "room": "86c0e5f7-888e-4d36-b537-ce6a759de2e6",
+    "room": "0ada09a6-a2e2-4c78-adc4-878447122776",
     "guest_details": [
         {"full_name": "Gerakl", "gender": 1}
     ],
-    "check_in": "19.10.2025 15:10",
-    "check_out": "19.10.2025 15:12",
+    "check_in": "19.10.2025 17:01",
+    "check_out": "19.10.2025 17:03",
     "count_of_people": 1
 }
 
