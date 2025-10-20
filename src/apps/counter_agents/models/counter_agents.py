@@ -18,7 +18,7 @@ class CounterAgent(AbstractBaseModel):
     # === The name of the counter agent. ===
     name = models.CharField(max_length=255)
     # === The slug of the counter agent. ===
-    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
+    slug = models.SlugField(max_length=255, unique=True)
     # === The address of the counter agent. ===
     address = models.CharField(max_length=1200)
     # === The status of the counter agent, indicating if they are active. ===
