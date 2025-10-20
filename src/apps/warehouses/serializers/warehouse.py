@@ -7,8 +7,8 @@ from apps.warehouses.models import Warehouse
 
 class WarehouseSerializer(CustomModelSerializer):
     product_name = serializers.CharField(source="product.name", read_only=True)
-    amount = serializers.FloatField(source="count", read_only=True)
-    arrived_amount = serializers.FloatField(source="arrived_count")
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2, source="count", read_only=True)
+    arrived_amount = serializers.DecimalField(max_digits=10, decimal_places=2, source="arrived_count")
 
     measure = serializers.CharField(
         source="product.measure.abbreviation", read_only=True
@@ -33,7 +33,7 @@ class WarehouseSerializer(CustomModelSerializer):
 
 
 class WarehouseExpensesSerializer(CustomSerializer):
-    amount = serializers.IntegerField(write_only=True)
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2, write_only=True)
 
     def validate(self, validated_data):
         amount = validated_data["amount"]

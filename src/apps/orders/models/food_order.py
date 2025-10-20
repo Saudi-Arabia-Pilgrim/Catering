@@ -1,10 +1,10 @@
 from collections import defaultdict
 from datetime import timedelta
-from decimal import ROUND_UP, Decimal
+from decimal import ROUND_UP, ROUND_HALF_UP, Decimal
 
 from django.utils.timezone import now
 from django.db import models, transaction
-from django.db.models import Sum, F, Q, Prefetch, Case, When, FloatField, Value
+from django.db.models import Sum, F, Q, Prefetch, Case, When, DecimalField, Value
 
 from apps.orders.utils import new_id
 from apps.base.exceptions import CustomExceptionError
@@ -229,11 +229,11 @@ class FoodOrder(AbstractBaseModel):
                         * Case(
                             When(product__difference_measures=0, then=Value(1)),
                             default=F("product__difference_measures"),
-                            output_field=FloatField(),
+                            output_field=DecimalField(max_digits=10, decimal_places=2),
                         )
                     )
                 )["total"]
-                or 0
+                or Decimal('0')
             )
 
             if total_available < required_quantity:
@@ -265,28 +265,33 @@ class FoodOrder(AbstractBaseModel):
                 available_quantity = (
                     warehouse_item.count * product.difference_measures
                     if product.difference_measures
-                    else 1
+                    else Decimal('1')
                 )
                 net_price = warehouse_item.get_net_price()
+                # Calculate price with proper rounding
+                item_price = (net_price * Decimal(str(required_quantity))).quantize(
+                    Decimal('0.01'), rounding=ROUND_HALF_UP
+                )
                 used_products.append(
                     ProductsUsed(
                         warehouse_id=warehouse_item.id,
-                        count=required_quantity,
-                        price=net_price * required_quantity,
+                        count=str(required_quantity),
+                        price=item_price,
                         order_id=self.food_order_id,
                     )
                 )
                 if available_quantity >= required_quantity:
-                    warehouse_item.count -= (
-                        required_quantity / product.difference_measures
-                    )
-                    if warehouse_item.count == 0:
+                    deduction = (
+                        Decimal(str(required_quantity)) / product.difference_measures
+                    ).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+                    warehouse_item.count -= deduction
+                    if warehouse_item.count == Decimal('0'):
                         warehouse_item.status = False
                     update_warehouses.append(warehouse_item)
                     break
                 else:
                     required_quantity -= available_quantity
-                    warehouse_item.count = 0
+                    warehouse_item.count = Decimal('0')
                     warehouse_item.status = False
                     update_warehouses.append(warehouse_item)
 

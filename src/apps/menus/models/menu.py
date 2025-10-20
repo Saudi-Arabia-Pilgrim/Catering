@@ -1,4 +1,4 @@
-from decimal import ROUND_UP, Decimal
+from decimal import ROUND_UP, ROUND_HALF_UP, Decimal
 from django.db import models
 from django.db.models import Q, OuterRef, Exists, Sum, DecimalField
 from django.core.validators import MinValueValidator
@@ -40,13 +40,13 @@ class Menu(AbstractBaseModel):
     image = models.ImageField(upload_to="menus/%Y/%m/%d/", blank=True, null=True)
 
     # === The net price of the menu, optional. ===
-    net_price = models.FloatField(default=0, blank=True)
+    net_price = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True)
     # === The profit associated with the menu. ===
     profit = models.DecimalField(
         max_digits=10, decimal_places=2, validators=[MinValueValidator(1)]
     )
     # === Menu price considering profit. ===
-    gross_price = models.FloatField(default=0, blank=True)
+    gross_price = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True)
 
     class Meta:
         # === The database table name for the model. ===
@@ -68,10 +68,14 @@ class Menu(AbstractBaseModel):
         return self.foods.only("net_price", "status")
 
     def calculate_prices(self, foods=None):
+        """
+        Calculate net and gross prices for the menu.
+        Prices are rounded to 2 decimal places using ROUND_HALF_UP.
+        """
         if foods is None:
             foods = self.foods.all()
 
-        has_zero_price = any(food.net_price == 0 for food in foods)
+        has_zero_price = any(food.net_price == Decimal('0') for food in foods)
 
         if has_zero_price:
             net_price = Decimal(0)
@@ -80,13 +84,14 @@ class Menu(AbstractBaseModel):
                 total=Sum("net_price", output_field=DecimalField())
             )["total"] or Decimal(0)
 
-        self.net_price = net_price.quantize(Decimal("0.0001"), rounding=ROUND_UP)
+        # Round to 2 decimal places with ROUND_HALF_UP
+        self.net_price = net_price.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         self.gross_price = (
             (self.net_price + self.profit).quantize(
-                Decimal("0.0001"), rounding=ROUND_UP
+                Decimal("0.01"), rounding=ROUND_HALF_UP
             )
-            if net_price > 0
-            else 0
+            if net_price > Decimal('0')
+            else Decimal(0)
         )
 
     def change_status(self, foods=None):

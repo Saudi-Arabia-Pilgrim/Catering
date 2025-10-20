@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.shortcuts import get_object_or_404
 
 from rest_framework.response import Response
@@ -31,7 +32,7 @@ class WarehouseExpensesRetrieveAPIView(CustomGenericAPIView):
         serializer.save()
         validated_data = serializer.validated_data
         data = f"{validated_data["amount"]}{validated_data["measure_abbreviation"]} {validated_data["product_name"]} were successfully removed from the warehouse"
-        price = float(warehouse.get_net_price()) * warehouse.product.difference_measures * float(validated_data["amount"])
+        price = Decimal(warehouse.get_net_price()) * Decimal(warehouse.product.difference_measures) * Decimal(validated_data["amount"])
         Experience.objects.create(
             warehouse=warehouse, count=validated_data["amount"], price=price
         )

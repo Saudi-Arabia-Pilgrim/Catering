@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import transaction
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -16,11 +18,11 @@ def post_save_warehouse(sender, instance, created, **kwargs):
 
     product_count_in_warehouse = (
         Warehouse.objects.filter(product=product).aggregate(total=Sum("count"))["total"]
-        or 0
+        or Decimal('0')
     )
     product_count = (
         (product_count_in_warehouse * product.difference_measures)
-        if product.difference_measures > 0
+        if product.difference_measures > Decimal('0')
         else product_count_in_warehouse
     )
 
@@ -28,7 +30,7 @@ def post_save_warehouse(sender, instance, created, **kwargs):
         product.status = instance.status
         product.save()
 
-        if product_count > 0:
+        if product_count > Decimal('0'):
 
             food_recipes = RecipeFood.objects.filter(product=product)
             recipes_status = {"False": [], "True": []}
