@@ -1,14 +1,16 @@
 from decimal import Decimal
 
 from django.db.models import Q
+from django.apps import apps
 
 from apps.products.models import Product
-from apps.foods.models import RecipeFood, Food
+from apps.foods.models import Food
 from apps.menus.models import Menu, Recipe
-from apps.warehouses.models import Warehouse
 
 
 def update_product_dependencies_in_warehouse(product_ids: list):
+    Warehouse = apps.get_model("warehouses", "Warehouse")
+    RecipeFood = apps.get_model("foods", "RecipeFood")
     product_list = []
     recipe_food_qs = RecipeFood.objects.filter(product_id__in=product_ids)
     food_qs = Food.objects.filter(recipes__in=recipe_food_qs).prefetch_related(
