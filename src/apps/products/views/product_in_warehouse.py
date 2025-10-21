@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db.models import Sum
 
 from rest_framework.response import Response
@@ -24,8 +26,8 @@ class ProductInWarehouse(CustomGenericAPIView):
 
         first_warehouse = warehouses.first()
         data = {
-            "count": warehouses.aggregate(total=Sum("count"))["total"] or 0,
-            "price": first_warehouse.get_net_price(),
+            "count": str(warehouses.aggregate(total=Sum("count"))["total"] or Decimal('0')),
+            "price": str(first_warehouse.get_net_price()),
             "measure": first_warehouse.product.measure_warehouse.abbreviation
         }
 

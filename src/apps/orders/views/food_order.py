@@ -9,7 +9,16 @@ from apps.orders.serializers import OnlyFoodOrderSerializer, FoodOrderRetrieveSe
 
 
 class FoodOrderListCreateAPIView(CustomListCreateAPIView):
-    queryset = FoodOrder.objects.all().order_by("-created_at")
+    queryset = (
+        FoodOrder.objects.all()
+        .order_by("-created_at")
+        .select_related(
+            "counter_agent",
+            "food",
+            "menu",
+            "recipe",
+        )
+    )
     serializer_class = OnlyFoodOrderSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_class = FoodOrderFilter

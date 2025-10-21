@@ -9,7 +9,8 @@ from apps.base.views import (
     CustomGenericAPIView,
 )
 from apps.foods.models import Food, FoodSection
-from apps.foods.serializers import FoodSerializer, FoodCreateUpdateSerializer, FoodSectionSerializer
+from apps.foods.serializers import FoodSerializer, FoodCreateUpdateSerializer, FoodSectionSerializer, OptimizedFoodSerializer
+from apps.foods.utils.missing_products import calculate_missing_products_batch
 from apps.warehouses.utils import validate_uuid
 
 
@@ -24,8 +25,13 @@ class FoodRetrieveUpdateDestroyAPIView(CustomRetrieveUpdateDestroyAPIView):
 
 
 class FoodListCreateAPIView(CustomListCreateAPIView):
-    queryset = Food.objects.all().prefetch_related("recipes", "recipes__product").select_related("section")
-    serializer_class = FoodSerializer
+    queryset = Food.objects.all().prefetch_related(
+        "recipes",
+        "recipes__product",
+        "recipes__product__measure",
+        "recipes__product__measure_warehouse"
+    ).select_related("section")
+    serializer_class = OptimizedFoodSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_fields = ["status", "section"]
     search_fields = ["name", "profit", "gross_price"]
@@ -34,6 +40,21 @@ class FoodListCreateAPIView(CustomListCreateAPIView):
         if self.request.method == "POST":
             return FoodCreateUpdateSerializer(*args, **kwargs)
         return super().get_serializer(*args, **kwargs)
+
+    def get_serializer_context(self):
+        """
+        Add batch missing products data to serializer context for optimization.
+        """
+        context = super().get_serializer_context()
+
+        # Only calculate batch missing products for list views (GET requests)
+        if self.request.method == "GET":
+            queryset = self.get_queryset()
+            # Pre-calculate missing products for all foods in the queryset
+            missing_products_batch = calculate_missing_products_batch(queryset)
+            context['missing_products_batch'] = missing_products_batch
+
+        return context
 
 
 class FoodsOnMenu(CustomGenericAPIView):

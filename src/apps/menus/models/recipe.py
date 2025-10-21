@@ -1,4 +1,4 @@
-from decimal import ROUND_UP, Decimal
+from decimal import ROUND_UP, ROUND_HALF_UP, Decimal
 
 from django.db import models
 from django.db.models import DecimalField, Q, F, OuterRef, Exists, Value
@@ -42,13 +42,13 @@ class Recipe(AbstractBaseModel):
     # === Status of the recipe, default is True (active). ===
     status = models.BooleanField(default=True)
     # === Net price of the recipe. ===
-    net_price = models.FloatField(blank=True)
+    net_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     # === Profit associated with the recipe. ===
     profit = models.DecimalField(
         max_digits=10, decimal_places=2, validators=[MinValueValidator(1)]
     )
     # === Gross price of the recipe. ===
-    gross_price = models.FloatField(blank=True)
+    gross_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
 
     class Meta:
         # === The database table name for the model. ===
@@ -91,7 +91,7 @@ class Recipe(AbstractBaseModel):
         if self._state.adding:
             if menus is None:
                 menus = self.get_menus()
-            has_zero_price = any(menu.net_price == 0 for menu in menus)
+            has_zero_price = any(menu.net_price == Decimal('0') for menu in menus)
             net_price = Decimal(
                 0 if has_zero_price else sum(menu.net_price for menu in menus if menu)
             )
@@ -136,11 +136,12 @@ class Recipe(AbstractBaseModel):
             else:
                 net_price = net_price_qs["total_price"] or Decimal(0)
 
-        self.net_price = net_price.quantize(Decimal("0.0001"), rounding=ROUND_UP)
+        # Round to 2 decimal places with ROUND_HALF_UP
+        self.net_price = net_price.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         self.gross_price = (
             (self.net_price + self.profit).quantize(
-                Decimal("0.0001"), rounding=ROUND_UP
+                Decimal("0.01"), rounding=ROUND_HALF_UP
             )
-            if net_price > 0
+            if net_price > Decimal('0')
             else Decimal(0)
         )

@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.text import slugify
 from django.core.validators import MinValueValidator
+from decimal import Decimal
 
 from apps.base.exceptions import CustomExceptionError
 from apps.base.models import AbstractBaseModel
@@ -10,7 +11,7 @@ class Product(AbstractBaseModel):
     """
     Represents a product in the catering application.
     """
-    
+
     # translation_fields = ["name"]
 
     # === A foreign key to the Measure model, representing the unit of measurement for the product. ===
@@ -22,7 +23,7 @@ class Product(AbstractBaseModel):
         "sections.Measure", on_delete=models.PROTECT, related_name="products_warehouse"
     )
     # === The difference between the measures ===
-    difference_measures = models.FloatField(validators=[MinValueValidator(0)])
+    difference_measures = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
     # === A foreign key to the Section model, representing the section/category of the product. ===
     section = models.ForeignKey(
         "sections.Section", on_delete=models.PROTECT, related_name="products"

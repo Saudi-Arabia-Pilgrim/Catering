@@ -4,6 +4,7 @@ from apps.base.exceptions import CustomExceptionError
 from apps.base.serializers import CustomModelSerializer, CustomSerializer
 from apps.foods.models import Food, RecipeFood, FoodSection
 from apps.foods.serializers.recipe_foods import RecipeFoodSerializer
+from apps.foods.utils.missing_products import calculate_missing_products_for_food, calculate_missing_products_batch
 
 
 class FoodSectionSerializer(CustomModelSerializer):
@@ -20,6 +21,7 @@ class FoodSectionSerializer(CustomModelSerializer):
 class FoodSerializer(CustomModelSerializer):
     recipe_foods = serializers.SerializerMethodField(read_only=True)
     section_name = serializers.SerializerMethodField(read_only=True)
+    missing_products = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Food
@@ -33,11 +35,73 @@ class FoodSerializer(CustomModelSerializer):
         # required_fields = ["name_uz", "name_ru", "name_ar", "name_en"]
 
     def get_recipe_foods(self, obj):
+        # Use prefetched recipes to avoid N+1 queries
         recipes = obj.recipes.all()
         return RecipeFoodSerializer(recipes, many=True).data
 
     def get_section_name(self, obj):
+        # Use prefetched section to avoid N+1 queries
         return obj.section.name
+
+    def get_missing_products(self, obj):
+        """
+        Return missing products when food status is False.
+
+        Returns:
+            dict: Dictionary with product names as keys and missing quantities as values
+                  Example: {"Product Name": 5.25, "Another Product": 2.00}
+        """
+        if not obj.status:
+            return calculate_missing_products_for_food(obj)
+        return {}
+
+
+class OptimizedFoodSerializer(CustomModelSerializer):
+    """
+    Optimized version of FoodSerializer that uses batch processing
+    to avoid N+1 queries when serializing multiple food objects.
+    """
+    recipe_foods = serializers.SerializerMethodField(read_only=True)
+    section_name = serializers.SerializerMethodField(read_only=True)
+    missing_products = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Food
+        exclude = ["slug", "created_at", "created_by", "updated_at", "updated_by"]
+        read_only_fields = [
+            "status",
+            "gross_price",
+            "net_price",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Store batch missing products data for efficient access
+        self._missing_products_cache = None
+        if hasattr(self, 'context') and 'missing_products_batch' in self.context:
+            self._missing_products_cache = self.context['missing_products_batch']
+
+    def get_recipe_foods(self, obj):
+        # Use prefetched recipes to avoid N+1 queries
+        recipes = obj.recipes.all()
+        return RecipeFoodSerializer(recipes, many=True).data
+
+    def get_section_name(self, obj):
+        # Use prefetched section to avoid N+1 queries
+        return obj.section.name
+
+    def get_missing_products(self, obj):
+        """
+        Return missing products when food status is False.
+        Uses cached batch data if available, otherwise falls back to individual calculation.
+        """
+        if not obj.status:
+            # Use cached batch data if available
+            if self._missing_products_cache is not None:
+                return self._missing_products_cache.get(obj.id, {})
+            # Fallback to individual calculation
+            return calculate_missing_products_for_food(obj)
+        return {}
 
 
 class FoodSerializerForFoodOrder(CustomModelSerializer):

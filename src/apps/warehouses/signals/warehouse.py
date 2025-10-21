@@ -1,173 +1,132 @@
+from decimal import Decimal
+
 from django.db import transaction
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.db.models import Exists, Q, Sum, OuterRef
+from django.db.models import Q, Sum
 
 from apps.menus.models import Recipe
 from apps.warehouses.models import Warehouse
 from apps.menus.models import Menu
 from apps.foods.models import Food, RecipeFood
+from apps.warehouses.utils.check_availability import (
+    check_foods_availability_batch,
+    check_menus_availability_batch,
+    check_recipes_availability_batch,
+)
 
 
 @receiver(post_save, sender=Warehouse)
 def post_save_warehouse(sender, instance, created, **kwargs):
-
+    """
+    Signal handler that updates product, recipe_food, food, menu, and recipe statuses
+    when warehouse changes. Status is determined by checking actual warehouse quantities
+    rather than relying on status flags of dependent objects.
+    """
     product = instance.product
 
+    # Calculate total product count in warehouse
     product_count_in_warehouse = (
         Warehouse.objects.filter(product=product).aggregate(total=Sum("count"))["total"]
-        or 0
+        or Decimal('0')
     )
-    product_count = (
-        (product_count_in_warehouse * product.difference_measures)
-        if product.difference_measures > 0
-        else product_count_in_warehouse
-    )
+
+    # Apply difference_measures to get actual available quantity
+    difference_measures = product.difference_measures if product.difference_measures > Decimal('0') else Decimal('1')
+    product_count = product_count_in_warehouse * difference_measures
 
     with transaction.atomic():
-        product.status = instance.status
+        # Update product status based on warehouse count
+        product.status = product_count > Decimal('0')
         product.save()
 
-        if product_count > 0:
+        # Get all recipe_foods that use this product
+        recipe_foods = RecipeFood.objects.filter(product=product).select_related('product')
 
-            food_recipes = RecipeFood.objects.filter(product=product)
-            recipes_status = {"False": [], "True": []}
+        if not recipe_foods:
+            return
 
-            warehouse = (
-                food_recipes.first().get_product_in_warehouse()
-                if food_recipes.first()
-                else None
-            )
-            for food_recipe in food_recipes:
-                food_recipe.status = food_recipe.count <= product_count
-                recipes_status["True" if food_recipe.status else "False"].append(
-                    food_recipe.id
-                )
-                food_recipe.calculate_prices(warehouse[0])
-            RecipeFood.objects.bulk_update(food_recipes, ["status", "price"])
+        # Update RecipeFood statuses and prices
+        warehouse_qs = (
+            recipe_foods.first().get_product_in_warehouse()
+            if recipe_foods.first()
+            else None
+        )
 
-            active_foods = (
-                Food.objects.filter(recipes__id__in=recipes_status["True"])
-                .annotate(
-                    has_inactive_recipes=Exists(
-                        RecipeFood.objects.filter(
-                            foods__id__in=OuterRef("pk"), status=False
-                        )
-                    )
-                )
-                .distinct()
-                .prefetch_related("recipes")
-            )
-            inactive_foods = (
-                Food.objects.filter(recipes__id__in=recipes_status["False"])
-                .distinct()
-                .prefetch_related("recipes")
-            )
+        for recipe_food in recipe_foods:
+            # Check if warehouse has enough for this recipe_food
+            recipe_food.status = recipe_food.count <= product_count
+            if warehouse_qs:
+                recipe_food.calculate_prices(warehouse_qs[0])
 
-            for food in active_foods:
-                food.status = not food.has_inactive_recipes
-                food.calculate_prices()
-            for food in inactive_foods:
-                food.status = False
+        RecipeFood.objects.bulk_update(recipe_foods, ["status", "price"])
+
+        # Get all affected foods
+        foods = Food.objects.filter(
+            recipes__in=recipe_foods
+        ).distinct().prefetch_related("recipes")
+
+        if foods:
+            # Check availability for all foods using batch function
+            food_availability = check_foods_availability_batch(foods)
+
+            # Update food statuses and prices
+            for food in foods:
+                food.status = food_availability.get(food.id, False)
                 food.calculate_prices()
 
             Food.objects.bulk_update(
-                list(active_foods) + list(inactive_foods),
+                foods,
                 ["status", "net_price", "gross_price"],
             )
 
-            active_menus = (
-                Menu.objects.filter(foods__in=active_foods.filter(status=True))
-                .annotate(
-                    has_inactive_food=Exists(
-                        Food.objects.filter(menus=OuterRef("pk"), status=False)
+            # Get all affected menus
+            menus = Menu.objects.filter(
+                foods__in=foods
+            ).distinct().prefetch_related("foods__recipes")
+
+            if menus:
+                # Check availability for all menus using batch function
+                menu_availability = check_menus_availability_batch(menus)
+
+                # Update menu statuses and prices
+                for menu in menus:
+                    menu.status = menu_availability.get(menu.id, False)
+                    menu.calculate_prices()
+
+                Menu.objects.bulk_update(
+                    menus,
+                    ["status", "net_price", "gross_price"],
+                )
+
+                # Get all affected recipes
+                recipes = Recipe.objects.filter(
+                    Q(menu_breakfast__in=menus)
+                    | Q(menu_lunch__in=menus)
+                    | Q(menu_dinner__in=menus)
+                ).distinct().select_related(
+                    "menu_breakfast", "menu_lunch", "menu_dinner"
+                )
+
+                if recipes:
+                    # Prefetch foods and recipes for all menus used in recipes
+                    for recipe in recipes:
+                        if recipe.menu_breakfast:
+                            recipe.menu_breakfast.foods.all()
+                        if recipe.menu_lunch:
+                            recipe.menu_lunch.foods.all()
+                        if recipe.menu_dinner:
+                            recipe.menu_dinner.foods.all()
+
+                    # Check availability for all recipes using batch function
+                    recipe_availability = check_recipes_availability_batch(recipes)
+
+                    # Update recipe statuses and prices
+                    for recipe in recipes:
+                        recipe.status = recipe_availability.get(recipe.id, False)
+                        recipe.calculate_prices()
+
+                    Recipe.objects.bulk_update(
+                        recipes,
+                        ["status", "slug", "net_price", "gross_price"],
                     )
-                )
-                .distinct()
-                .prefetch_related("foods")
-            )
-            inactive_menus = (
-                Menu.objects.filter(
-                    foods__in=active_foods.filter(status=False) | inactive_foods
-                )
-                .distinct()
-                .prefetch_related("foods")
-            )
-
-            for menu in active_menus:
-                menu.status = not menu.has_inactive_food
-                menu.calculate_prices()
-            for menu in inactive_menus:
-                menu.status = False
-                menu.calculate_prices()
-
-            Menu.objects.bulk_update(
-                list(inactive_menus) + list(active_menus),
-                ["status", "net_price", "gross_price"],
-            )
-
-            active_menus = active_menus.filter(status=True)
-            inactive_menus = Menu.objects.filter(
-                id__in=active_menus.filter(status=False) | inactive_menus
-            )
-
-            active_recipes = (
-                Recipe.objects.filter(
-                    Q(menu_breakfast__in=active_menus)
-                    | Q(menu_lunch__in=active_menus)
-                    | Q(menu_dinner__in=active_menus)
-                )
-                .annotate(
-                    has_inactive_menu=Exists(
-                        Menu.objects.filter(
-                            Q(id=OuterRef("menu_breakfast"))
-                            | Q(id=OuterRef("menu_lunch"))
-                            | Q(id=OuterRef("menu_dinner")),
-                            status=False,
-                        )
-                    )
-                )
-                .distinct()
-            )
-            inactive_recipes = Recipe.objects.filter(
-                Q(menu_breakfast__in=inactive_menus)
-                | Q(menu_lunch__in=inactive_menus)
-                | Q(menu_dinner__in=inactive_menus)
-            ).distinct()
-
-            for recipe in active_recipes:
-                recipe.status = not recipe.has_inactive_menu
-                recipe.calculate_prices()
-            for recipe in inactive_recipes:
-                recipe.status = False
-                recipe.calculate_prices()
-
-            Recipe.objects.bulk_update(
-                list(active_recipes) + list(inactive_recipes),
-                ["status", "slug", "net_price", "gross_price"],
-            )
-
-        else:
-
-            recipe_foods = RecipeFood.objects.filter(product=product)
-            foods = Food.objects.filter(recipes__in=recipe_foods).distinct()
-            menus = Menu.objects.filter(foods__in=foods).distinct()
-            recipes = Recipe.objects.filter(
-                Q(menu_breakfast__in=menus)
-                | Q(menu_lunch__in=menus)
-                | Q(menu_dinner__in=menus)
-            ).distinct()
-
-            for obj in list(recipe_foods) + list(foods) + list(menus) + list(recipes):
-                obj.status = False
-
-            RecipeFood.objects.bulk_update(recipe_foods, ["status", "price"])
-            Food.objects.bulk_update(
-                foods, ["status", "slug", "net_price", "gross_price"]
-            )
-            Menu.objects.bulk_update(
-                menus, ["status", "slug", "net_price", "gross_price"]
-            )
-            Recipe.objects.bulk_update(
-                recipes, ["status", "slug", "net_price", "gross_price"]
-            )

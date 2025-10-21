@@ -1,12 +1,16 @@
+from decimal import Decimal
+
 from django.db.models import Q
+from django.apps import apps
 
 from apps.products.models import Product
-from apps.foods.models import RecipeFood, Food
+from apps.foods.models import Food
 from apps.menus.models import Menu, Recipe
-from apps.warehouses.models import Warehouse
 
 
 def update_product_dependencies_in_warehouse(product_ids: list):
+    Warehouse = apps.get_model("warehouses", "Warehouse")
+    RecipeFood = apps.get_model("foods", "RecipeFood")
     product_list = []
     recipe_food_qs = RecipeFood.objects.filter(product_id__in=product_ids)
     food_qs = Food.objects.filter(recipes__in=recipe_food_qs).prefetch_related(
@@ -27,7 +31,7 @@ def update_product_dependencies_in_warehouse(product_ids: list):
         product_list.append(warehouse.product)
 
     for product in product_list:
-        if warehouse.count > 0:
+        if warehouse.count > Decimal('0'):
             product.status = True
         else:
             product.status = False
@@ -39,10 +43,13 @@ def update_product_dependencies_in_warehouse(product_ids: list):
         product_id = recipe_food.product_id
         recipe_food.calculate_prices(warehouse=warehouses_dict[product_id])
         product_count = sum([w.count for w in warehouses_dict[product_id]])
-        if product_count > recipe_food.count:
-            recipe_food.status = True
-        else:
+        product = recipe_food.product
+        # Calculate actual available quantity considering difference_measures
+        available_quantity = product_count * (product.difference_measures if product.difference_measures else Decimal('1'))
+        if product_count == Decimal('0') or recipe_food.count > available_quantity:
             recipe_food.status = False
+        else:
+            recipe_food.status = True
 
     for food in food_qs:
         recipes = food.recipes.all()

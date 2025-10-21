@@ -1,6 +1,6 @@
-from decimal import ROUND_UP, Decimal
+from decimal import ROUND_UP, ROUND_HALF_UP, Decimal
 from django.db import models
-from django.db.models import F, When, Value, FloatField, Case, ExpressionWrapper, Sum
+from django.db.models import F, When, Value, DecimalField, Case, ExpressionWrapper, Sum
 from django.core.validators import MinValueValidator
 
 from apps.base.exceptions import CustomExceptionError
@@ -20,9 +20,9 @@ class RecipeFood(AbstractBaseModel):
         "products.Product", on_delete=models.PROTECT, related_name="recipe_foods"
     )
     # === The quantity of the product used in the recipe. ===
-    count = models.FloatField(validators=[MinValueValidator(1)])
-    # === Price of the product item, stored as a floating-point number. Must be ≥ 0. ===
-    price = models.FloatField(default=0, validators=[MinValueValidator(0)])
+    count = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
+    # === Price of the product item. Must be ≥ 0. ===
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(0)])
     # === Status of the recipe food item. ===
     status = models.BooleanField(default=True)
 
@@ -50,12 +50,16 @@ class RecipeFood(AbstractBaseModel):
         )
 
     def calculate_net_price(self, warehouse):
+        """
+        Calculate net price for the recipe food item.
+        Returns Decimal value rounded to 2 decimal places.
+        """
         warehouse = warehouse.annotate(
             exact_quantity=F("count")
             * Case(
                 When(product__difference_measures=0, then=Value(1)),
                 default=F("product__difference_measures"),
-                output_field=FloatField(),
+                output_field=DecimalField(max_digits=10, decimal_places=2),
             ),
             net_price=ExpressionWrapper(
                 F("gross_price")
@@ -65,13 +69,13 @@ class RecipeFood(AbstractBaseModel):
                         then=F("arrived_count") * Case(
                             When(product__difference_measures=0, then=Value(1)),
                             default=F("product__difference_measures"),
-                            output_field=FloatField()
+                            output_field=DecimalField(max_digits=10, decimal_places=2)
                         ),
                     ),
                     default=F("arrived_count"),
-                    output_field=FloatField(),
+                    output_field=DecimalField(max_digits=10, decimal_places=2),
                 ),
-                output_field=FloatField(),
+                output_field=DecimalField(max_digits=10, decimal_places=2),
             ),
         )
 
@@ -81,26 +85,34 @@ class RecipeFood(AbstractBaseModel):
             .first()
             or warehouse.order_by("-created_at").first()
         )
-        return float(price_obj.get_net_price()) if price_obj else float(self.price or 0)
+        if price_obj:
+            result = price_obj.get_net_price()
+            return Decimal(str(result)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        return Decimal(str(self.price or 0)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
     def calculate_prices(self, warehouse=None):
+        """
+        Calculate prices for the recipe food item.
+        Prices are rounded to 2 decimal places using ROUND_HALF_UP.
+        """
         if warehouse is None:
             warehouse, _ = self.get_product_in_warehouse()
 
         net_price = self.calculate_net_price(warehouse)
-        self.price = Decimal(net_price * self.count).quantize(
-            Decimal("0.0001"), rounding=ROUND_UP
+        self.price = (Decimal(str(net_price)) * self.count).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
         )
 
     def save(self, *args, **kwargs):
         warehouse, product = self.get_product_in_warehouse()
         self.calculate_prices(warehouse=warehouse)
-        product_count = warehouse.aggregate(total=Sum("count"))["total"] or 0
+        product_count = warehouse.aggregate(total=Sum("count"))["total"] or Decimal('0')
 
-        if (
-            product_count == 0
-            or self.count > product_count * product.difference_measures
-        ):
+        # Calculate actual available quantity considering difference_measures
+        difference_measures = product.difference_measures if product.difference_measures else Decimal('1')
+        available_quantity = product_count * difference_measures
+
+        if product_count == Decimal('0') or self.count > available_quantity:
             self.status = False
         else:
             self.status = True
