@@ -20,21 +20,30 @@ def calculate_missing_products_for_menu(menu):
 
     This function checks the warehouse inventory against the required products
     for all foods in the menu and returns a dictionary of missing products with
-    their names and the quantities that are missing. It always calculates based
+    their names, quantities, and measures. It always calculates based
     on real quantities, regardless of menu/food/product status.
 
     Args:
         menu: A Menu instance to check for missing products
 
     Returns:
-        dict: A dictionary where keys are product names and values are the
-              missing quantities (rounded to 2 decimal places)
-              Example: {"Product Name": "5.25", "Another Product": "2.00"}
+        dict: A dictionary where keys are product names and values are dictionaries
+              containing measure and missing quantity
+              Example: {
+                  "Product Name": {
+                      "measure": "kg",
+                      "missing": "5.25"
+                  },
+                  "Another Product": {
+                      "measure": "L",
+                      "missing": "2.00"
+                  }
+              }
     """
     missing_products = {}
 
-    # Get all foods for this menu
-    foods = menu.foods.all()
+    # Get all foods for this menu with prefetched recipe and product data
+    foods = menu.foods.prefetch_related('recipes__product__measure').all()
 
     if not foods:
         return missing_products
@@ -92,7 +101,10 @@ def calculate_missing_products_for_menu(menu):
                 Decimal('0.01'),
                 rounding=ROUND_HALF_UP
             )
-            missing_products[product.name] = str(rounded_missing)
+            missing_products[product.name] = {
+                "measure": product.measure.abbreviation,
+                "missing": str(rounded_missing)
+            }
 
     return missing_products
 
@@ -103,16 +115,25 @@ def calculate_missing_products_for_recipe(recipe):
 
     This function checks the warehouse inventory against the required products
     for all menus associated with the recipe and returns a dictionary of missing
-    products with their names and the quantities that are missing. It always
+    products with their names, quantities, and measures. It always
     calculates based on real quantities, regardless of recipe/menu/food/product status.
 
     Args:
         recipe: A Recipe instance to check for missing products
 
     Returns:
-        dict: A dictionary where keys are product names and values are the
-              missing quantities (rounded to 2 decimal places)
-              Example: {"Product Name": "5.25", "Another Product": "2.00"}
+        dict: A dictionary where keys are product names and values are dictionaries
+              containing measure and missing quantity
+              Example: {
+                  "Product Name": {
+                      "measure": "kg",
+                      "missing": "5.25"
+                  },
+                  "Another Product": {
+                      "measure": "L",
+                      "missing": "2.00"
+                  }
+              }
     """
     missing_products = {}
 
@@ -123,10 +144,10 @@ def calculate_missing_products_for_recipe(recipe):
     if not menus:
         return missing_products
 
-    # Get all foods for all menus
+    # Get all foods for all menus with prefetched recipe and product data
     all_foods = []
     for menu in menus:
-        foods = menu.foods.all()
+        foods = menu.foods.prefetch_related('recipes__product__measure').all()
         all_foods.extend(foods)
 
     if not all_foods:
@@ -185,7 +206,10 @@ def calculate_missing_products_for_recipe(recipe):
                 Decimal('0.01'),
                 rounding=ROUND_HALF_UP
             )
-            missing_products[product.name] = str(rounded_missing)
+            missing_products[product.name] = {
+                "measure": product.measure.abbreviation,
+                "missing": str(rounded_missing)
+            }
 
     return missing_products
 
@@ -202,17 +226,24 @@ def calculate_missing_products_batch_menus(menus):
 
     Returns:
         dict: Dictionary mapping menu IDs to their missing products
-              Example: {menu_id: {"Product Name": "5.25"}, ...}
+              Example: {
+                  menu_id: {
+                      "Product Name": {
+                          "measure": "kg",
+                          "missing": "5.25"
+                      }
+                  }
+              }
     """
     if not menus:
         return {}
 
-    # Get all foods for all menus (assume caller prefetched relations)
+    # Get all foods for all menus with prefetched relations
     all_foods = []
     menu_food_mapping = {}
 
     for menu in menus:
-        foods = list(menu.foods.all())
+        foods = list(menu.foods.prefetch_related('recipes__product__measure').all())
         all_foods.extend(foods)
         menu_food_mapping[menu.id] = foods
 
@@ -286,7 +317,10 @@ def calculate_missing_products_batch_menus(menus):
                     Decimal('0.01'),
                     rounding=ROUND_HALF_UP
                 )
-                missing_products[product.name] = str(rounded_missing)
+                missing_products[product.name] = {
+                    "measure": product.measure.abbreviation,
+                    "missing": str(rounded_missing)
+                }
 
         result[menu.id] = missing_products
 
@@ -305,7 +339,14 @@ def calculate_missing_products_batch_recipes(recipes):
 
     Returns:
         dict: Dictionary mapping recipe IDs to their missing products
-              Example: {recipe_id: {"Product Name": "5.25"}, ...}
+              Example: {
+                  recipe_id: {
+                      "Product Name": {
+                          "measure": "kg",
+                          "missing": "5.25"
+                      }
+                  }
+              }
     """
     if not recipes:
         return {}
@@ -323,12 +364,12 @@ def calculate_missing_products_batch_recipes(recipes):
     if not all_menus:
         return {}
 
-    # Get all foods for all menus (assume caller prefetched relations)
+    # Get all foods for all menus with prefetched relations
     all_foods = []
     menu_food_mapping = {}
 
     for menu in all_menus:
-        foods = list(menu.foods.all())
+        foods = list(menu.foods.prefetch_related('recipes__product__measure').all())
         all_foods.extend(foods)
         menu_food_mapping[menu.id] = foods
 
@@ -404,7 +445,10 @@ def calculate_missing_products_batch_recipes(recipes):
                     Decimal('0.01'),
                     rounding=ROUND_HALF_UP
                 )
-                missing_products[product.name] = str(rounded_missing)
+                missing_products[product.name] = {
+                    "measure": product.measure.abbreviation,
+                    "missing": str(rounded_missing)
+                }
 
         result[recipe.id] = missing_products
 
