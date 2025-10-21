@@ -24,21 +24,30 @@ def calculate_missing_products_for_food(food):
 
     This function checks the warehouse inventory against the required products
     for a food's recipes and returns a dictionary of missing products with
-    their names and the quantities that are missing. It always calculates based
+    their names, quantities, and measures. It always calculates based
     on real quantities, regardless of food/product status.
 
     Args:
         food: A Food instance to check for missing products
 
     Returns:
-        dict: A dictionary where keys are product names and values are the
-              missing quantities (rounded to 2 decimal places)
-              Example: {"Product Name": 5.25, "Another Product": 2.00}
+        dict: A dictionary where keys are product names and values are dictionaries
+              containing measure and missing quantity
+              Example: {
+                  "Product Name": {
+                      "measure": "kg",
+                      "missing": "5.25"
+                  },
+                  "Another Product": {
+                      "measure": "L",
+                      "missing": "2.00"
+                  }
+              }
     """
     missing_products = {}
 
-    # Get all recipe foods for this food
-    recipe_foods = food.recipes.all()
+    # Get all recipe foods for this food with prefetched product and measure data
+    recipe_foods = food.recipes.select_related('product__measure').all()
 
     if not recipe_foods:
         return missing_products
@@ -94,7 +103,10 @@ def calculate_missing_products_for_food(food):
                 Decimal('0.01'),
                 rounding=ROUND_HALF_UP
             )
-            missing_products[product.name] = str(rounded_missing)
+            missing_products[product.name] = {
+                "measure": product.measure.abbreviation,
+                "missing": str(rounded_missing)
+            }
 
     return missing_products
 
@@ -111,17 +123,24 @@ def calculate_missing_products_batch(foods):
 
     Returns:
         dict: Dictionary mapping food IDs to their missing products
-              Example: {food_id: {"Product Name": 5.25}, ...}
+              Example: {
+                  food_id: {
+                      "Product Name": {
+                          "measure": "kg",
+                          "missing": "5.25"
+                      }
+                  }
+              }
     """
     if not foods:
         return {}
 
-    # Get all recipe foods for all foods
+    # Get all recipe foods for all foods with prefetched product and measure data
     all_recipe_foods = []
     food_recipe_mapping = {}
 
     for food in foods:
-        recipe_foods = list(food.recipes.all())
+        recipe_foods = list(food.recipes.select_related('product__measure').all())
         all_recipe_foods.extend(recipe_foods)
         food_recipe_mapping[food.id] = recipe_foods
 
@@ -181,7 +200,10 @@ def calculate_missing_products_batch(foods):
                     Decimal('0.01'),
                     rounding=ROUND_HALF_UP
                 )
-                missing_products[product.name] = str(rounded_missing)
+                missing_products[product.name] = {
+                    "measure": product.measure.abbreviation,
+                    "missing": str(rounded_missing)
+                }
 
         result[food.id] = missing_products
 
