@@ -33,7 +33,7 @@ class WarehouseExpensesRetrieveAPIView(CustomGenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         validated_data = serializer.validated_data
-        data = f"{validated_data["amount"]}{validated_data["measure_abbreviation"]} {validated_data["product_name"]} were successfully removed from the warehouse"
+        data = f"{validated_data['amount']}{validated_data['measure_abbreviation']} {validated_data['product_name']} were successfully removed from the warehouse"
         price = (
             Decimal(warehouse.get_net_price())
             * Decimal(warehouse.product.difference_measures)
